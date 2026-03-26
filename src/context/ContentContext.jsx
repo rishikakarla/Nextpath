@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
-import { CODING_PROBLEMS, ASSESSMENT_QUESTIONS, ROADMAP_PHASES, DAILY_TASKS } from '../data/appData'
+import { ASSESSMENT_QUESTIONS, ROADMAP_PHASES, DAILY_TASKS } from '../data/appData'
+import { CODING_PROBLEMS } from '../data/codingProblems'
 
 const ContentContext = createContext(null)
 
