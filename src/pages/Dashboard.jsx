@@ -1,13 +1,43 @@
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore'
+import { db } from '../firebase'
 import { useApp } from '../context/AppContext'
 import { ROADMAP_PHASES } from '../data/appData'
 
+function useTopPerformers(currentUid) {
+  const [board, setBoard] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const q = query(collection(db, 'leaderboard'), orderBy('points', 'desc'), limit(5))
+    const unsub = onSnapshot(q, (snap) => {
+      const entries = snap.docs.map((doc, i) => ({
+        id: doc.id,
+        rank: i + 1,
+        isMe: doc.id === currentUid,
+        ...doc.data(),
+      }))
+      setBoard(entries)
+      setLoading(false)
+    })
+    return unsub
+  }, [currentUid])
+
+  return { board, loading }
+}
+
 export default function Dashboard() {
-  const { user, streak, progress, solvedProblems, dailyTasks, points, assessmentResult, getLeaderboard } = useApp()
+  const { user, streak, progress, solvedProblems, dailyTasks, assessmentResult, getLeaderboard } = useApp()
   const navigate = useNavigate()
 
-  const board = getLeaderboard()
-  const myRank = board.find(e => e.isMe)?.rank ?? '—'
+  const { board: topBoard, loading: boardLoading } = useTopPerformers(user?.uid)
+
+  // Fallback rank from full leaderboard (local) until real-time data loads
+  const fullBoard = getLeaderboard()
+  const myRank = topBoard.find(e => e.isMe)?.rank
+    ?? fullBoard.find(e => e.isMe)?.rank
+    ?? '—'
   const tasksToday = [dailyTasks.coding, dailyTasks.aptitude, dailyTasks.revision].filter(Boolean).length
   const allPhasesTopicCount = ROADMAP_PHASES.reduce((a, p) => a + p.topics.length, 0)
 
@@ -152,28 +182,75 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Top Leaderboard */}
+        {/* Top Leaderboard — real-time */}
         <div className="card">
           <div className="flex-between mb-16">
-            <h3 className="card-title" style={{ margin: 0 }}>Top Performers</h3>
+            <h3 className="card-title" style={{ margin: 0 }}>
+              Top Performers
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                marginLeft: 10, fontSize: 11, fontWeight: 600,
+                color: '#10b981', verticalAlign: 'middle',
+              }}>
+                <span style={{
+                  width: 7, height: 7, borderRadius: '50%', background: '#10b981',
+                  animation: 'livePulse 1.5s ease-in-out infinite',
+                  display: 'inline-block',
+                }} />
+                LIVE
+              </span>
+            </h3>
             <button className="btn btn-secondary btn-sm" onClick={() => navigate('/leaderboard')}>
               Full Board
             </button>
           </div>
-          {board.slice(0, 5).map(entry => (
-            <div key={entry.id} style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
-              borderBottom: '1px solid var(--border)',
-            }}>
-              <span style={{ width: 22, fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>
-                {entry.rank <= 3 ? ['🥇','🥈','🥉'][entry.rank - 1] : `#${entry.rank}`}
-              </span>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: entry.isMe ? 700 : 500, color: entry.isMe ? 'var(--primary)' : 'inherit' }}>
-                {entry.name} {entry.isMe ? '(You)' : ''}
-              </span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{entry.points} pts</span>
+
+          {boardLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 0', borderBottom: '1px solid var(--border)',
+              }}>
+                <div style={{ width: 22, height: 14, borderRadius: 4, background: 'var(--border)' }} />
+                <div style={{ flex: 1, height: 14, borderRadius: 4, background: 'var(--border)' }} />
+                <div style={{ width: 48, height: 14, borderRadius: 4, background: 'var(--border)' }} />
+              </div>
+            ))
+          ) : topBoard.length === 0 ? (
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>
+              No data yet — be the first on the board!
             </div>
-          ))}
+          ) : (
+            topBoard.map(entry => (
+              <div key={entry.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
+                borderBottom: '1px solid var(--border)',
+                background: entry.isMe ? 'var(--primary-light)' : 'transparent',
+                borderRadius: entry.isMe ? 6 : 0,
+                padding: entry.isMe ? '8px 8px' : '8px 0',
+              }}>
+                <span style={{ width: 22, fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, flexShrink: 0 }}>
+                  {entry.rank <= 3 ? ['🥇','🥈','🥉'][entry.rank - 1] : `#${entry.rank}`}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 14, fontWeight: entry.isMe ? 700 : 500,
+                    color: entry.isMe ? 'var(--primary)' : 'var(--text)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {entry.name} {entry.isMe ? '(You)' : ''}
+                  </div>
+                  {entry.college && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{entry.college}</div>
+                  )}
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{entry.points} pts</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>🔥 {entry.streak}</div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

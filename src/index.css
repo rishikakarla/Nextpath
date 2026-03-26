@@ -744,6 +744,11 @@ nav { flex: 1; padding: 12px 0; }
 
 .dp-modal.dp-modal-sm { max-width: 520px; }
 
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .4; transform: scale(.7); }
+}
+
 @keyframes dpSlideUp {
   from { transform: translateY(24px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
