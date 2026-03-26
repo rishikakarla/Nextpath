@@ -42,19 +42,38 @@ function ActiveCard({ children }) {
 }
 
 // ── Coding Problems ───────────────────────────────────────────────────────────
-const BLANK_PROB = { title: '', category: 'Arrays', difficulty: 'Easy', description: '', example: '', hint: '' }
+const BLANK_PROB = {
+  title: '', category: 'Arrays', difficulty: 'Easy',
+  description: '', inputFormat: '', outputFormat: '', constraints: '', hint: '',
+  examples:  [{ input: '', output: '', explanation: '' }],
+  testCases: [{ input: '', expectedOutput: '', hidden: false }],
+  starterCode: { 71: '', 63: '', 54: '' },
+}
+
+const STARTER_LANG_LABELS = [
+  { id: 71, label: 'Python 3' },
+  { id: 63, label: 'JavaScript' },
+  { id: 54, label: 'C++ 17' },
+]
 
 function CodingProblemsTab({ problems = [], onUpdate }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(BLANK_PROB)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const deepClone = (p) => ({
+    ...p,
+    examples:   (p.examples  || []).map(e => ({ ...e })),
+    testCases:  (p.testCases || []).map(t => ({ ...t })),
+    starterCode: { ...(p.starterCode || {}) },
+  })
+
   const save = () => {
     if (!form.title.trim() || !form.description.trim()) return
     if (editing === 'new') {
-      onUpdate([...problems, { ...form, id: Date.now() }])
+      onUpdate([...problems, { ...deepClone(form), id: Date.now() }])
     } else {
-      onUpdate(problems.map(p => p.id === editing ? { ...form, id: editing } : p))
+      onUpdate(problems.map(p => p.id === editing ? { ...deepClone(form), id: editing } : p))
     }
     setEditing(null)
   }
@@ -67,14 +86,16 @@ function CodingProblemsTab({ problems = [], onUpdate }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Coding Problems <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>({problems.length})</span></h2>
+        <h2 style={{ margin: 0, fontSize: 20 }}>
+          Coding Problems <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>({problems.length})</span>
+        </h2>
         <Btn onClick={() => { setForm(BLANK_PROB); setEditing('new') }}>+ Add Problem</Btn>
       </div>
 
       {editing === 'new' && (
         <ActiveCard>
           <h3 style={{ margin: '0 0 16px' }}>New Problem</h3>
-          <ProblemForm form={form} set={set} onSave={save} onCancel={() => setEditing(null)} />
+          <ProblemForm form={form} set={set} setForm={setForm} onSave={save} onCancel={() => setEditing(null)} />
         </ActiveCard>
       )}
 
@@ -82,16 +103,22 @@ function CodingProblemsTab({ problems = [], onUpdate }) {
         <div key={p.id}>
           {editing === p.id ? (
             <ActiveCard>
-              <h3 style={{ margin: '0 0 16px' }}>Edit Problem</h3>
-              <ProblemForm form={form} set={set} onSave={save} onCancel={() => setEditing(null)} />
+              <h3 style={{ margin: '0 0 16px' }}>Edit: {p.title}</h3>
+              <ProblemForm form={form} set={set} setForm={setForm} onSave={save} onCancel={() => setEditing(null)} />
             </ActiveCard>
           ) : (
             <div style={{ ...s.card, padding: '12px 16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ flex: 1, fontWeight: 600, fontSize: 14 }}>{p.title}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ flex: 1, fontWeight: 600, fontSize: 14, minWidth: 160 }}>{p.title}</span>
                 <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{p.category}</span>
                 <span className={`badge badge-${p.difficulty.toLowerCase()}`}>{p.difficulty}</span>
-                <Btn sm variant="ghost" onClick={() => { setForm({ ...p }); setEditing(p.id) }}>Edit</Btn>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {(p.examples?.length || 0)} example{(p.examples?.length || 0) !== 1 ? 's' : ''} ·{' '}
+                  {(p.testCases?.length || 0)} test case{(p.testCases?.length || 0) !== 1 ? 's' : ''}
+                  {(p.testCases?.filter(t => t.hidden)?.length || 0) > 0
+                    ? ` (${p.testCases.filter(t => t.hidden).length} hidden)` : ''}
+                </span>
+                <Btn sm variant="ghost" onClick={() => { setForm(deepClone(p)); setEditing(p.id) }}>Edit</Btn>
                 <Btn sm variant="danger" onClick={() => remove(p.id)}>Delete</Btn>
               </div>
             </div>
@@ -102,10 +129,26 @@ function CodingProblemsTab({ problems = [], onUpdate }) {
   )
 }
 
-function ProblemForm({ form, set, onSave, onCancel }) {
+function ProblemForm({ form, set, setForm, onSave, onCancel }) {
+  const [starterTab, setStarterTab] = useState(71)
+
+  // ── examples helpers
+  const addExample   = () => setForm(f => ({ ...f, examples: [...f.examples, { input: '', output: '', explanation: '' }] }))
+  const removeExample = (i) => setForm(f => ({ ...f, examples: f.examples.filter((_, idx) => idx !== i) }))
+  const setExample   = (i, k, v) => setForm(f => ({ ...f, examples: f.examples.map((e, idx) => idx === i ? { ...e, [k]: v } : e) }))
+
+  // ── test case helpers
+  const addTestCase    = (hidden = false) => setForm(f => ({ ...f, testCases: [...f.testCases, { input: '', expectedOutput: '', hidden }] }))
+  const removeTestCase = (i) => setForm(f => ({ ...f, testCases: f.testCases.filter((_, idx) => idx !== i) }))
+  const setTestCase    = (i, k, v) => setForm(f => ({ ...f, testCases: f.testCases.map((t, idx) => idx === i ? { ...t, [k]: v } : t) }))
+
+  const monoInp = { ...s.inp, fontFamily: 'monospace', fontSize: 12 }
+  const sep = { borderTop: '1px solid var(--border)', marginTop: 20, paddingTop: 16 }
+
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      {/* ── Basic info ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12 }}>
         <Field label="Title">
           <input style={s.inp} value={form.title} onChange={e => set('title', e.target.value)} placeholder="Two Sum" />
         </Field>
@@ -120,17 +163,139 @@ function ProblemForm({ form, set, onSave, onCancel }) {
           </select>
         </Field>
       </div>
-      <Field label="Description">
-        <textarea style={{ ...s.inp, height: 80, resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} />
+
+      <Field label="Problem Description">
+        <textarea style={{ ...s.inp, height: 90, resize: 'vertical' }} value={form.description}
+          onChange={e => set('description', e.target.value)} placeholder="Describe the problem clearly..." />
       </Field>
-      <Field label="Example">
-        <textarea style={{ ...s.inp, height: 60, resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} value={form.example} onChange={e => set('example', e.target.value)} />
-      </Field>
-      <Field label="Hint">
-        <input style={s.inp} value={form.hint} onChange={e => set('hint', e.target.value)} />
-      </Field>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Btn onClick={onSave} variant="success">Save Problem</Btn>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <Field label="Input Format">
+          <textarea style={{ ...s.inp, height: 70, resize: 'vertical' }} value={form.inputFormat}
+            onChange={e => set('inputFormat', e.target.value)} placeholder="First line: N&#10;Second line: N space-separated integers" />
+        </Field>
+        <Field label="Output Format">
+          <textarea style={{ ...s.inp, height: 70, resize: 'vertical' }} value={form.outputFormat}
+            onChange={e => set('outputFormat', e.target.value)} placeholder="A single integer — the answer" />
+        </Field>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <Field label="Constraints">
+          <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.constraints}
+            onChange={e => set('constraints', e.target.value)} placeholder="1 ≤ N ≤ 10⁵&#10;-10⁹ ≤ nums[i] ≤ 10⁹" />
+        </Field>
+        <Field label="Hint (optional)">
+          <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.hint}
+            onChange={e => set('hint', e.target.value)} placeholder="Tip to nudge students..." />
+        </Field>
+      </div>
+
+      {/* ── Sample Examples ── */}
+      <div style={sep}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>📋 Sample Examples <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}>(visible to students)</span></span>
+          <Btn sm onClick={addExample}>+ Add Example</Btn>
+        </div>
+        {form.examples.map((ex, i) => (
+          <div key={i} style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 10, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Example {i + 1}</span>
+              {form.examples.length > 1 && <Btn sm variant="danger" onClick={() => removeExample(i)}>Remove</Btn>}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 8 }}>
+              <Field label="Input">
+                <textarea style={{ ...monoInp, height: 60, resize: 'vertical' }} value={ex.input}
+                  onChange={e => setExample(i, 'input', e.target.value)} placeholder="4 9&#10;2 7 11 15" />
+              </Field>
+              <Field label="Expected Output">
+                <textarea style={{ ...monoInp, height: 60, resize: 'vertical' }} value={ex.output}
+                  onChange={e => setExample(i, 'output', e.target.value)} placeholder="0 1" />
+              </Field>
+            </div>
+            <Field label="Explanation (optional)">
+              <input style={s.inp} value={ex.explanation} onChange={e => setExample(i, 'explanation', e.target.value)}
+                placeholder="nums[0] + nums[1] = 9" />
+            </Field>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Test Cases ── */}
+      <div style={sep}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>
+            🧪 Test Cases
+            <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12, marginLeft: 6 }}>
+              ({form.testCases.filter(t => !t.hidden).length} visible · {form.testCases.filter(t => t.hidden).length} hidden)
+            </span>
+          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <Btn sm onClick={() => addTestCase(false)}>+ Visible</Btn>
+            <Btn sm variant="ghost" onClick={() => addTestCase(true)}>+ Hidden</Btn>
+          </div>
+        </div>
+
+        {form.testCases.map((tc, i) => (
+          <div key={i} style={{
+            background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 8,
+            border: `1px solid ${tc.hidden ? '#f59e0b44' : 'var(--border)'}`,
+            borderLeft: `3px solid ${tc.hidden ? '#f59e0b' : 'var(--success)'}`,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Test {i + 1}</span>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: tc.hidden ? '#f59e0b' : 'var(--success)' }}>
+                  <input type="checkbox" checked={tc.hidden} onChange={e => setTestCase(i, 'hidden', e.target.checked)} />
+                  {tc.hidden ? '🔒 Hidden' : '👁 Visible'}
+                </label>
+              </div>
+              {form.testCases.length > 1 && <Btn sm variant="danger" onClick={() => removeTestCase(i)}>Remove</Btn>}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <Field label="Input (stdin)">
+                <textarea style={{ ...monoInp, height: 60, resize: 'vertical' }} value={tc.input}
+                  onChange={e => setTestCase(i, 'input', e.target.value)} placeholder="4 9&#10;2 7 11 15" />
+              </Field>
+              <Field label="Expected Output (stdout)">
+                <textarea style={{ ...monoInp, height: 60, resize: 'vertical' }} value={tc.expectedOutput}
+                  onChange={e => setTestCase(i, 'expectedOutput', e.target.value)} placeholder="0 1" />
+              </Field>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Starter Code ── */}
+      <div style={sep}>
+        <div style={{ marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>💻 Starter Code</span>
+          <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12, marginLeft: 6 }}>(shown in editor when student opens problem)</span>
+        </div>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+          {STARTER_LANG_LABELS.map(l => (
+            <button key={l.id} type="button" onClick={() => setStarterTab(l.id)} style={{
+              padding: '5px 14px', borderRadius: 6, border: '1px solid var(--border)',
+              background: starterTab === l.id ? 'var(--primary)' : 'var(--bg)',
+              color: starterTab === l.id ? '#fff' : 'var(--text-secondary)',
+              fontWeight: 600, fontSize: 12, cursor: 'pointer',
+            }}>
+              {l.label}
+            </button>
+          ))}
+        </div>
+        <textarea
+          style={{ ...monoInp, height: 140, resize: 'vertical', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155' }}
+          value={form.starterCode?.[starterTab] || ''}
+          onChange={e => setForm(f => ({ ...f, starterCode: { ...f.starterCode, [starterTab]: e.target.value } }))}
+          placeholder={`Write the starter code for ${STARTER_LANG_LABELS.find(l => l.id === starterTab)?.label}...`}
+          spellCheck={false}
+        />
+      </div>
+
+      {/* ── Actions ── */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+        <Btn onClick={onSave} variant="success">✓ Save Problem</Btn>
         <Btn onClick={onCancel} variant="ghost">Cancel</Btn>
       </div>
     </>
