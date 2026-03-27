@@ -78,7 +78,7 @@ body {
   color: var(--text);
 }
 
-/* ─── FORMS ─────────────────────────────────────────────── */
+/* ─── FORMS ──────────────────────────────────────────���──── */
 .form-group {
   margin-bottom: 16px;
 }
@@ -1975,13 +1975,15 @@ nav { flex: 1; padding: 12px 0; }
 
 /* Hero banner */
 .db-hero {
-  display: flex; justify-content: space-between; align-items: center;
-  flex-wrap: wrap; gap: 20px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 20px;
   background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 55%, #4f46e5 100%);
   border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px;
   color: #fff; box-shadow: 0 8px 32px #4338ca33;
 }
-.db-hero-left { display: flex; flex-direction: column; gap: 6px; }
+.db-hero-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .db-hero-greeting { font-size: 13px; font-weight: 600; opacity: .75; letter-spacing: .4px; }
 .db-hero-name { font-size: 30px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
 .db-hero-meta { font-size: 13px; opacity: .7; margin-top: 2px; }
@@ -1991,13 +1993,14 @@ nav { flex: 1; padding: 12px 0; }
   border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 700;
   backdrop-filter: blur(4px);
 }
-.db-hero-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+.db-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .db-hero-stat {
-  text-align: center; min-width: 64px;
+  text-align: center;
   background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18);
-  border-radius: 12px; padding: 12px 16px; backdrop-filter: blur(4px);
+  border-radius: 12px; padding: 12px 14px; backdrop-filter: blur(4px);
+  white-space: nowrap;
 }
-.db-hero-stat-val { font-size: 22px; font-weight: 800; line-height: 1; }
+.db-hero-stat-val { font-size: 20px; font-weight: 800; line-height: 1; }
 .db-hero-stat-lbl { font-size: 11px; opacity: .7; font-weight: 600; margin-top: 5px; text-transform: uppercase; letter-spacing: .5px; }
 
 /* Learning progress 3-column grid */
@@ -2086,9 +2089,8 @@ nav { flex: 1; padding: 12px 0; }
   .db-quick-grid  { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
-  .db-hero        { flex-direction: column; padding: 20px; }
-  .db-hero-stats  { gap: 10px; width: 100%; justify-content: space-between; }
-  .db-hero-stat   { flex: 1; min-width: 0; padding: 10px 8px; }
+  .db-hero        { grid-template-columns: 1fr; padding: 20px; }
+  .db-hero-stats  { grid-template-columns: repeat(2, 1fr); }
   .db-hero-stat-val { font-size: 17px; }
   .db-quick-grid  { grid-template-columns: 1fr; }
 }
