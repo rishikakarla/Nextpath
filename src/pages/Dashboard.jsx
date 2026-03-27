@@ -150,6 +150,22 @@ export default function Dashboard() {
 
   const MEDALS = ['🥇', '🥈', '🥉']
 
+  const QUOTES = [
+    { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
+    { text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
+    { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+    { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+    { text: "Consistency is what transforms average into excellence.", author: "Unknown" },
+    { text: "A mentor is someone who sees more talent and ability within you than you see in yourself.", author: "Bob Proctor" },
+    { text: "Push yourself, because no one else is going to do it for you.", author: "Unknown" },
+    { text: "Great things never come from comfort zones.", author: "Unknown" },
+    { text: "Dream it. Wish it. Do it.", author: "Unknown" },
+    { text: "The expert in anything was once a beginner.", author: "Helen Hayes" },
+    { text: "Small daily improvements are the key to staggering long-term results.", author: "Unknown" },
+    { text: "Success doesn't come from what you do occasionally, it comes from what you do consistently.", author: "Marie Forleo" },
+  ]
+  const todayQuote = QUOTES[new Date().getDate() % QUOTES.length]
+
   return (
     <div>
       {/* ── Hero Banner ─────────────────────────────────────────── */}
@@ -178,6 +194,15 @@ export default function Dashboard() {
               <div className="db-hero-stat-lbl">{s.lbl}</div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ── Daily Quote ─────────────────────────────────────────── */}
+      <div className="db-quote">
+        <span className="db-quote-mark">"</span>
+        <div className="db-quote-body">
+          <p className="db-quote-text">{todayQuote.text}</p>
+          <span className="db-quote-author">— {todayQuote.author}</span>
         </div>
       </div>
 
