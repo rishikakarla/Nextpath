@@ -125,7 +125,8 @@ function ResultsPanel({ results, problem, running }) {
   if (!results && !running) return null
 
   const testCases      = problem.testCases || []
-  const allPassed      = results && results.every(r => r.verdict === 'pass')
+  const isStillRunning = results?.some(r => r.verdict === 'running')
+  const allPassed      = results && !isStillRunning && results.every(r => r.verdict === 'pass')
   const passCount      = results?.filter(r => r.verdict === 'pass').length ?? 0
   const totalCount     = results?.length ?? 0
 
@@ -133,13 +134,19 @@ function ResultsPanel({ results, problem, running }) {
     <div className="pe-results">
       {/* Summary bar */}
       {results && (
-        <div className={`pe-result-summary ${allPassed ? 'pass' : 'fail'}`}>
-          <span className="pe-result-icon">{allPassed ? '✅' : '❌'}</span>
+        <div className={`pe-result-summary ${isStillRunning ? '' : allPassed ? 'pass' : 'fail'}`}>
+          <span className="pe-result-icon">
+            {isStillRunning ? '⏳' : allPassed ? '✅' : '❌'}
+          </span>
           <span className="pe-result-text">
-            {allPassed ? 'All test cases passed!' : `${passCount} / ${totalCount} test cases passed`}
+            {isStillRunning
+              ? `Running… ${passCount} / ${totalCount} done`
+              : allPassed
+                ? 'All test cases passed!'
+                : `${passCount} / ${totalCount} test cases passed`}
           </span>
           <span className="pe-result-score">
-            {results[0]?.time && `⏱ ${results[0].time}s`}
+            {!isStillRunning && results[0]?.time && `⏱ ${results[0].time}s`}
           </span>
         </div>
       )}
@@ -151,13 +158,14 @@ function ResultsPanel({ results, problem, running }) {
         .filter(({ tc }) => !tc.hidden)
         .map(({ tc, i }) => {
           const r = results?.[i]
+          const rowVerdict = r?.verdict === 'running' ? '' : r?.verdict === 'pass' ? 'pass' : r ? 'fail' : ''
           return (
-            <div key={i} className={`pe-tc-row ${r ? (r.verdict === 'pass' ? 'pass' : 'fail') : ''}`}>
+            <div key={i} className={`pe-tc-row ${rowVerdict}`}>
               <div className="pe-tc-header">
                 <span className="pe-tc-label">Test Case {i + 1}</span>
-                <VerdictChip verdict={running ? 'running' : r?.verdict} />
+                <VerdictChip verdict={r?.verdict} />
               </div>
-              {r && r.verdict !== 'pass' && (
+              {r && r.verdict !== 'pass' && r.verdict !== 'running' && (
                 <div className="pe-tc-detail">
                   <div className="pe-tc-io">
                     <div className="pe-io-label">Input</div>
@@ -191,11 +199,12 @@ function ResultsPanel({ results, problem, running }) {
             .filter(({ tc }) => tc.hidden)
             .map(({ i }, idx) => {
               const r = results?.[i]
+              const rowVerdict = r?.verdict === 'running' ? '' : r?.verdict === 'pass' ? 'pass' : r ? 'fail' : ''
               return (
-                <div key={i} className={`pe-tc-row ${r ? (r.verdict === 'pass' ? 'pass' : 'fail') : ''}`}>
+                <div key={i} className={`pe-tc-row ${rowVerdict}`}>
                   <div className="pe-tc-header">
                     <span className="pe-tc-label">Hidden Test {idx + 1}</span>
-                    <VerdictChip verdict={running ? 'running' : r?.verdict} />
+                    <VerdictChip verdict={r?.verdict} />
                   </div>
                   {r && r.verdict !== 'pass' && r.stderr && (
                     <div className="pe-tc-detail">
