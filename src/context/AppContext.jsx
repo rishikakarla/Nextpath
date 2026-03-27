@@ -174,13 +174,13 @@ export function AppProvider({ children }) {
   }
 
   // ── Daily Practice ────────────────────────────────────────────────────────
-  const completeTask = (type, dayNum = 1, submission = {}) => {
+  const completeTask = (type, dayNum = 1, submission = {}, pts = 5) => {
     const today = todayStr()
     setDailyTasks(prev => {
       if (prev[type]) return prev
       const updated = { ...prev, date: today, [type]: true }
       const allDone = updated.coding && updated.aptitude && updated.revision
-      setPoints(p => p + (allDone ? 15 : 5))
+      setPoints(p => p + (allDone ? pts + 15 : pts))
       if (allDone) triggerStreak()
       return updated
     })

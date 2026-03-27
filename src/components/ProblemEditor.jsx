@@ -324,8 +324,9 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed }
     setResults(newResults)
     setSubmitting(false)
 
-    if (newResults.every(r => r.verdict === 'pass') && onSolve && !isSolved) {
-      onSolve()
+    if (onSolve && !isSolved) {
+      const passCount = newResults.filter(r => r.verdict === 'pass').length
+      onSolve({ passed: passCount, total: newResults.length })
     }
   }
 
