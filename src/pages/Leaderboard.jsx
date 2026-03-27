@@ -13,16 +13,16 @@ export default function Leaderboard() {
 
   useEffect(() => {
     const unsub = onSnapshot(
-      collection(db, 'users'),
+      collection(db, 'leaderboard'),
       snap => {
         const data = snap.docs.map(d => {
           const u = d.data()
           return {
             uid: d.id,
-            name: u.profile?.name || '',
-            college: u.profile?.college || '',
+            name: u.name || '',
+            college: u.college || '',
             points: u.points || 0,
-            streak: u.streak?.count || 0,
+            streak: u.streak || 0,
           }
         })
         setEntries(data)
