@@ -638,13 +638,13 @@ const BLANK_DAILY_QUIZ = {
   questions: [{ question: '', options: ['', '', '', ''], answer: 0 }],
 }
 const getBlankTask = (type) => type === 'aptitude'
-  ? { ...BLANK_DAILY_QUIZ, questions: [{ question: '', options: ['', '', '', ''], answer: 0 }] }
+  ? { ...BLANK_DAILY_QUIZ, questions: [{ question: '', options: ['', '', '', ''], answer: 0, explanation: '' }] }
   : { ...BLANK_DAILY_CODING, examples: [{ input: '', output: '', explanation: '' }], testCases: [{ input: '', expectedOutput: '', hidden: false }], starterCode: { 71: '', 63: '', 54: '' } }
 
 function DailyQuizForm({ form, setForm }) {
   const setQ   = (qi, k, v) => setForm(f => ({ ...f, questions: f.questions.map((q, i) => i === qi ? { ...q, [k]: v } : q) }))
   const setOpt = (qi, oi, v) => setForm(f => ({ ...f, questions: f.questions.map((q, i) => i === qi ? { ...q, options: q.options.map((o, j) => j === oi ? v : o) } : q) }))
-  const addQ   = () => setForm(f => ({ ...f, questions: [...(f.questions || []), { question: '', options: ['', '', '', ''], answer: 0 }] }))
+  const addQ   = () => setForm(f => ({ ...f, questions: [...(f.questions || []), { question: '', options: ['', '', '', ''], answer: 0, explanation: '' }] }))
   const removeQ = (qi) => setForm(f => ({ ...f, questions: f.questions.filter((_, i) => i !== qi) }))
 
   return (
@@ -670,6 +670,9 @@ function DailyQuizForm({ form, setForm }) {
             <select style={{ ...s.inp, width: 'auto' }} value={q.answer} onChange={e => setQ(qi, 'answer', Number(e.target.value))}>
               {q.options.map((opt, oi) => <option key={oi} value={oi}>{String.fromCharCode(65 + oi)}. {opt || `Option ${oi + 1}`}</option>)}
             </select>
+          </Field>
+          <Field label="Explanation (shown after submit)">
+            <textarea style={{ ...s.inp, resize: 'vertical', minHeight: 56 }} value={q.explanation || ''} onChange={e => setQ(qi, 'explanation', e.target.value)} placeholder="Explain why the correct answer is right…" />
           </Field>
         </div>
       ))}

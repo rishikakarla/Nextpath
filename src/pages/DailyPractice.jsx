@@ -114,12 +114,6 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
     }
   }
 
-  const handleRetry = () => {
-    setAnswers({})
-    setSubmitted(false)
-    setScore(null)
-  }
-
   const allAnswered = questions.length > 0 && Object.keys(answers).length === questions.length
 
   // Past submission review mode
@@ -149,7 +143,7 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
               const chosen = pastAnswers[i]
               const isCorrect = chosen === q.answer
               return (
-                <div key={i} style={{ marginBottom: 16 }}>
+                <div key={i} style={{ marginBottom: 20 }}>
                   <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Q{i + 1}. {q.question}</div>
                   {(q.options || []).map((opt, j) => {
                     let cls = ''
@@ -164,6 +158,12 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
                       </div>
                     )
                   })}
+                  {q.explanation && (
+                    <div className="dp-explanation">
+                      <span className="dp-explanation-label">💡 Explanation</span>
+                      {q.explanation}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -211,7 +211,7 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
                 const chosen = answers[i]
                 const isCorrect = chosen === q.answer
                 return (
-                  <div key={i} style={{ marginBottom: 16 }}>
+                  <div key={i} style={{ marginBottom: 20 }}>
                     <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Q{i + 1}. {q.question}</div>
                     {(q.options || []).map((opt, j) => {
                       let cls = ''
@@ -226,18 +226,17 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
                         </div>
                       )
                     })}
+                    {q.explanation && (
+                      <div className="dp-explanation">
+                        <span className="dp-explanation-label">💡 Explanation</span>
+                        {q.explanation}
+                      </div>
+                    )}
                   </div>
                 )
               })}
 
-              {score.pct >= 80 ? (
-                <button className="btn btn-secondary" style={{ width: '100%' }} onClick={onClose}>Close</button>
-              ) : (
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleRetry}>Try Again</button>
-                  <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>Close</button>
-                </div>
-              )}
+              <button className="btn btn-secondary" style={{ width: '100%' }} onClick={onClose}>Close</button>
             </>
           ) : (
             <>
