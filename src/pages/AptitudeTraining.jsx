@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { APTITUDE_TOPICS, LEVEL_ORDER, getRecommendedLevel } from '../data/aptitudeData'
+import { useContent } from '../context/ContentContext'
+import { LEVEL_ORDER, getRecommendedLevel } from '../data/aptitudeData'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function bestAttempt(attempts = []) {
@@ -215,6 +216,7 @@ function TopicModal({ topic, attempts, onComplete, onClose }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AptitudeTraining() {
   const { quizAttempts, saveQuizAttempt, assessmentResult } = useApp()
+  const { aptitudeTopics } = useContent()
 
   const [levelFilter, setLevelFilter] = useState('All')
   const [modal, setModal]             = useState(null) // topic object
@@ -223,15 +225,15 @@ export default function AptitudeTraining() {
 
   const filtered = useMemo(() =>
     levelFilter === 'All'
-      ? APTITUDE_TOPICS
-      : APTITUDE_TOPICS.filter(t => t.level === levelFilter),
-    [levelFilter]
+      ? aptitudeTopics
+      : aptitudeTopics.filter(t => t.level === levelFilter),
+    [levelFilter, aptitudeTopics]
   )
 
   // overall stats
-  const totalTopics    = APTITUDE_TOPICS.length
-  const attemptedCount = APTITUDE_TOPICS.filter(t => (quizAttempts[t.id] || []).length > 0).length
-  const passedCount    = APTITUDE_TOPICS.filter(t => {
+  const totalTopics    = aptitudeTopics.length
+  const attemptedCount = aptitudeTopics.filter(t => (quizAttempts[t.id] || []).length > 0).length
+  const passedCount    = aptitudeTopics.filter(t => {
     const b = bestAttempt(quizAttempts[t.id])
     return b && b.score >= 60
   }).length
@@ -283,7 +285,7 @@ export default function AptitudeTraining() {
             {l}
             {l !== 'All' && (
               <span style={{ marginLeft: 4, opacity: .7 }}>
-                ({APTITUDE_TOPICS.filter(t => t.level === l).length})
+                ({aptitudeTopics.filter(t => t.level === l).length})
               </span>
             )}
           </button>

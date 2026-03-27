@@ -3,6 +3,7 @@ import { db } from '../firebase'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { ASSESSMENT_QUESTIONS, ROADMAP_PHASES, DAILY_TASKS } from '../data/appData'
 import { CODING_PROBLEMS } from '../data/codingProblems'
+import { APTITUDE_TOPICS } from '../data/aptitudeData'
 
 const ContentContext = createContext(null)
 
@@ -23,6 +24,7 @@ export function ContentProvider({ children }) {
   const [assessmentQuestions, setAssessmentQuestions] = useState(ASSESSMENT_QUESTIONS)
   const [roadmapPhases, setRoadmapPhases] = useState(DEFAULT_ROADMAP)
   const [dailyTasks, setDailyTasks] = useState(DAILY_TASKS)
+  const [aptitudeTopics, setAptitudeTopics] = useState(APTITUDE_TOPICS)
 
   useEffect(() => {
     const entries = [
@@ -40,7 +42,7 @@ export function ContentProvider({ children }) {
         key: 'roadmapPhases',
         seed: DEFAULT_ROADMAP,
         setter: d => setRoadmapPhases({
-          beginner:     d.beginner     || (d.items || SEEDED_PHASES), // migrate old single-roadmap data → beginner
+          beginner:     d.beginner     || (d.items || SEEDED_PHASES),
           beginnerPlus: d.beginnerPlus || SEEDED_PHASES,
           intermediate: d.intermediate || [],
           advanced:     d.advanced     || [],
@@ -54,6 +56,11 @@ export function ContentProvider({ children }) {
           aptitude: d.aptitude || DAILY_TASKS.aptitude,
           revision: d.revision || DAILY_TASKS.revision,
         }),
+      },
+      {
+        key: 'aptitudeTopics',
+        seed: { items: APTITUDE_TOPICS },
+        setter: d => setAptitudeTopics(d.items || APTITUDE_TOPICS),
       },
     ]
 
@@ -83,7 +90,7 @@ export function ContentProvider({ children }) {
   }
 
   return (
-    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, updateContent }}>
+    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, updateContent }}>
       {children}
     </ContentContext.Provider>
   )

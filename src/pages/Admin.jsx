@@ -850,17 +850,259 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
   )
 }
 
+// ── Aptitude Training ─────────────────────────────────────────────────────────
+const AT_LEVELS = ['Beginner', 'Intermediate', 'Advanced']
+const BLANK_AT_TOPIC = {
+  title: '', icon: '📚', level: 'Beginner', description: '',
+  module: { concepts: [{ heading: '', body: '' }] },
+  quiz: [{ q: '', options: ['', '', '', ''], answer: 0, explanation: '' }],
+}
+
+function AptitudeTab({ topics = [], onUpdate }) {
+  const [editing, setEditing]     = useState(null)   // null | 'new' | topic.id
+  const [form, setForm]           = useState(BLANK_AT_TOPIC)
+  const [levelFilter, setLevel]   = useState('All')
+
+  const deepClone = t => ({
+    ...t,
+    module: { concepts: (t.module?.concepts || []).map(c => ({ ...c })) },
+    quiz:   (t.quiz || []).map(q => ({ ...q, options: [...q.options] })),
+  })
+
+  const save = () => {
+    if (!form.title.trim()) return
+    const topic = { ...deepClone(form), id: editing === 'new' ? `at-${Date.now()}` : editing }
+    if (editing === 'new') onUpdate([...topics, topic])
+    else onUpdate(topics.map(t => t.id === editing ? topic : t))
+    setEditing(null)
+  }
+
+  const remove = id => {
+    if (!window.confirm('Delete this topic?')) return
+    onUpdate(topics.filter(t => t.id !== id))
+  }
+
+  // ── concept helpers
+  const addConcept    = () => setForm(f => ({ ...f, module: { concepts: [...(f.module?.concepts || []), { heading: '', body: '' }] } }))
+  const removeConcept = i  => setForm(f => ({ ...f, module: { concepts: f.module.concepts.filter((_, idx) => idx !== i) } }))
+  const setConcept    = (i, k, v) => setForm(f => ({ ...f, module: { concepts: f.module.concepts.map((c, idx) => idx === i ? { ...c, [k]: v } : c) } }))
+
+  // ── quiz helpers
+  const addQuizQ    = () => setForm(f => ({ ...f, quiz: [...(f.quiz || []), { q: '', options: ['', '', '', ''], answer: 0, explanation: '' }] }))
+  const removeQuizQ = i  => setForm(f => ({ ...f, quiz: f.quiz.filter((_, idx) => idx !== i) }))
+  const setQuizQ    = (i, k, v) => setForm(f => ({ ...f, quiz: f.quiz.map((q, idx) => idx === i ? { ...q, [k]: v } : q) }))
+  const setQuizOpt  = (i, oi, v) => setForm(f => ({ ...f, quiz: f.quiz.map((q, idx) => idx === i ? { ...q, options: q.options.map((o, j) => j === oi ? v : o) } : q) }))
+
+  const sep = { borderTop: '1px solid var(--border)', marginTop: 20, paddingTop: 16 }
+  const shown = levelFilter === 'All' ? topics : topics.filter(t => t.level === levelFilter)
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <h2 style={{ margin: '0 0 4px', fontSize: 20 }}>Aptitude Training</h2>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+            Manage topics, learning modules (concepts), and quiz questions.
+          </p>
+        </div>
+        <Btn onClick={() => { setForm(BLANK_AT_TOPIC); setEditing('new') }}>+ Add Topic</Btn>
+      </div>
+
+      {/* Level filter */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+        {['All', ...AT_LEVELS].map(l => (
+          <button key={l} onClick={() => setLevel(l)} style={{
+            padding: '5px 16px', borderRadius: 20, border: '1.5px solid',
+            borderColor: levelFilter === l ? 'var(--primary)' : 'var(--border)',
+            background: levelFilter === l ? 'var(--primary-light)' : 'transparent',
+            color: levelFilter === l ? 'var(--primary)' : 'var(--text)',
+            fontWeight: 600, fontSize: 13, cursor: 'pointer',
+          }}>
+            {l}
+            {l !== 'All' && <span style={{ marginLeft: 5, opacity: .7, fontSize: 11 }}>({topics.filter(t => t.level === l).length})</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* New topic form */}
+      {editing === 'new' && (
+        <ActiveCard>
+          <h3 style={{ margin: '0 0 16px' }}>New Topic</h3>
+          <AptitudeTopicForm
+            form={form} setForm={setForm}
+            addConcept={addConcept} removeConcept={removeConcept} setConcept={setConcept}
+            addQuizQ={addQuizQ} removeQuizQ={removeQuizQ} setQuizQ={setQuizQ} setQuizOpt={setQuizOpt}
+            onSave={save} onCancel={() => setEditing(null)} sep={sep}
+          />
+        </ActiveCard>
+      )}
+
+      {/* Topic list */}
+      {shown.map(topic => (
+        <div key={topic.id}>
+          {editing === topic.id ? (
+            <ActiveCard>
+              <h3 style={{ margin: '0 0 16px' }}>Edit: {topic.title}</h3>
+              <AptitudeTopicForm
+                form={form} setForm={setForm}
+                addConcept={addConcept} removeConcept={removeConcept} setConcept={setConcept}
+                addQuizQ={addQuizQ} removeQuizQ={removeQuizQ} setQuizQ={setQuizQ} setQuizOpt={setQuizOpt}
+                onSave={save} onCancel={() => setEditing(null)} sep={sep}
+              />
+            </ActiveCard>
+          ) : (
+            <div style={{ ...s.card, padding: '12px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 20 }}>{topic.icon}</span>
+                <span style={{ flex: 1, fontWeight: 600, fontSize: 14, minWidth: 140 }}>{topic.title}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20,
+                  background: topic.level === 'Beginner' ? '#d1fae5' : topic.level === 'Intermediate' ? '#e0e7ff' : '#fce7f3',
+                  color: topic.level === 'Beginner' ? '#065f46' : topic.level === 'Intermediate' ? '#3730a3' : '#9d174d',
+                }}>
+                  {topic.level}
+                </span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {topic.module?.concepts?.length || 0} concept{(topic.module?.concepts?.length || 0) !== 1 ? 's' : ''} · {topic.quiz?.length || 0} quiz Q
+                </span>
+                <Btn sm variant="ghost" onClick={() => { setForm(deepClone(topic)); setEditing(topic.id) }}>Edit</Btn>
+                <Btn sm variant="danger" onClick={() => remove(topic.id)}>Delete</Btn>
+              </div>
+              {topic.description && (
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, paddingLeft: 30 }}>{topic.description}</div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {shown.length === 0 && editing !== 'new' && (
+        <div style={{ ...s.card, textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', fontSize: 13 }}>
+          No topics yet. Click "+ Add Topic" to get started.
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AptitudeTopicForm({ form, setForm, addConcept, removeConcept, setConcept, addQuizQ, removeQuizQ, setQuizQ, setQuizOpt, onSave, onCancel, sep }) {
+  return (
+    <>
+      {/* Basic info */}
+      <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 160px', gap: 12 }}>
+        <Field label="Icon">
+          <input style={s.inp} value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} placeholder="📚" />
+        </Field>
+        <Field label="Title">
+          <input style={s.inp} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Percentages" />
+        </Field>
+        <Field label="Level">
+          <select style={s.inp} value={form.level} onChange={e => setForm(f => ({ ...f, level: e.target.value }))}>
+            {AT_LEVELS.map(l => <option key={l}>{l}</option>)}
+          </select>
+        </Field>
+      </div>
+      <Field label="Description">
+        <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.description}
+          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+          placeholder="Short summary shown on the topic card…" />
+      </Field>
+
+      {/* Learning module — concepts */}
+      <div style={sep}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>
+            📖 Learning Module
+            <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12, marginLeft: 6 }}>
+              ({(form.module?.concepts || []).length} concept{(form.module?.concepts || []).length !== 1 ? 's' : ''})
+            </span>
+          </span>
+          <Btn sm onClick={addConcept}>+ Add Concept</Btn>
+        </div>
+        {(form.module?.concepts || []).map((c, i) => (
+          <div key={i} style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 10, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Concept {i + 1}</span>
+              {(form.module?.concepts || []).length > 1 && (
+                <Btn sm variant="danger" onClick={() => removeConcept(i)}>Remove</Btn>
+              )}
+            </div>
+            <Field label="Heading">
+              <input style={s.inp} value={c.heading} onChange={e => setConcept(i, 'heading', e.target.value)} placeholder="e.g. Core Formula" />
+            </Field>
+            <Field label="Body (supports multiple lines)">
+              <textarea style={{ ...s.inp, height: 100, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
+                value={c.body} onChange={e => setConcept(i, 'body', e.target.value)}
+                placeholder="Explain this concept clearly. Use line breaks for readability." />
+            </Field>
+          </div>
+        ))}
+      </div>
+
+      {/* Quiz questions */}
+      <div style={sep}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>
+            📝 Quiz Questions
+            <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12, marginLeft: 6 }}>
+              ({(form.quiz || []).length} question{(form.quiz || []).length !== 1 ? 's' : ''})
+            </span>
+          </span>
+          <Btn sm onClick={addQuizQ}>+ Add Question</Btn>
+        </div>
+        {(form.quiz || []).map((q, qi) => (
+          <div key={qi} style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 10, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Question {qi + 1}</span>
+              {(form.quiz || []).length > 1 && <Btn sm variant="danger" onClick={() => removeQuizQ(qi)}>Remove</Btn>}
+            </div>
+            <Field label="Question">
+              <input style={s.inp} value={q.q} onChange={e => setQuizQ(qi, 'q', e.target.value)} placeholder="Enter question…" />
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+              {q.options.map((opt, oi) => (
+                <div key={oi}>
+                  <label style={{ ...s.lbl, marginBottom: 3 }}>Option {String.fromCharCode(65 + oi)}</label>
+                  <input style={s.inp} value={opt} onChange={e => setQuizOpt(qi, oi, e.target.value)} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Field label="Correct Answer">
+                <select style={s.inp} value={q.answer} onChange={e => setQuizQ(qi, 'answer', Number(e.target.value))}>
+                  {q.options.map((opt, oi) => (
+                    <option key={oi} value={oi}>{String.fromCharCode(65 + oi)}. {opt || `Option ${String.fromCharCode(65 + oi)}`}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Explanation">
+                <input style={s.inp} value={q.explanation} onChange={e => setQuizQ(qi, 'explanation', e.target.value)} placeholder="Why is this the correct answer?" />
+              </Field>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+        <Btn onClick={onSave} variant="success">✓ Save Topic</Btn>
+        <Btn onClick={onCancel} variant="ghost">Cancel</Btn>
+      </div>
+    </>
+  )
+}
+
 // ── Main Admin Layout ─────────────────────────────────────────────────────────
 const TABS = [
   { key: 'coding',     label: '💻 Coding Problems' },
   { key: 'assessment', label: '📝 Assessment' },
   { key: 'roadmap',    label: '🗺️ Roadmap' },
   { key: 'daily',      label: '📅 Daily Tasks' },
+  { key: 'aptitude',   label: '🧮 Aptitude Training' },
 ]
 
 export default function Admin() {
   const { user, logout } = useApp()
-  const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, updateContent } = useContent()
+  const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, updateContent } = useContent()
   const navigate = useNavigate()
   const [tab, setTab] = useState('coding')
 
@@ -904,6 +1146,7 @@ export default function Admin() {
           {tab === 'assessment' && <AssessmentTab     questions={assessmentQuestions}   onUpdate={d => updateContent('assessmentQuestions', d)} />}
           {tab === 'roadmap'    && <RoadmapTab        roadmapByLevel={roadmapPhases}    onUpdate={d => updateContent('roadmapPhases', d)} />}
           {tab === 'daily'      && <DailyTasksTab     tasks={dailyTasks}                onUpdate={d => updateContent('dailyTasks', d)} />}
+          {tab === 'aptitude'   && <AptitudeTab       topics={aptitudeTopics}           onUpdate={d => updateContent('aptitudeTopics', d)} />}
         </main>
       </div>
     </div>
