@@ -2093,6 +2093,45 @@ nav { flex: 1; padding: 12px 0; }
   .db-quick-grid  { grid-template-columns: 1fr; }
 }
 
+/* ─── GITHUB HEATMAP ────────────────────────────────────── */
+.gh-scroll { overflow-x: auto; padding-bottom: 4px; }
+.gh-months-row {
+  display: flex; gap: 2px; margin-bottom: 3px;
+}
+.gh-label-spacer { width: 30px; flex-shrink: 0; }
+.gh-month-cell {
+  width: 13px; flex-shrink: 0;
+  font-size: 10px; font-weight: 700; color: var(--text-muted);
+  overflow: visible; white-space: nowrap; line-height: 1;
+}
+.gh-day-labels {
+  display: flex; flex-direction: column;
+  gap: 2px; width: 30px; flex-shrink: 0; padding-top: 1px;
+}
+.gh-day-lbl {
+  height: 13px; font-size: 9px; font-weight: 600;
+  color: var(--text-muted); display: flex; align-items: center;
+  line-height: 1; user-select: none;
+}
+.gh-grid { display: flex; gap: 2px; }
+.gh-week-col { display: flex; flex-direction: column; gap: 2px; }
+.gh-cell {
+  width: 13px; height: 13px; border-radius: 2px;
+  background: var(--border); flex-shrink: 0;
+  transition: opacity .1s;
+}
+.gh-cell:hover { opacity: .75; cursor: default; }
+.gh-cell.empty { background: transparent; }
+.gh-cell.active { background: #10b981; }
+.gh-cell.today { outline: 2px solid var(--primary); outline-offset: 1px; }
+.gh-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 10px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; gap: 8px;
+}
+.gh-legend {
+  display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--text-muted);
+}
+
 /* ─── MISC ───────────────────────────────────────────────── */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }

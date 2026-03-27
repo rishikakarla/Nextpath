@@ -20,6 +20,101 @@ function useTopPerformers(currentUid) {
   return { board, loading }
 }
 
+// ── GitHub-style activity heatmap ─────────────────────────────────────────────
+function ActivityHeatmap({ history = [], createdAt }) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Start from createdAt, capped at 1 year back
+  const oneYearAgo = new Date(today)
+  oneYearAgo.setFullYear(today.getFullYear() - 1)
+  let start = createdAt ? new Date(createdAt) : new Date(oneYearAgo)
+  start.setHours(0, 0, 0, 0)
+  if (start < oneYearAgo) start = new Date(oneYearAgo)
+
+  // Align to the Sunday of that week
+  const cursor = new Date(start)
+  cursor.setDate(cursor.getDate() - cursor.getDay())
+
+  // Build week columns
+  const activeSet = new Set(history)
+  const isActive  = d => d && activeSet.has(d.toDateString())
+  const isToday   = d => d && d.toDateString() === today.toDateString()
+
+  const weeks = []
+  while (cursor <= today) {
+    const week = []
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(cursor)
+      day.setDate(cursor.getDate() + d)
+      week.push(day <= today ? new Date(day) : null)
+    }
+    weeks.push(week)
+    cursor.setDate(cursor.getDate() + 7)
+  }
+
+  // Month labels: show at the first column where a new month starts
+  let lastMonth = -1
+  const weekLabels = weeks.map(week => {
+    const first = week.find(d => d !== null)
+    const m = first ? first.getMonth() : -1
+    const show = first && m !== lastMonth
+    if (show) lastMonth = m
+    return show ? first.toLocaleString('default', { month: 'short' }) : ''
+  })
+
+  const totalActive = [...activeSet].filter(d => new Date(d) >= start).length
+  const DAY_LABELS  = ['', 'Mon', '', 'Wed', '', 'Fri', '']
+
+  return (
+    <div>
+      <div className="gh-scroll">
+        {/* Month row */}
+        <div className="gh-months-row">
+          <div className="gh-label-spacer" />
+          {weekLabels.map((lbl, i) => (
+            <div key={i} className="gh-month-cell">{lbl}</div>
+          ))}
+        </div>
+
+        {/* Day labels + grid */}
+        <div style={{ display: 'flex', gap: 3 }}>
+          <div className="gh-day-labels">
+            {DAY_LABELS.map((l, i) => <div key={i} className="gh-day-lbl">{l}</div>)}
+          </div>
+          <div className="gh-grid">
+            {weeks.map((week, wi) => (
+              <div key={wi} className="gh-week-col">
+                {week.map((day, di) => (
+                  <div
+                    key={di}
+                    className={`gh-cell${!day ? ' empty' : isActive(day) ? ' active' : ''}${isToday(day) ? ' today' : ''}`}
+                    title={day
+                      ? day.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + (isActive(day) ? ' — Active' : '')
+                      : ''}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="gh-footer">
+        <span>{totalActive} active day{totalActive !== 1 ? 's' : ''} since joining</span>
+        <span className="gh-legend">
+          Less
+          {[false, true].map((a, i) => (
+            <div key={i} className={`gh-cell${a ? ' active' : ''}`} />
+          ))}
+          More
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function RingProgress({ pct, color, size = 90, stroke = 9 }) {
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
@@ -52,14 +147,6 @@ export default function Dashboard() {
     const best = (quizAttempts[t.id] || []).reduce((b, a) => a.score > (b?.score ?? -1) ? a : b, null)
     return best && best.score >= 60
   }).length
-
-  const today = new Date()
-  const last28 = Array.from({ length: 28 }, (_, i) => {
-    const d = new Date(today)
-    d.setDate(today.getDate() - (27 - i))
-    return d.toDateString()
-  })
-  const activeDays = last28.filter(d => streak.history?.includes(d)).length
 
   const MEDALS = ['🥇', '🥈', '🥉']
 
@@ -292,32 +379,12 @@ export default function Dashboard() {
       {/* ── Activity Heatmap ─────────────────────────────────────── */}
       <div className="card">
         <div className="flex-between mb-16">
-          <h3 className="card-title" style={{ margin: 0 }}>Activity — Last 28 Days</h3>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
-            {activeDays} active day{activeDays !== 1 ? 's' : ''}
+          <h3 className="card-title" style={{ margin: 0 }}>Activity</h3>
+          <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700 }}>
+            🔥 {streak.count}-day streak
           </span>
         </div>
-        <div className="streak-calendar">
-          {last28.map((d, i) => (
-            <div key={i}
-              className={`streak-day${streak.history?.includes(d) ? ' active' : ''}${d === today.toDateString() ? ' today' : ''}`}
-              title={d}
-            />
-          ))}
-        </div>
-        <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--success)', display: 'inline-block' }} />
-            Active day
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--border)', display: 'inline-block' }} />
-            Inactive
-          </span>
-          <span style={{ marginLeft: 'auto', fontWeight: 600 }}>
-            🔥 Current streak: <strong style={{ color: '#f59e0b' }}>{streak.count} days</strong>
-          </span>
-        </div>
+        <ActivityHeatmap history={streak.history || []} createdAt={user?.createdAt} />
       </div>
     </div>
   )
