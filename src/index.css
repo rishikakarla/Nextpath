@@ -170,7 +170,6 @@ input:focus, select:focus, textarea:focus {
 
 /* ─── LAYOUT ─────────────────────────────────────────────── */
 .app-layout {
-  display: flex;
   min-height: 100vh;
 }
 
@@ -287,9 +286,10 @@ nav { flex: 1; padding: 12px 0; }
 
 .main-content {
   margin-left: 240px;
-  flex: 1;
   padding: 28px;
   min-height: 100vh;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* ─── CARDS ──────────────────────────────────────────────── */
