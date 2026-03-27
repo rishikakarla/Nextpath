@@ -9,15 +9,8 @@ function passed(actual, expected) {
   return normalize(actual) === normalize(expected)
 }
 
-const STATUS_BG = {
-  'Accepted':            '#10b981',
-  'Wrong Answer':        '#ef4444',
-  'Time Limit Exceeded': '#f59e0b',
-  'Runtime Error':       '#ef4444',
-  'Compilation Error':   '#ef4444',
-}
 
-const SUPPORTED_LANGS = LANGUAGES.filter(l => [71, 63, 54].includes(l.id))
+const SUPPORTED_LANGS = LANGUAGES
 
 // Run one test case through Judge0 and return { passed, stdout, stderr, status, time }
 async function runTestCase(code, langId, input) {
@@ -74,38 +67,47 @@ function ProblemPanel({ problem }) {
       <div className="pe-section-label">Constraints</div>
       <pre className="pe-constraints">{problem.constraints}</pre>
 
-      {/* Examples */}
-      <div className="pe-section-label">Sample Test Cases</div>
-      <div className="pe-example-tabs">
-        {problem.examples.map((_, i) => (
-          <button
-            key={i}
-            className={`pe-example-tab${activeEx === i ? ' active' : ''}`}
-            onClick={() => setActiveEx(i)}
-          >
-            Example {i + 1}
-          </button>
-        ))}
-      </div>
-      {problem.examples[activeEx] && (
-        <div className="pe-example-box">
-          <div className="pe-io-row">
-            <div className="pe-io-col">
-              <div className="pe-io-label">Input</div>
-              <pre className="pe-io-pre">{problem.examples[activeEx].input}</pre>
+      {/* Sample Test Cases — all visible test cases shown on left */}
+      {(() => {
+        const visibleTc = (problem.testCases || []).filter(tc => !tc.hidden)
+        const examples  = problem.examples || []
+        // Merge: show examples (with explanation) + any visible test cases not already shown
+        const items = examples.length > 0 ? examples.map((ex, i) => ({
+          input: ex.input, output: ex.output, explanation: ex.explanation, label: `Sample ${i + 1}`,
+        })) : visibleTc.map((tc, i) => ({
+          input: tc.input, output: tc.expectedOutput, label: `Sample ${i + 1}`,
+        }))
+        if (items.length === 0) return null
+        return (
+          <>
+            <div className="pe-section-label">Sample Test Cases</div>
+            <div className="pe-example-tabs">
+              {items.map((_, i) => (
+                <button key={i} className={`pe-example-tab${activeEx === i ? ' active' : ''}`} onClick={() => setActiveEx(i)}>
+                  Sample {i + 1}
+                </button>
+              ))}
             </div>
-            <div className="pe-io-col">
-              <div className="pe-io-label">Output</div>
-              <pre className="pe-io-pre">{problem.examples[activeEx].output}</pre>
-            </div>
-          </div>
-          {problem.examples[activeEx].explanation && (
-            <div className="pe-explanation">
-              <strong>Explanation:</strong> {problem.examples[activeEx].explanation}
-            </div>
-          )}
-        </div>
-      )}
+            {items[activeEx] && (
+              <div className="pe-example-box">
+                <div className="pe-io-row">
+                  <div className="pe-io-col">
+                    <div className="pe-io-label">Input</div>
+                    <pre className="pe-io-pre">{items[activeEx].input}</pre>
+                  </div>
+                  <div className="pe-io-col">
+                    <div className="pe-io-label">Output</div>
+                    <pre className="pe-io-pre">{items[activeEx].output}</pre>
+                  </div>
+                </div>
+                {items[activeEx].explanation && (
+                  <div className="pe-explanation"><strong>Explanation:</strong> {items[activeEx].explanation}</div>
+                )}
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* Hint */}
       {problem.hint && (
@@ -122,8 +124,7 @@ function ProblemPanel({ problem }) {
 function ResultsPanel({ results, problem, running }) {
   if (!results && !running) return null
 
-  const sampleResults  = results?.filter((_, i) => !problem.testCases[i]?.hidden)
-  const hiddenResults  = results?.filter((_, i) =>  problem.testCases[i]?.hidden)
+  const testCases      = problem.testCases || []
   const allPassed      = results && results.every(r => r.verdict === 'pass')
   const passCount      = results?.filter(r => r.verdict === 'pass').length ?? 0
   const totalCount     = results?.length ?? 0
@@ -145,7 +146,7 @@ function ResultsPanel({ results, problem, running }) {
 
       {/* Sample test cases (visible) */}
       <div className="pe-tc-section-label">Sample Test Cases</div>
-      {problem.testCases
+      {testCases
         .map((tc, i) => ({ tc, i }))
         .filter(({ tc }) => !tc.hidden)
         .map(({ tc, i }) => {
@@ -185,7 +186,7 @@ function ResultsPanel({ results, problem, running }) {
             Hidden Test Cases
             <span className="pe-hidden-note">Input/Output not shown</span>
           </div>
-          {problem.testCases
+          {testCases
             .map((tc, i) => ({ tc, i }))
             .filter(({ tc }) => tc.hidden)
             .map(({ i }, idx) => {
@@ -211,26 +212,37 @@ function ResultsPanel({ results, problem, running }) {
   )
 }
 
+// ── helpers ───────────────────────────────────────────────────────────────────
+function getSamples(problem) {
+  const examples = problem.examples || []
+  if (examples.length > 0)
+    return examples.map(ex => ({ input: ex.input, expectedOutput: ex.output }))
+  return (problem.testCases || [])
+    .filter(tc => !tc.hidden)
+    .map(tc => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+}
+
 // ── Main ProblemEditor ────────────────────────────────────────────────────────
 export default function ProblemEditor({ problem, onSolve, isSolved }) {
-  const [langId, setLangId]         = useState(71)  // Python 3 default
-  const [code, setCode]             = useState(() => problem.starterCode?.[71] || '')
-  const [customInput, setCustomInput] = useState('')
-  const [tcTab, setTcTab]           = useState('sample') // 'sample' | 'custom'
-  const [customOutput, setCustomOutput] = useState(null)
-  const [running, setRunning]       = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [results, setResults]       = useState(null)
-  const [runMode, setRunMode]       = useState(null) // 'run' | 'submit'
-  const [mobileTab, setMobileTab]   = useState('problem') // 'problem' | 'editor'
-  const textareaRef                 = useRef(null)
+  const [langId, setLangId]             = useState(71)
+  const [code, setCode]                 = useState(() => problem.starterCode?.[71] || LANGUAGES.find(l => l.id === 71)?.template || '')
+  const [customInput, setCustomInput]   = useState('')
+  const [sampleResults, setSampleResults] = useState(null)   // run results for sample cases
+  const [customResult, setCustomResult] = useState(null)     // run result for custom input
+  const [activeCase, setActiveCase]     = useState(0)        // selected tab in Console (0..n-1 = samples, -1 = custom)
+  const [running, setRunning]           = useState(false)
+  const [submitting, setSubmitting]     = useState(false)
+  const [results, setResults]           = useState(null)
+  const [bottomTab, setBottomTab]       = useState('console')
+  const textareaRef                     = useRef(null)
 
   const handleLangChange = (id) => {
     const numId = Number(id)
     setLangId(numId)
     setCode(problem.starterCode?.[numId] || LANGUAGES.find(l => l.id === numId)?.template || '')
     setResults(null)
-    setCustomOutput(null)
+    setSampleResults(null)
+    setCustomResult(null)
   }
 
   const handleKeyDown = (e) => {
@@ -244,32 +256,60 @@ export default function ProblemEditor({ problem, onSolve, isSolved }) {
     }
   }
 
-  // Run against custom input only
+  // Run against sample cases (+ custom input if filled)
   const handleRun = async () => {
     if (!code.trim()) return
     setRunning(true)
-    setRunMode('run')
-    setCustomOutput({ status: 'running' })
-    try {
-      const res = await runTestCase(code, langId, customInput || (problem.examples[0]?.input ?? ''))
-      setCustomOutput(res)
-    } catch (e) {
-      setCustomOutput({ error: e.message })
-    } finally {
-      setRunning(false)
+    setBottomTab('console')
+
+    const samples = getSamples(problem)
+    const hasCustom = customInput.trim() !== ''
+
+    // initialise placeholders
+    setSampleResults(samples.map(() => ({ verdict: 'running' })))
+    if (hasCustom) setCustomResult({ status: 'running' })
+    setActiveCase(0)
+
+    // run sample cases sequentially
+    const newSampleResults = []
+    for (let i = 0; i < samples.length; i++) {
+      const { input, expectedOutput } = samples[i]
+      try {
+        const res = await runTestCase(code, langId, input)
+        const verdict = passed(normalize(res.stdout || ''), expectedOutput) ? 'pass' : 'fail'
+        newSampleResults.push({ ...res, verdict, input, expectedOutput })
+      } catch (e) {
+        newSampleResults.push({ verdict: 'fail', stderr: e.message, input, expectedOutput })
+      }
+      setSampleResults([...newSampleResults, ...samples.slice(i + 1).map(() => ({ verdict: 'running' }))])
     }
+    setSampleResults(newSampleResults)
+
+    // run custom input if provided
+    if (hasCustom) {
+      try {
+        const res = await runTestCase(code, langId, customInput)
+        setCustomResult(res)
+      } catch (e) {
+        setCustomResult({ error: e.message })
+      }
+    }
+
+    setRunning(false)
   }
 
   // Submit against ALL test cases
   const handleSubmit = async () => {
     if (!code.trim()) return
+    const tcs = problem.testCases || []
+    if (tcs.length === 0) return
     setSubmitting(true)
-    setRunMode('submit')
-    setResults(problem.testCases.map(() => ({ verdict: 'running' })))
+    setBottomTab('results')
+    setResults(tcs.map(() => ({ verdict: 'running' })))
 
     const newResults = []
-    for (let i = 0; i < problem.testCases.length; i++) {
-      const tc = problem.testCases[i]
+    for (let i = 0; i < tcs.length; i++) {
+      const tc = tcs[i]
       try {
         const res = await runTestCase(code, langId, tc.input)
         const stdout = normalize(res.stdout || '')
@@ -278,7 +318,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved }) {
       } catch (e) {
         newResults.push({ verdict: 'fail', stderr: e.message })
       }
-      setResults([...newResults, ...problem.testCases.slice(i + 1).map(() => ({ verdict: 'running' }))])
+      setResults([...newResults, ...tcs.slice(i + 1).map(() => ({ verdict: 'running' }))])
     }
 
     setResults(newResults)
@@ -293,21 +333,15 @@ export default function ProblemEditor({ problem, onSolve, isSolved }) {
 
   return (
     <div className="pe-root">
-      {/* ── Mobile tab bar ── */}
-      <div className="pe-mobile-tabs">
-        <button className={`pe-mobile-tab${mobileTab === 'problem' ? ' active' : ''}`} onClick={() => setMobileTab('problem')}>📄 Problem</button>
-        <button className={`pe-mobile-tab${mobileTab === 'editor' ? ' active' : ''}`} onClick={() => setMobileTab('editor')}>💻 Editor</button>
-      </div>
-
-      {/* ── Body: Problem | Editor ── */}
+      {/* ── Body: Problem | Editor ── always side-by-side ── */}
       <div className="pe-body">
         {/* Left — Problem */}
-        <div className={`pe-left${mobileTab === 'editor' ? ' pe-mobile-hidden' : ''}`}>
+        <div className="pe-left">
           <ProblemPanel problem={problem} />
         </div>
 
         {/* Right — Editor + Results */}
-        <div className={`pe-right${mobileTab === 'problem' ? ' pe-mobile-hidden' : ''}`}>
+        <div className="pe-right">
           {/* Toolbar */}
           <div className="pe-editor-toolbar">
             <select
@@ -353,75 +387,160 @@ export default function ProblemEditor({ problem, onSolve, isSolved }) {
             disabled={isRunning}
           />
 
-          {/* Test case / Custom input tabs */}
-          <div className="pe-tc-toolbar">
-            <button className={`pe-tc-tab${tcTab === 'sample' ? ' active' : ''}`} onClick={() => setTcTab('sample')}>
-              Sample Cases
-            </button>
-            <button className={`pe-tc-tab${tcTab === 'custom' ? ' active' : ''}`} onClick={() => setTcTab('custom')}>
-              Custom Input
-            </button>
-          </div>
+          {/* Bottom panel — Console / Test Results tabs */}
+          {(() => {
+            const samples = getSamples(problem)
+            const hasCustom = customInput.trim() !== ''
+            // Active case: 0..samples.length-1 = sample cases, -1 = custom input
+            const safeActive = activeCase === -1 ? -1 : Math.min(activeCase, samples.length - 1)
+            const sr = sampleResults?.[safeActive]
+            return (
+              <div className="pe-bottom-panel">
+                {/* ── Outer tab bar: Console / Test Results ── */}
+                <div className="pe-bottom-tabs">
+                  <button className={`pe-bottom-tab${bottomTab === 'console' ? ' active' : ''}`} onClick={() => setBottomTab('console')}>
+                    Console
+                  </button>
+                  <button className={`pe-bottom-tab${bottomTab === 'results' ? ' active' : ''}`} onClick={() => setBottomTab('results')}>
+                    Test Results
+                    {results && (
+                      <span className={`pe-tab-badge ${results.every(r => r.verdict === 'pass') ? 'pass' : 'fail'}`}>
+                        {results.filter(r => r.verdict === 'pass').length}/{results.length}
+                      </span>
+                    )}
+                  </button>
+                  <span className="pe-bottom-hint">▶ Run checks sample cases · ⚡ Submit checks all test cases</span>
+                </div>
 
-          {tcTab === 'custom' ? (
-            <div className="pe-custom-input">
-              <textarea
-                className="pe-custom-area"
-                value={customInput}
-                onChange={e => setCustomInput(e.target.value)}
-                placeholder="Enter custom input here..."
-                disabled={isRunning}
-              />
-              {customOutput && (
-                <div className="pe-custom-output">
-                  <div className="pe-io-label">Output</div>
-                  {customOutput.status === 'running' ? (
-                    <div style={{ color: '#94a3b8', fontSize: 13 }}>Running...</div>
-                  ) : customOutput.error ? (
-                    <pre className="pe-io-pre pe-io-wrong">{customOutput.error}</pre>
-                  ) : (
-                    <>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                        <span className="pe-chip"
-                          style={{ background: (STATUS_BG[customOutput.status?.description] || '#64748b') + '22',
-                                   color: STATUS_BG[customOutput.status?.description] || '#64748b' }}>
-                          {customOutput.status?.description}
-                        </span>
-                        {customOutput.time && <span style={{ fontSize: 11, color: '#94a3b8' }}>⏱ {customOutput.time}s</span>}
-                      </div>
-                      {customOutput.stdout && <pre className="pe-io-pre">{customOutput.stdout}</pre>}
-                      {(customOutput.stderr || customOutput.compile_output) && (
-                        <pre className="pe-io-pre pe-io-wrong">{customOutput.stderr || customOutput.compile_output}</pre>
+                {/* ── Console tab ── */}
+                {bottomTab === 'console' && (
+                  <div className="pe-console-body">
+                    {/* Case selector tabs */}
+                    <div className="pe-case-tabs">
+                      {samples.map((_, i) => {
+                        const r = sampleResults?.[i]
+                        return (
+                          <button
+                            key={i}
+                            className={`pe-case-tab${safeActive === i ? ' active' : ''} ${r ? (r.verdict === 'pass' ? 'pass' : r.verdict === 'running' ? '' : 'fail') : ''}`}
+                            onClick={() => setActiveCase(i)}
+                          >
+                            {r?.verdict === 'running'
+                              ? <span className="ce-spinner" style={{ width: 8, height: 8, borderWidth: 1.5 }} />
+                              : r?.verdict === 'pass' ? '✓' : r?.verdict === 'fail' ? '✗' : null
+                            }
+                            Case {i + 1}
+                          </button>
+                        )
+                      })}
+                      {(hasCustom || sampleResults) && (
+                        <button
+                          className={`pe-case-tab${safeActive === -1 ? ' active' : ''}`}
+                          onClick={() => setActiveCase(-1)}
+                        >
+                          Custom
+                        </button>
                       )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="pe-sample-preview">
-              {problem.examples.map((ex, i) => (
-                <div key={i} className="pe-sample-case">
-                  <div className="pe-tc-label">Sample {i + 1}</div>
-                  <div className="pe-io-row">
-                    <div className="pe-io-col">
-                      <div className="pe-io-label">Input</div>
-                      <pre className="pe-io-pre">{ex.input}</pre>
+                      <textarea
+                        className="pe-custom-inline"
+                        value={customInput}
+                        onChange={e => setCustomInput(e.target.value)}
+                        placeholder="Custom input (optional)"
+                        disabled={isRunning}
+                        rows={1}
+                      />
                     </div>
-                    <div className="pe-io-col">
-                      <div className="pe-io-label">Expected</div>
-                      <pre className="pe-io-pre">{ex.output}</pre>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
 
-          {/* Results after submit */}
-          {runMode === 'submit' && (
-            <ResultsPanel results={results} problem={problem} running={submitting} />
-          )}
+                    {/* Case detail */}
+                    {safeActive >= 0 && samples[safeActive] && (
+                      <div className="pe-case-detail">
+                        <div className="pe-case-io-grid">
+                          <div className="pe-case-io-col">
+                            <div className="pe-run-io-colhead">Input</div>
+                            <pre className="pe-case-pre">{samples[safeActive].input}</pre>
+                          </div>
+                          <div className="pe-case-io-col">
+                            <div className="pe-run-io-colhead">Expected Output</div>
+                            <pre className="pe-case-pre">{samples[safeActive].expectedOutput}</pre>
+                          </div>
+                          <div className="pe-case-io-col">
+                            <div className="pe-run-io-colhead" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              Your Output
+                              {sr && sr.verdict !== 'running' && (
+                                <VerdictChip verdict={sr.verdict} />
+                              )}
+                            </div>
+                            <div className="pe-case-pre" style={{ color: !sr ? '#2a3a55' : sr.verdict === 'pass' ? '#86efac' : '#f87171' }}>
+                              {!sr || !sampleResults ? (
+                                <span style={{ fontStyle: 'italic', color: '#2a3a55' }}>click ▶ Run</span>
+                              ) : sr.verdict === 'running' ? (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#64748b' }}>
+                                  <span className="ce-spinner" style={{ width: 10, height: 10, borderWidth: 1.5 }} /> Running…
+                                </span>
+                              ) : (
+                                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12.5, color: 'inherit' }}>
+                                  {sr.stdout || sr.stderr || sr.compile_output || `(${sr.status?.description})`}
+                                </pre>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Custom input detail */}
+                    {safeActive === -1 && (
+                      <div className="pe-case-detail">
+                        <div className="pe-case-io-grid">
+                          <div className="pe-case-io-col" style={{ gridColumn: '1 / 2' }}>
+                            <div className="pe-run-io-colhead">Custom Input</div>
+                            <pre className="pe-case-pre" style={{ color: '#94a3b8' }}>{customInput || '(empty)'}</pre>
+                          </div>
+                          <div className="pe-case-io-col" style={{ gridColumn: '2 / 4' }}>
+                            <div className="pe-run-io-colhead">Output</div>
+                            <div className="pe-case-pre">
+                              {!customResult ? (
+                                <span style={{ fontStyle: 'italic', color: '#2a3a55' }}>click ▶ Run with custom input filled</span>
+                              ) : customResult.status === 'running' ? (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#64748b' }}>
+                                  <span className="ce-spinner" style={{ width: 10, height: 10, borderWidth: 1.5 }} /> Running…
+                                </span>
+                              ) : customResult.error ? (
+                                <pre style={{ color: '#f87171', margin: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>{customResult.error}</pre>
+                              ) : (
+                                <pre style={{ color: '#86efac', margin: 0, whiteSpace: 'pre-wrap', fontSize: 12.5 }}>
+                                  {customResult.stdout || customResult.stderr || customResult.compile_output || '(no output)'}
+                                </pre>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Placeholder before first run */}
+                    {!sampleResults && safeActive >= 0 && (
+                      <div style={{ padding: '6px 14px 10px', color: '#2a3a55', fontSize: 12, fontStyle: 'italic' }}>
+                        Press ▶ Run to test against sample cases
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Test Results tab ── */}
+                {bottomTab === 'results' && (
+                  <div className="pe-bottom-content">
+                    {results || submitting
+                      ? <ResultsPanel results={results} problem={problem} running={submitting} />
+                      : <div style={{ padding: '20px 16px', color: '#2a3a55', fontSize: 13, fontStyle: 'italic' }}>
+                          Click ⚡ Submit to run against all test cases
+                        </div>
+                    }
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Already solved banner */}
           {isSolved && (

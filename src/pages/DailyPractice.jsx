@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 import { db } from '../firebase'
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore'
-import CodeEditor from '../components/CodeEditor'
+import ProblemEditor from '../components/ProblemEditor'
 
 const SECTIONS = [
   { key: 'coding',   icon: '💻', label: 'Coding Challenge', color: '#6366f1' },
@@ -41,94 +41,54 @@ function useTimer() {
 
 // ── Coding Challenge Modal ────────────────────────────────────────────────────
 function CodingModal({ task, done, submission, onComplete, onClose }) {
-  const { elapsed, stop } = useTimer()
-  const [hintOpen, setHintOpen] = useState(false)
-  const [marked, setMarked]     = useState(false)
+  const { stop } = useTimer()
+  const [solved, setSolved] = useState(false)
 
-  const handleMark = () => {
+  const handleSolve = () => {
     const timeTaken = stop()
-    setMarked(true)
+    setSolved(true)
     onComplete({ format: 'coding', title: task.title, score: 100, timeTaken })
   }
 
-  const isCompleted = done || marked
+  const isCompleted = done || solved
 
   return (
-    <div className="dp-overlay" onClick={onClose}>
-      <div className="dp-modal" onClick={e => e.stopPropagation()}>
-        <div className="dp-modal-header">
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: .7, textTransform: 'uppercase', color: '#6366f1' }}>
-                💻 Coding Challenge
-              </div>
-              {!isCompleted && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f1f5f9', padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 700, color: elapsed >= 300 ? '#dc2626' : 'var(--text)' }}>
-                  ⏱ {formatTime(elapsed)}
-                </div>
-              )}
-            </div>
-            <h2 className="dp-modal-title" style={{ marginTop: 6 }}>{task.title}</h2>
-            <div className="dp-meta-chips" style={{ marginTop: 8 }}>
-              {task.difficulty && <span className={`dp-chip ${task.difficulty?.toLowerCase()}`}>{task.difficulty}</span>}
-              {task.category && <span className="dp-chip">{task.category}</span>}
-            </div>
+    <div className="pe-modal-overlay">
+      <div className="pe-modal-container">
+        {/* Top bar */}
+        <div className="pe-modal-topbar">
+          <div className="pe-modal-topbar-left">
+            <span style={{ fontSize: 16, fontWeight: 800, color: '#f1f5f9' }}>NextPath</span>
+            <span style={{ color: '#475569', margin: '0 8px' }}>/</span>
+            <span style={{ fontSize: 13, color: '#94a3b8' }}>Daily Challenge</span>
+            <span style={{ color: '#475569', margin: '0 8px' }}>/</span>
+            <span style={{ fontSize: 13, color: '#94a3b8' }}>{task.title}</span>
           </div>
-          <button className="dp-modal-close" onClick={onClose}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {isCompleted && (
+              <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 700 }}>✅ Completed · +5 pts</span>
+            )}
+            <button className="pe-modal-close-btn" onClick={onClose}>✕ Close</button>
+          </div>
         </div>
 
-        <div className="dp-modal-body">
-          {task.description && (
-            <div style={{ marginBottom: 18 }}>
-              <div className="dp-section-label">Description</div>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.75 }}>{task.description}</p>
+        {isCompleted ? (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: '#f1f5f9' }}>
+            <span style={{ fontSize: 48 }}>✅</span>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>Challenge Completed!</div>
+            <div style={{ fontSize: 14, color: '#94a3b8' }}>
+              {submission?.timeTaken != null ? `Solved in ${formatTime(submission.timeTaken)}` : ''}
+              {submission?.completedAt ? ` · ${new Date(submission.completedAt).toLocaleString()}` : ''}
             </div>
-          )}
-
-          {task.example && (
-            <div style={{ marginBottom: 18 }}>
-              <div className="dp-section-label">Example</div>
-              <pre className="code-block" style={{ marginBottom: 0 }}>{task.example}</pre>
-            </div>
-          )}
-
-          {task.hint && (
-            <div style={{ marginBottom: 20 }}>
-              <button className="dp-hint-toggle" onClick={() => setHintOpen(o => !o)}>
-                <span>💡</span>
-                <span>{hintOpen ? 'Hide Hint' : 'Show Hint'}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 12 }}>{hintOpen ? '▲' : '▼'}</span>
-              </button>
-              {hintOpen && <div className="dp-hint-body">{task.hint}</div>}
-            </div>
-          )}
-
-          <div className="dp-divider" />
-
-          {isCompleted ? (
-            <div className="dp-complete-banner">
-              <span style={{ fontSize: 20 }}>✅</span>
-              <div>
-                <div>Challenge completed · +5 pts</div>
-                <div style={{ fontSize: 12, fontWeight: 400, color: '#16a34a', opacity: .8 }}>
-                  {submission?.timeTaken != null ? `Solved in ${formatTime(submission.timeTaken)}` : ''}
-                  {submission?.completedAt ? ` · ${new Date(submission.completedAt).toLocaleString()}` : ''}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <CodeEditor onSuccess={handleMark} />
-              <button
-                className="btn btn-ghost"
-                style={{ width: '100%', marginTop: 10, fontSize: 13 }}
-                onClick={handleMark}
-              >
-                ✓ Mark as Solved manually · +5 pts
-              </button>
-            </>
-          )}
-        </div>
+            <button className="btn btn-secondary" style={{ marginTop: 8 }} onClick={onClose}>Close</button>
+          </div>
+        ) : (
+          <ProblemEditor
+            problem={task}
+            isSolved={false}
+            onSolve={handleSolve}
+          />
+        )}
       </div>
     </div>
   )
@@ -528,10 +488,14 @@ function PastDayRow({ dayNum, taskContent, dayHistory }) {
   const completedCount = SECTIONS.filter(s => dayHistory?.[s.key]).length
   const allDone = completedCount === 3
 
+  const getTaskForDay = (arr, day) => {
+    if (!arr || arr.length === 0) return []
+    return [arr[(day - 1) % arr.length]]
+  }
   const tasksForDay = {
-    coding:   (taskContent.coding   || []).filter(t => t.day === dayNum),
-    aptitude: (taskContent.aptitude || []).filter(t => t.day === dayNum),
-    revision: (taskContent.revision || []).filter(t => t.day === dayNum),
+    coding:   getTaskForDay(taskContent.coding,   dayNum),
+    aptitude: getTaskForDay(taskContent.aptitude, dayNum),
+    revision: getTaskForDay(taskContent.revision, dayNum),
   }
   const hasContent = SECTIONS.some(s => tasksForDay[s.key].length > 0)
 
@@ -629,10 +593,15 @@ export default function DailyPractice() {
 
   const currentDay = getDayNumber(user?.createdAt)
 
+  const getTaskForDay = (arr, day) => {
+    if (!arr || arr.length === 0) return []
+    return [arr[(day - 1) % arr.length]]
+  }
+
   const todayTasks = {
-    coding:   (taskContent.coding   || []).filter(t => t.day === currentDay),
-    aptitude: (taskContent.aptitude || []).filter(t => t.day === currentDay),
-    revision: (taskContent.revision || []).filter(t => t.day === currentDay),
+    coding:   getTaskForDay(taskContent.coding,   currentDay),
+    aptitude: getTaskForDay(taskContent.aptitude, currentDay),
+    revision: getTaskForDay(taskContent.revision, currentDay),
   }
 
   const doneCount = SECTIONS.filter(s => dailyTasks[s.key]).length

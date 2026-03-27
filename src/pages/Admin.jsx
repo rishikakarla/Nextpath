@@ -50,11 +50,6 @@ const BLANK_PROB = {
   starterCode: { 71: '', 63: '', 54: '' },
 }
 
-const STARTER_LANG_LABELS = [
-  { id: 71, label: 'Python 3' },
-  { id: 63, label: 'JavaScript' },
-  { id: 54, label: 'C++ 17' },
-]
 
 function CodingProblemsTab({ problems = [], onUpdate }) {
   const [editing, setEditing] = useState(null)
@@ -130,7 +125,6 @@ function CodingProblemsTab({ problems = [], onUpdate }) {
 }
 
 function ProblemForm({ form, set, setForm, onSave, onCancel }) {
-  const [starterTab, setStarterTab] = useState(71)
 
   // ── examples helpers
   const addExample   = () => setForm(f => ({ ...f, examples: [...f.examples, { input: '', output: '', explanation: '' }] }))
@@ -264,33 +258,6 @@ function ProblemForm({ form, set, setForm, onSave, onCancel }) {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* ── Starter Code ── */}
-      <div style={sep}>
-        <div style={{ marginBottom: 12 }}>
-          <span style={{ fontWeight: 700, fontSize: 13 }}>💻 Starter Code</span>
-          <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12, marginLeft: 6 }}>(shown in editor when student opens problem)</span>
-        </div>
-        <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-          {STARTER_LANG_LABELS.map(l => (
-            <button key={l.id} type="button" onClick={() => setStarterTab(l.id)} style={{
-              padding: '5px 14px', borderRadius: 6, border: '1px solid var(--border)',
-              background: starterTab === l.id ? 'var(--primary)' : 'var(--bg)',
-              color: starterTab === l.id ? '#fff' : 'var(--text-secondary)',
-              fontWeight: 600, fontSize: 12, cursor: 'pointer',
-            }}>
-              {l.label}
-            </button>
-          ))}
-        </div>
-        <textarea
-          style={{ ...monoInp, height: 140, resize: 'vertical', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155' }}
-          value={form.starterCode?.[starterTab] || ''}
-          onChange={e => setForm(f => ({ ...f, starterCode: { ...f.starterCode, [starterTab]: e.target.value } }))}
-          placeholder={`Write the starter code for ${STARTER_LANG_LABELS.find(l => l.id === starterTab)?.label}...`}
-          spellCheck={false}
-        />
       </div>
 
       {/* ── Actions ── */}
@@ -658,127 +625,87 @@ function TopicForm({ form, setForm, onSave, onCancel, addResource, removeResourc
 }
 
 // ── Daily Tasks ───────────────────────────────────────────────────────────────
-const BLANK_CODING_TASK = { day: 1, format: 'coding', title: '', difficulty: 'Easy', category: 'Arrays', description: '', example: '', hint: '' }
-const BLANK_QUIZ_TASK   = { day: 1, format: 'quiz', questions: [{ question: '', options: ['', '', '', ''], answer: 0 }] }
-const getBlankTask = (t) => t === 'aptitude' ? { ...BLANK_QUIZ_TASK } : { ...BLANK_CODING_TASK }
+const BLANK_DAILY_CODING = {
+  format: 'coding',
+  title: '', category: 'Arrays', difficulty: 'Easy',
+  description: '', inputFormat: '', outputFormat: '', constraints: '', hint: '',
+  examples:    [{ input: '', output: '', explanation: '' }],
+  testCases:   [{ input: '', expectedOutput: '', hidden: false }],
+  starterCode: { 71: '', 63: '', 54: '' },
+}
+const BLANK_DAILY_QUIZ = {
+  format: 'quiz',
+  questions: [{ question: '', options: ['', '', '', ''], answer: 0 }],
+}
+const getBlankTask = (type) => type === 'aptitude'
+  ? { ...BLANK_DAILY_QUIZ, questions: [{ question: '', options: ['', '', '', ''], answer: 0 }] }
+  : { ...BLANK_DAILY_CODING, examples: [{ input: '', output: '', explanation: '' }], testCases: [{ input: '', expectedOutput: '', hidden: false }], starterCode: { 71: '', 63: '', 54: '' } }
 
-function DailyTaskForm({ taskType, form, setForm, onSave, onCancel }) {
+function DailyQuizForm({ form, setForm }) {
   const setQ   = (qi, k, v) => setForm(f => ({ ...f, questions: f.questions.map((q, i) => i === qi ? { ...q, [k]: v } : q) }))
   const setOpt = (qi, oi, v) => setForm(f => ({ ...f, questions: f.questions.map((q, i) => i === qi ? { ...q, options: q.options.map((o, j) => j === oi ? v : o) } : q) }))
   const addQ   = () => setForm(f => ({ ...f, questions: [...(f.questions || []), { question: '', options: ['', '', '', ''], answer: 0 }] }))
   const removeQ = (qi) => setForm(f => ({ ...f, questions: f.questions.filter((_, i) => i !== qi) }))
-  const switchFormat = (fmt) => fmt === 'coding'
-    ? setForm(f => ({ ...BLANK_CODING_TASK, day: f.day }))
-    : setForm(f => ({ ...BLANK_QUIZ_TASK, day: f.day }))
 
   return (
-    <ActiveCard>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {/* Format toggle — only for revision */}
-          {taskType === 'revision' && [
-            { key: 'coding', label: '💻 Coding Challenge' },
-            { key: 'quiz',   label: '🧮 Quiz' },
-          ].map(f => (
-            <button key={f.key} type="button" onClick={() => switchFormat(f.key)} style={{
-              padding: '5px 12px', borderRadius: 8, border: `2px solid ${form.format === f.key ? 'var(--primary)' : 'var(--border)'}`,
-              background: form.format === f.key ? 'var(--primary-light)' : 'transparent',
-              color: form.format === f.key ? 'var(--primary)' : 'var(--text)',
-              fontWeight: 600, fontSize: 12, cursor: 'pointer',
-            }}>{f.label}</button>
-          ))}
-          {taskType === 'coding'   && <span style={{ fontWeight: 700, color: '#6366f1' }}>💻 Coding Challenge</span>}
-          {taskType === 'aptitude' && <span style={{ fontWeight: 700, color: '#f59e0b' }}>🧮 Aptitude Quiz</span>}
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={s.lbl}>Day</span>
-          <input type="number" min="1" style={{ ...s.inp, width: 70 }} value={form.day}
-            onChange={e => setForm(f => ({ ...f, day: Math.max(1, Number(e.target.value)) }))} />
-        </div>
-      </div>
-
-      {/* ── Coding fields ──────────────────────────────────────── */}
-      {form.format === 'coding' && (<>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 140px', gap: 12 }}>
-          <Field label="Title">
-            <input style={s.inp} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Two Sum" />
+    <div>
+      {(form.questions || []).map((q, qi) => (
+        <div key={qi} style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 12, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Question {qi + 1}</span>
+            {(form.questions || []).length > 1 && <Btn sm variant="danger" onClick={() => removeQ(qi)}>Remove</Btn>}
+          </div>
+          <Field label="Question">
+            <input style={s.inp} value={q.question} onChange={e => setQ(qi, 'question', e.target.value)} placeholder="Enter question..." />
           </Field>
-          <Field label="Difficulty">
-            <select style={s.inp} value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}>
-              {DIFFS.map(d => <option key={d}>{d}</option>)}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+            {q.options.map((opt, oi) => (
+              <div key={oi}>
+                <label style={{ ...s.lbl, marginBottom: 3 }}>Option {String.fromCharCode(65 + oi)}</label>
+                <input style={s.inp} value={opt} onChange={e => setOpt(qi, oi, e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <Field label="Correct Answer">
+            <select style={{ ...s.inp, width: 'auto' }} value={q.answer} onChange={e => setQ(qi, 'answer', Number(e.target.value))}>
+              {q.options.map((opt, oi) => <option key={oi} value={oi}>{String.fromCharCode(65 + oi)}. {opt || `Option ${oi + 1}`}</option>)}
             </select>
           </Field>
-          <Field label="Category">
-            <input style={s.inp} value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="Arrays" />
-          </Field>
         </div>
-        <Field label="Description">
-          <textarea style={{ ...s.inp, height: 80, resize: 'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Problem description..." />
-        </Field>
-        <Field label="Example">
-          <textarea style={{ ...s.inp, height: 55, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} value={form.example} onChange={e => setForm(f => ({ ...f, example: e.target.value }))} placeholder={'Input: ...\nOutput: ...'} />
-        </Field>
-        <Field label="Hint">
-          <input style={s.inp} value={form.hint || ''} onChange={e => setForm(f => ({ ...f, hint: e.target.value }))} placeholder="Hint for the student..." />
-        </Field>
-      </>)}
-
-      {/* ── Quiz fields ────────────────────────────────────────── */}
-      {form.format === 'quiz' && (
-        <div>
-          {(form.questions || []).map((q, qi) => (
-            <div key={qi} style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 12, border: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Question {qi + 1}</span>
-                <Btn sm variant="danger" onClick={() => removeQ(qi)}>Remove</Btn>
-              </div>
-              <Field label="Question">
-                <input style={s.inp} value={q.question} onChange={e => setQ(qi, 'question', e.target.value)} placeholder="Enter question..." />
-              </Field>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-                {q.options.map((opt, oi) => (
-                  <div key={oi}>
-                    <label style={{ ...s.lbl, marginBottom: 3 }}>Option {String.fromCharCode(65 + oi)}</label>
-                    <input style={s.inp} value={opt} onChange={e => setOpt(qi, oi, e.target.value)} />
-                  </div>
-                ))}
-              </div>
-              <Field label="Correct Answer">
-                <select style={{ ...s.inp, width: 'auto' }} value={q.answer} onChange={e => setQ(qi, 'answer', Number(e.target.value))}>
-                  {q.options.map((opt, oi) => <option key={oi} value={oi}>{String.fromCharCode(65 + oi)}. {opt || `Option ${oi + 1}`}</option>)}
-                </select>
-              </Field>
-            </div>
-          ))}
-          <Btn sm variant="ghost" onClick={addQ}>+ Add Question</Btn>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-        <Btn onClick={onSave} variant="success">Save Task</Btn>
-        <Btn onClick={onCancel} variant="ghost">Cancel</Btn>
-      </div>
-    </ActiveCard>
+      ))}
+      <Btn sm variant="ghost" onClick={addQ}>+ Add Question</Btn>
+    </div>
   )
 }
 
 function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onUpdate }) {
-  const [type, setType]     = useState('coding')
-  const [editing, setEditing] = useState(null)
-  const [form, setForm]     = useState(BLANK_CODING_TASK)
+  const [type, setType]       = useState('coding')
+  const [editing, setEditing] = useState(null)   // null | 'new' | index
+  const [form, setForm]       = useState(() => getBlankTask('coding'))
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const raw     = tasks[type] || []
-  const current = [...raw].sort((a, b) => (a.day || 1) - (b.day || 1))
+  const raw = tasks[type] || []
 
   const startNew = () => { setForm(getBlankTask(type)); setEditing('new') }
 
+  const startEdit = (i) => {
+    const t = raw[i]
+    // deep-clone to avoid mutating store
+    setForm({
+      ...t,
+      examples:    (t.examples   || []).map(e => ({ ...e })),
+      testCases:   (t.testCases  || []).map(tc => ({ ...tc })),
+      starterCode: { ...(t.starterCode || {}) },
+      questions:   (t.questions  || []).map(q => ({ ...q, options: [...(q.options || [])] })),
+    })
+    setEditing(i)
+  }
+
   const save = () => {
     if (form.format === 'coding' && !form.title.trim()) return
-    if (form.format === 'quiz'   && !form.questions?.[0]?.question.trim()) return
-    const updated = editing === 'new'
-      ? { ...tasks, [type]: [...raw, { ...form }] }
-      : { ...tasks, [type]: raw.map((t, i) => i === editing ? { ...form } : t) }
-    onUpdate(updated)
+    if (form.format !== 'coding' && !form.questions?.[0]?.question.trim()) return
+    const slot = editing === 'new' ? [...raw, form] : raw.map((t, i) => i === editing ? form : t)
+    onUpdate({ ...tasks, [type]: slot })
     setEditing(null)
   }
 
@@ -787,13 +714,15 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
     onUpdate({ ...tasks, [type]: raw.filter((_, idx) => idx !== i) })
   }
 
-  const byDay = current.reduce((acc, task) => {
-    const day = task.day || 1
-    const rawIdx = raw.indexOf(task)
-    if (!acc[day]) acc[day] = []
-    acc[day].push({ ...task, _rawIdx: rawIdx })
-    return acc
-  }, {})
+  const move = (i, dir) => {
+    const arr = [...raw]
+    const j = i + dir
+    if (j < 0 || j >= arr.length) return
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    onUpdate({ ...tasks, [type]: arr })
+  }
+
+  const switchFormat = (fmt) => setForm(fmt === 'coding' ? getBlankTask(type) : { ...BLANK_DAILY_QUIZ, questions: [{ question: '', options: ['', '', '', ''], answer: 0 }] })
 
   const TYPE_META = {
     coding:   { label: '💻 Coding',   color: '#6366f1' },
@@ -804,9 +733,9 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ margin: '0 0 6px', fontSize: 20 }}>Daily Tasks</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20 }}>Daily Tasks</h2>
         <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
-          Day 1 = student's registration date. Coding = challenge, Aptitude = quiz, Revision = either.
+          Add a task for each day (Day 1, Day 2, …). Use ↑↓ to reorder. Coding tasks use the full HackerRank editor with test cases.
         </p>
       </div>
 
@@ -824,52 +753,97 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
             </button>
           ))}
         </div>
-        <Btn onClick={startNew}>+ Add Task</Btn>
+        {editing === null && <Btn onClick={startNew}>+ Add Task</Btn>}
       </div>
 
-      {editing === 'new' && (
-        <DailyTaskForm taskType={type} form={form} setForm={setForm} onSave={save} onCancel={() => setEditing(null)} />
+      {/* Add / Edit form */}
+      {editing !== null && (
+        <ActiveCard>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {/* Format toggle for revision */}
+              {type === 'revision' && [
+                { key: 'coding', label: '💻 Coding' },
+                { key: 'quiz',   label: '🧮 Quiz' },
+              ].map(f => (
+                <button key={f.key} type="button" onClick={() => switchFormat(f.key)} style={{
+                  padding: '5px 14px', borderRadius: 8,
+                  border: `2px solid ${form.format === f.key ? 'var(--primary)' : 'var(--border)'}`,
+                  background: form.format === f.key ? 'var(--primary-light)' : 'transparent',
+                  color: form.format === f.key ? 'var(--primary)' : 'var(--text)',
+                  fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                }}>{f.label}</button>
+              ))}
+              {type !== 'revision' && (
+                <span style={{ fontWeight: 700, color: TYPE_META[type].color }}>
+                  {TYPE_META[type].label} — {editing === 'new' ? 'New Task' : `Editing Day ${editing + 1}`}
+                </span>
+              )}
+            </div>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {editing === 'new' ? `Will be Day ${raw.length + 1}` : `Day ${editing + 1} of ${raw.length}`}
+            </span>
+          </div>
+
+          {form.format === 'coding'
+            ? <ProblemForm form={form} set={set} setForm={setForm} onSave={save} onCancel={() => setEditing(null)} />
+            : <>
+                <DailyQuizForm form={form} setForm={setForm} />
+                <div style={{ display: 'flex', gap: 8, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                  <Btn onClick={save} variant="success">Save Task</Btn>
+                  <Btn onClick={() => setEditing(null)} variant="ghost">Cancel</Btn>
+                </div>
+              </>
+          }
+        </ActiveCard>
       )}
 
-      {Object.keys(byDay).length === 0 && editing !== 'new' ? (
+      {/* Task list */}
+      {raw.length === 0 && editing === null ? (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40, fontSize: 14, fontStyle: 'italic' }}>
-          No {type} tasks yet. Add one above.
+          No {type} tasks yet. Click "+ Add Task" to create one.
         </div>
       ) : (
-        Object.entries(byDay).map(([day, dayTasks]) => (
-          <div key={day} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--border)' }}>
-              Day {day}
-            </div>
-            {dayTasks.map(task => (
-              <div key={task._rawIdx}>
-                {editing === task._rawIdx ? (
-                  <DailyTaskForm taskType={type} form={form} setForm={setForm} onSave={save} onCancel={() => setEditing(null)} />
-                ) : (
-                  <div style={{ ...s.card, padding: '12px 16px', marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ flex: 1 }}>
-                        {task.format === 'coding' ? (<>
-                          <div style={{ fontWeight: 600, fontSize: 14 }}>{task.title}</div>
-                          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                            <span className={`badge badge-${task.difficulty?.toLowerCase()}`}>{task.difficulty}</span>
-                            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{task.category}</span>
-                          </div>
-                        </>) : (<>
-                          <div style={{ fontWeight: 600, fontSize: 14 }}>Quiz — {task.questions?.length} question{task.questions?.length !== 1 ? 's' : ''}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                            {task.questions?.slice(0, 2).map((q, i) => `Q${i + 1}: ${q.question.slice(0, 35)}${q.question.length > 35 ? '…' : ''}`).join(' · ')}
-                          </div>
-                        </>)}
-                      </div>
-                      <Btn sm variant="ghost" onClick={() => { setForm({ ...task }); setEditing(task._rawIdx) }}>Edit</Btn>
-                      <Btn sm variant="danger" onClick={() => remove(task._rawIdx)}>Delete</Btn>
+        raw.map((task, i) => (
+          editing === i ? null : (
+            <div key={i} style={{ ...s.card, padding: '12px 16px', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* Day badge + reorder */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, marginRight: 4 }}>
+                  <button onClick={() => move(i, -1)} disabled={i === 0} style={{ background: 'none', border: 'none', cursor: i === 0 ? 'default' : 'pointer', opacity: i === 0 ? 0.3 : 1, fontSize: 12, padding: '1px 4px', color: 'var(--text-secondary)' }}>▲</button>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)', background: 'var(--primary-light)', borderRadius: 6, padding: '1px 7px' }}>Day {i + 1}</span>
+                  <button onClick={() => move(i, 1)} disabled={i === raw.length - 1} style={{ background: 'none', border: 'none', cursor: i === raw.length - 1 ? 'default' : 'pointer', opacity: i === raw.length - 1 ? 0.3 : 1, fontSize: 12, padding: '1px 4px', color: 'var(--text-secondary)' }}>▼</button>
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {task.format === 'coding' || type === 'coding' ? (<>
+                    <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{task.title || '(untitled)'}</div>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                      {task.difficulty && <span className={`badge badge-${task.difficulty?.toLowerCase()}`}>{task.difficulty}</span>}
+                      {task.category && <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{task.category}</span>}
+                      {task.testCases?.length > 0 && (
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{task.testCases.length} test cases ({task.testCases.filter(tc => tc.hidden).length} hidden)</span>
+                      )}
                     </div>
-                  </div>
-                )}
+                  </>) : (<>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>Quiz — {task.questions?.length} question{task.questions?.length !== 1 ? 's' : ''}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {task.questions?.slice(0, 2).map((q, qi) => `Q${qi + 1}: ${q.question.slice(0, 40)}${q.question.length > 40 ? '…' : ''}`).join(' · ')}
+                    </div>
+                  </>)}
+                </div>
+
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <Btn sm variant="ghost" onClick={() => startEdit(i)}>Edit</Btn>
+                  <Btn sm variant="danger" onClick={() => remove(i)}>Delete</Btn>
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)', fontSize: 11, color: 'var(--text-muted)' }}>
+                Assigned to: <strong>Day {i + 1}</strong>
+              </div>
+            </div>
+          )
         ))
       )}
     </div>
