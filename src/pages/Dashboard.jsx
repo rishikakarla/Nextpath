@@ -284,43 +284,87 @@ export default function Dashboard() {
       <div className="grid-2" style={{ marginBottom: 16 }}>
 
         {/* Today's Tasks */}
-        <div className="card">
-          <div className="flex-between mb-16">
-            <h3 className="card-title" style={{ margin: 0 }}>Today's Tasks</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: tasksToday === 3 ? 'var(--success)' : 'var(--text-muted)' }}>
-                {tasksToday}/3 done
-              </span>
-              <button className="btn btn-secondary btn-sm" onClick={() => navigate('/practice/daily')}>Go →</button>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <div>
+              <h3 className="card-title" style={{ margin: '0 0 3px' }}>Today's Tasks</h3>
+              <p style={{ margin: 0, fontSize: 12, color: tasksToday === 3 ? 'var(--success)' : 'var(--text-muted)', fontWeight: 600 }}>
+                {tasksToday === 3 ? '🎉 All done! Great work' : `${3 - tasksToday} task${3 - tasksToday !== 1 ? 's' : ''} remaining`}
+              </p>
             </div>
-          </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <div className="progress-bar-wrap" style={{ height: 6 }}>
-              <div className="progress-bar-fill indigo" style={{ width: `${(tasksToday / 3) * 100}%`, transition: 'width .4s ease' }} />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { key: 'coding',   icon: '💻', label: 'Coding Problem',   pts: '+5 pts' },
-              { key: 'aptitude', icon: '🧮', label: 'Aptitude Question', pts: '+5 pts' },
-              { key: 'revision', icon: '📖', label: 'Concept Revision',  pts: '+5 pts' },
-            ].map(t => (
-              <div key={t.key} className={`db-task-row${dailyTasks[t.key] ? ' done' : ''}`}>
-                <span style={{ fontSize: 20 }}>{t.icon}</span>
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{t.label}</span>
-                {dailyTasks[t.key]
-                  ? <span className="db-task-done-badge">✓ Done</span>
-                  : <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{t.pts}</span>
-                }
+            {/* Circular ring */}
+            <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
+              <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="28" cy="28" r="22" fill="none" stroke="var(--border)" strokeWidth="5" />
+                <circle cx="28" cy="28" r="22" fill="none"
+                  stroke={tasksToday === 3 ? '#10b981' : '#6366f1'} strokeWidth="5"
+                  strokeDasharray={`${(tasksToday / 3) * 138.2} 138.2`}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dasharray .5s ease, stroke .3s' }}
+                />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: tasksToday === 3 ? 'var(--success)' : 'var(--primary)' }}>
+                {tasksToday}/3
               </div>
+            </div>
+          </div>
+
+          {/* Segmented progress */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5, marginBottom: 18 }}>
+            {[
+              { key: 'coding',   color: '#6366f1' },
+              { key: 'aptitude', color: '#f59e0b' },
+              { key: 'revision', color: '#10b981' },
+            ].map(t => (
+              <div key={t.key} style={{
+                height: 5, borderRadius: 99,
+                background: dailyTasks[t.key] ? t.color : 'var(--border)',
+                transition: 'background .4s ease',
+              }} />
             ))}
           </div>
 
-          {tasksToday === 3 && (
-            <div className="db-all-done-banner">
-              🎉 All tasks completed! +15 pts earned today
+          {/* Task cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+            {[
+              { key: 'coding',   icon: '💻', label: 'Coding Problem',   sub: 'Solve a DSA challenge',      color: '#6366f1', bg: '#eef2ff', path: '/practice/daily' },
+              { key: 'aptitude', icon: '🧮', label: 'Aptitude Quiz',     sub: 'Sharpen your reasoning',     color: '#f59e0b', bg: '#fffbeb', path: '/practice/daily' },
+              { key: 'revision', icon: '📖', label: 'Concept Revision',  sub: 'Review today\'s topic',      color: '#10b981', bg: '#ecfdf5', path: '/practice/daily' },
+            ].map(t => {
+              const done = dailyTasks[t.key]
+              return (
+                <div key={t.key} className={`db-task-card${done ? ' done' : ''}`}
+                  style={{ '--tc': t.color, '--tc-bg': t.bg }}
+                  onClick={() => navigate(t.path)}
+                >
+                  <div className="db-task-icon-wrap" style={{ background: done ? '#d1fae5' : t.bg }}>
+                    {done
+                      ? <span style={{ fontSize: 18, color: '#10b981' }}>✓</span>
+                      : <span style={{ fontSize: 18 }}>{t.icon}</span>
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className={`db-task-name${done ? ' done' : ''}`}>{t.label}</div>
+                    <div className="db-task-sub">{t.sub}</div>
+                  </div>
+                  {done
+                    ? <span className="db-task-badge done">✓ Done</span>
+                    : <span className="db-task-badge pending">+5 pts</span>
+                  }
+                </div>
+              )
+            })}
+          </div>
+
+          {/* All done / bonus banner */}
+          {tasksToday === 3 ? (
+            <div className="db-all-done-banner" style={{ marginTop: 14 }}>
+              🎉 All tasks completed! <strong>+15 bonus pts</strong> earned today
+            </div>
+          ) : (
+            <div style={{ marginTop: 14, padding: '8px 12px', background: 'var(--bg)', borderRadius: 8, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
+              Complete all 3 tasks to earn <strong style={{ color: 'var(--primary)' }}>+15 bonus pts</strong> 🏆
             </div>
           )}
         </div>
