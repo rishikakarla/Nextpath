@@ -244,7 +244,7 @@ export function AppProvider({ children }) {
       quizAttempts, saveQuizAttempt,
       taskHistory,
       register, login, logout, saveAssessment,
-      completeTask, solveProblem, toggleTopic, getLeaderboard,
+      completeTask, solveProblem, toggleTopic, getLeaderboard, setPoints,
     }}>
       {children}
     </AppContext.Provider>

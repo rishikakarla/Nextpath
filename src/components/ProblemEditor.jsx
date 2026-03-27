@@ -111,8 +111,8 @@ function ProblemPanel({ problem }) {
 
       {/* Hint */}
       {problem.hint && (
-        <details className="pe-hint">
-          <summary>💡 Hint</summary>
+        <details className="pe-hint" onToggle={e => { if (e.target.open && onHintUsed) onHintUsed() }}>
+          <summary>💡 Hint <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 600, marginLeft: 6 }}>(-1 pt)</span></summary>
           <p>{problem.hint}</p>
         </details>
       )}
@@ -223,7 +223,7 @@ function getSamples(problem) {
 }
 
 // ── Main ProblemEditor ────────────────────────────────────────────────────────
-export default function ProblemEditor({ problem, onSolve, isSolved }) {
+export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed }) {
   const [langId, setLangId]             = useState(71)
   const [code, setCode]                 = useState(() => problem.starterCode?.[71] || LANGUAGES.find(l => l.id === 71)?.template || '')
   const [customInput, setCustomInput]   = useState('')
