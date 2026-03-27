@@ -1091,6 +1091,62 @@ function AptitudeTopicForm({ form, setForm, addConcept, removeConcept, setConcep
   )
 }
 
+// ── Daily Quote Tab ───────────────────────────────────────────────────────────
+function QuoteTab({ quote, onUpdate }) {
+  const [text, setText]     = useState(quote.text || '')
+  const [author, setAuthor] = useState(quote.author || '')
+  const [saved, setSaved]   = useState(false)
+
+  const handleSave = async () => {
+    await onUpdate({ text: text.trim(), author: author.trim() })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <div>
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Daily Quote</h2>
+      <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>
+        This quote is shown to all students on their Dashboard every day.
+      </p>
+
+      <div className="card" style={{ maxWidth: 600 }}>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Quote Text</label>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            rows={3}
+            placeholder="Enter the motivational quote…"
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 14, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+          />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Author Name</label>
+          <input
+            value={author}
+            onChange={e => setAuthor(e.target.value)}
+            placeholder="e.g. Jim Rohn"
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 14, fontFamily: 'inherit' }}
+          />
+        </div>
+
+        {/* Preview */}
+        {text && (
+          <div style={{ background: 'linear-gradient(135deg,#eef2ff,#f5f3ff)', borderLeft: '4px solid var(--primary)', borderRadius: '0 8px 8px 0', padding: '14px 18px', marginBottom: 20 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, fontStyle: 'italic', color: 'var(--text)', marginBottom: 6 }}>"{text}"</p>
+            {author && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)' }}>— {author}</span>}
+          </div>
+        )}
+
+        <button className="btn btn-primary" onClick={handleSave} disabled={!text.trim()}>
+          {saved ? '✓ Saved!' : 'Save Quote'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Admin Layout ─────────────────────────────────────────────────────────
 const TABS = [
   { key: 'coding',     label: '💻 Coding Problems' },
@@ -1098,11 +1154,12 @@ const TABS = [
   { key: 'roadmap',    label: '🗺️ Roadmap' },
   { key: 'daily',      label: '📅 Daily Tasks' },
   { key: 'aptitude',   label: '🧮 Aptitude Training' },
+  { key: 'quote',      label: '💬 Daily Quote' },
 ]
 
 export default function Admin() {
   const { user, logout } = useApp()
-  const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, updateContent } = useContent()
+  const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, updateContent } = useContent()
   const navigate = useNavigate()
   const [tab, setTab] = useState('coding')
 
@@ -1147,6 +1204,7 @@ export default function Admin() {
           {tab === 'roadmap'    && <RoadmapTab        roadmapByLevel={roadmapPhases}    onUpdate={d => updateContent('roadmapPhases', d)} />}
           {tab === 'daily'      && <DailyTasksTab     tasks={dailyTasks}                onUpdate={d => updateContent('dailyTasks', d)} />}
           {tab === 'aptitude'   && <AptitudeTab       topics={aptitudeTopics}           onUpdate={d => updateContent('aptitudeTopics', d)} />}
+          {tab === 'quote'      && <QuoteTab          quote={dailyQuote}                onUpdate={d => updateContent('dailyQuote', d)} />}
         </main>
       </div>
     </div>

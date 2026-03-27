@@ -132,7 +132,7 @@ function RingProgress({ pct, color, size = 90, stroke = 9 }) {
 
 export default function Dashboard() {
   const { user, streak, progress, solvedProblems, dailyTasks, points, assessmentResult, quizAttempts, getLeaderboard } = useApp()
-  const { aptitudeTopics, codingProblems } = useContent()
+  const { aptitudeTopics, codingProblems, dailyQuote } = useContent()
   const navigate = useNavigate()
   const { board: topBoard, loading: boardLoading } = useTopPerformers(user?.uid)
 
@@ -164,7 +164,8 @@ export default function Dashboard() {
     { text: "Small daily improvements are the key to staggering long-term results.", author: "Unknown" },
     { text: "Success doesn't come from what you do occasionally, it comes from what you do consistently.", author: "Marie Forleo" },
   ]
-  const todayQuote = QUOTES[new Date().getDate() % QUOTES.length]
+  const fallback = QUOTES[new Date().getDate() % QUOTES.length]
+  const todayQuote = dailyQuote?.text ? dailyQuote : fallback
 
   return (
     <div>

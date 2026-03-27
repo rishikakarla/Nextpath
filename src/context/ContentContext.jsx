@@ -25,6 +25,7 @@ export function ContentProvider({ children }) {
   const [roadmapPhases, setRoadmapPhases] = useState(DEFAULT_ROADMAP)
   const [dailyTasks, setDailyTasks] = useState(DAILY_TASKS)
   const [aptitudeTopics, setAptitudeTopics] = useState(APTITUDE_TOPICS)
+  const [dailyQuote, setDailyQuote] = useState({ text: '', author: '' })
 
   useEffect(() => {
     const entries = [
@@ -62,6 +63,11 @@ export function ContentProvider({ children }) {
         seed: { items: APTITUDE_TOPICS },
         setter: d => setAptitudeTopics(d.items || APTITUDE_TOPICS),
       },
+      {
+        key: 'dailyQuote',
+        seed: { text: 'Consistency is what transforms average into excellence.', author: 'Unknown' },
+        setter: d => setDailyQuote({ text: d.text || '', author: d.author || '' }),
+      },
     ]
 
     // Use onSnapshot so all students instantly see admin changes
@@ -83,14 +89,14 @@ export function ContentProvider({ children }) {
   }, [])
 
   const updateContent = async (type, data) => {
-    // roadmapPhases and dailyTasks are stored as-is; others are wrapped in { items }
-    const payload = (type === 'dailyTasks' || type === 'roadmapPhases') ? data : { items: data }
+    // roadmapPhases, dailyTasks, and dailyQuote are stored as-is; others are wrapped in { items }
+    const payload = (type === 'dailyTasks' || type === 'roadmapPhases' || type === 'dailyQuote') ? data : { items: data }
     await setDoc(doc(db, 'content', type), payload)
     // No manual state update needed — onSnapshot fires automatically
   }
 
   return (
-    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, updateContent }}>
+    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, updateContent }}>
       {children}
     </ContentContext.Provider>
   )
