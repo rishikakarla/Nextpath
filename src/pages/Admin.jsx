@@ -782,11 +782,59 @@ function DailyQuizForm({ form, setForm }) {
   )
 }
 
+const DAILY_CODING_TEMPLATE = `{
+  "format": "coding",
+  "title": "Reverse Array",
+  "category": "Arrays",
+  "difficulty": "Easy",
+  "description": "Given an array, return it reversed.",
+  "inputFormat": "Space-separated integers",
+  "outputFormat": "Space-separated integers in reverse",
+  "constraints": "1 <= n <= 100",
+  "hint": "Try using two pointers.",
+  "examples": [
+    { "input": "1 2 3 4 5", "output": "5 4 3 2 1", "explanation": "Reversed order" }
+  ],
+  "testCases": [
+    { "input": "1 2 3 4 5", "expectedOutput": "5 4 3 2 1", "hidden": false },
+    { "input": "10 20",     "expectedOutput": "20 10",     "hidden": true }
+  ],
+  "starterCode": {
+    "71": "# Python\\nn = list(map(int, input().split()))\\n",
+    "63": "// JavaScript\\nconst n = require('fs').readFileSync('/dev/stdin','utf8').trim().split(' ');",
+    "54": "// C++\\n#include<bits/stdc++.h>\\nusing namespace std;"
+  }
+}`
+
+const DAILY_QUIZ_TEMPLATE = `[
+  {
+    "format": "quiz",
+    "questions": [
+      {
+        "question": "What is the time complexity of binary search?",
+        "options": ["O(n)", "O(log n)", "O(n log n)", "O(1)"],
+        "answer": 1,
+        "explanation": "Binary search halves the search space each step, giving O(log n)."
+      },
+      {
+        "question": "Which data structure uses LIFO order?",
+        "options": ["Queue", "Stack", "Array", "Linked List"],
+        "answer": 1,
+        "explanation": "Stack follows Last In First Out (LIFO) principle."
+      }
+    ]
+  }
+]`
+
 function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onUpdate }) {
   const [type, setType]       = useState('coding')
   const [editing, setEditing] = useState(null)   // null | 'new' | index
   const [form, setForm]       = useState(() => getBlankTask('coding'))
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [jsonMode, setJsonMode]       = useState(false)
+  const [jsonText, setJsonText]       = useState('')
+  const [jsonError, setJsonError]     = useState('')
+  const [jsonSuccess, setJsonSuccess] = useState('')
 
   const raw = tasks[type] || []
 
@@ -828,6 +876,34 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
 
   const switchFormat = (fmt) => setForm(fmt === 'coding' ? getBlankTask(type) : { ...BLANK_DAILY_QUIZ, questions: [{ question: '', options: ['', '', '', ''], answer: 0 }] })
 
+  const handleJsonUpload = () => {
+    setJsonError(''); setJsonSuccess('')
+    let parsed
+    try { parsed = JSON.parse(jsonText.trim()) } catch (e) { setJsonError('Invalid JSON: ' + e.message); return }
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    const isCoding = type === 'coding' || (type === 'revision' && items[0]?.format === 'coding')
+    const errors = []
+    items.forEach((item, idx) => {
+      if (isCoding && !item.title?.trim()) errors.push(`Item ${idx + 1}: missing "title"`)
+      if (!isCoding && !item.questions?.length) errors.push(`Item ${idx + 1}: missing "questions" array`)
+    })
+    if (errors.length) { setJsonError(errors.join('\n')); return }
+    const newTasks = items.map(item => isCoding ? {
+      ...BLANK_DAILY_CODING, ...item,
+      format: 'coding',
+      examples:    item.examples  || [{ input: '', output: '', explanation: '' }],
+      testCases:   item.testCases || [{ input: '', expectedOutput: '', hidden: false }],
+      starterCode: { 71: '', 63: '', 54: '', ...(item.starterCode || {}) },
+    } : {
+      format: 'quiz',
+      questions: (item.questions || []).map(q => ({ question: '', options: ['','','',''], answer: 0, explanation: '', ...q })),
+    })
+    onUpdate({ ...tasks, [type]: [...raw, ...newTasks] })
+    setJsonSuccess(`✅ ${newTasks.length} task${newTasks.length > 1 ? 's' : ''} added to ${TYPE_META[type].label}!`)
+    setJsonText('')
+    setTimeout(() => { setJsonMode(false); setJsonSuccess('') }, 1800)
+  }
+
   const TYPE_META = {
     coding:   { label: '💻 Coding',   color: '#6366f1' },
     aptitude: { label: '🧮 Aptitude', color: '#f59e0b' },
@@ -857,8 +933,57 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
             </button>
           ))}
         </div>
-        {editing === null && <Btn onClick={startNew}>+ Add Task</Btn>}
+        {editing === null && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn variant="ghost" onClick={() => { setJsonMode(m => !m); setJsonError(''); setJsonSuccess(''); setEditing(null) }}>
+              {jsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
+            </Btn>
+            <Btn onClick={startNew}>+ Add Task</Btn>
+          </div>
+        )}
       </div>
+
+      {/* JSON paste panel */}
+      {jsonMode && editing === null && (
+        <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>
+                📋 Paste JSON — {TYPE_META[type].label} Task(s)
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                Single object <code>{'{...}'}</code> or array <code>{'[{...}]'}</code> for bulk upload.
+              </div>
+            </div>
+            <Btn sm variant="ghost" onClick={() => setJsonText(type === 'aptitude' ? DAILY_QUIZ_TEMPLATE : DAILY_CODING_TEMPLATE)}>
+              Load Template
+            </Btn>
+          </div>
+
+          <textarea
+            value={jsonText}
+            onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
+            placeholder={'Paste your JSON here…\n\nClick "Load Template" to see the expected format.'}
+            style={{ ...s.inp, minHeight: 240, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
+          />
+
+          {jsonError && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>
+              {jsonError}
+            </div>
+          )}
+          {jsonSuccess && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>
+              {jsonSuccess}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <Btn onClick={handleJsonUpload} variant="success">⬆ Upload Task(s)</Btn>
+            <Btn variant="ghost" onClick={() => { setJsonMode(false); setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Cancel</Btn>
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit form */}
       {editing !== null && (
