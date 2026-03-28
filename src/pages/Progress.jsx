@@ -3,39 +3,14 @@ import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 import { ROADMAP_PHASES } from '../data/appData'
 
-// ── SVG Ring ──────────────────────────────────────────────────────────────────
-function Ring({ pct, size = 80, stroke = 8, color = '#6366f1', label, sub }) {
-  const r = (size - stroke) / 2
-  const circ = 2 * Math.PI * r
-  const dash = (pct / 100) * circ
-  return (
-    <div className="pg-ring-wrap">
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
-          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-          style={{ transition: 'stroke-dasharray .6s ease' }} />
-      </svg>
-      <div className="pg-ring-center">
-        <div className="pg-ring-pct" style={{ color }}>{pct}%</div>
-      </div>
-      {label && <div className="pg-ring-label">{label}</div>}
-      {sub   && <div className="pg-ring-sub">{sub}</div>}
-    </div>
-  )
-}
-
-// ── Milestone ─────────────────────────────────────────────────────────────────
-function Milestone({ icon, label, desc, unlocked }) {
-  return (
-    <div className={`pg-milestone${unlocked ? ' unlocked' : ''}`}>
-      <div className="pg-ms-icon">{icon}</div>
-      <div className="pg-ms-label">{label}</div>
-      <div className="pg-ms-desc">{desc}</div>
-      {!unlocked && <div className="pg-ms-lock">🔒</div>}
-    </div>
-  )
-}
+const LEVELS = [
+  { min: 0,    max: 99,   name: 'Rookie',   color: '#94a3b8', next: 100  },
+  { min: 100,  max: 299,  name: 'Explorer', color: '#10b981', next: 300  },
+  { min: 300,  max: 599,  name: 'Coder',    color: '#6366f1', next: 600  },
+  { min: 600,  max: 999,  name: 'Ninja',    color: '#8b5cf6', next: 1000 },
+  { min: 1000, max: Infinity, name: 'Master', color: '#f59e0b', next: null },
+]
+const getLvl = pts => LEVELS.find(l => pts >= l.min && pts <= l.max) || LEVELS[0]
 
 const CAT_COLORS = {
   Arrays: '#6366f1', Strings: '#8b5cf6', Recursion: '#ec4899',
@@ -46,310 +21,312 @@ const CAT_ICONS = {
   'Linked Lists': '🔗', Stacks: '📚', Queues: '🎯',
 }
 
+function SkillBar({ label, sub, pct, color, icon, onClick }) {
+  return (
+    <div className="pr-skill-row" onClick={onClick}>
+      <div className="pr-skill-icon" style={{ background: color + '18' }}>{icon}</div>
+      <div className="pr-skill-info">
+        <div className="pr-skill-top-row">
+          <span className="pr-skill-name">{label}</span>
+          <span className="pr-skill-pct" style={{ color }}>{pct}%</span>
+        </div>
+        <div className="pr-skill-track">
+          <div className="pr-skill-fill"
+            style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}bb)` }} />
+        </div>
+        <div className="pr-skill-sub">{sub}</div>
+      </div>
+    </div>
+  )
+}
+
 export default function Progress() {
   const navigate = useNavigate()
   const { progress, solvedProblems, streak, points, dailyTasks, quizAttempts } = useApp()
   const { aptitudeTopics, codingProblems } = useContent()
 
-  const TOTAL_PROBLEMS = codingProblems.length || 1
-  const TOTAL_TOPICS   = ROADMAP_PHASES.reduce((a, p) => a + p.topics.length, 0)
+  const TOTAL_PROBLEMS  = codingProblems.length || 1
+  const TOTAL_TOPICS    = ROADMAP_PHASES.reduce((a, p) => a + p.topics.length, 0)
   const completedTopics = progress.completedTopics?.length ?? 0
-  const tasksToday = [dailyTasks.coding, dailyTasks.aptitude, dailyTasks.revision].filter(Boolean).length
-  const activeDays = streak.history?.length ?? 0
+  const tasksToday      = [dailyTasks.coding, dailyTasks.aptitude, dailyTasks.revision].filter(Boolean).length
+  const activeDays      = streak.history?.length ?? 0
 
-  // Aptitude
   const aptitudePassed = aptitudeTopics.filter(t => {
     const best = (quizAttempts[t.id] || []).reduce((b, a) => a.score > (b?.score ?? -1) ? a : b, null)
     return best && best.score >= 60
   }).length
   const aptitudePct = aptitudeTopics.length ? Math.round((aptitudePassed / aptitudeTopics.length) * 100) : 0
+  const dsaPct      = Math.round((solvedProblems.length / TOTAL_PROBLEMS) * 100)
+  const roadmapPct  = TOTAL_TOPICS ? Math.round((completedTopics / TOTAL_TOPICS) * 100) : 0
+  const overallPct  = Math.round((dsaPct + aptitudePct + roadmapPct) / 3)
 
-  // DSA pct
-  const dsaPct = Math.round((solvedProblems.length / TOTAL_PROBLEMS) * 100)
-  const roadmapPct = TOTAL_TOPICS ? Math.round((completedTopics / TOTAL_TOPICS) * 100) : 0
-
-  // Category stats
-  const categories = ['Arrays', 'Strings', 'Recursion', 'Linked Lists', 'Stacks', 'Queues']
-  const categoryStats = categories.map(cat => {
+  const categoryStats = ['Arrays', 'Strings', 'Recursion', 'Linked Lists', 'Stacks', 'Queues'].map(cat => {
     const total  = codingProblems.filter(p => p.category === cat).length
     const solved = codingProblems.filter(p => p.category === cat && solvedProblems.includes(p.id)).length
     return { cat, solved, total, pct: total ? Math.round((solved / total) * 100) : 0 }
   })
 
-  // Roadmap phases
   const phaseStats = ROADMAP_PHASES.map(phase => {
     const done = phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length
     return { ...phase, done, pct: Math.round((done / phase.topics.length) * 100) }
   })
 
-  // Milestones
+  // Level / XP
+  const level    = getLvl(points)
+  const nextLvl  = LEVELS[LEVELS.findIndex(l => l.name === level.name) + 1]
+  const xpIn     = points - level.min
+  const xpNeeded = (nextLvl?.min ?? level.min + 100) - level.min
+  const xpPct    = Math.min(Math.round((xpIn / xpNeeded) * 100), 100)
+
   const milestones = [
-    { icon: '🌱', label: 'First Step',     desc: 'Solve your first problem',         unlocked: solvedProblems.length >= 1 },
-    { icon: '🔥', label: '7-Day Streak',   desc: 'Maintain a 7-day streak',          unlocked: streak.count >= 7 },
-    { icon: '💯', label: 'Century',        desc: 'Earn 100 points',                  unlocked: points >= 100 },
-    { icon: '🧠', label: 'DSA Explorer',   desc: 'Solve 10 problems',                unlocked: solvedProblems.length >= 10 },
-    { icon: '📖', label: 'Phase Master',   desc: 'Complete a roadmap phase',         unlocked: phaseStats.some(p => p.pct === 100) },
-    { icon: '⚡', label: 'Speed Demon',    desc: '30-day streak',                    unlocked: streak.count >= 30 },
-    { icon: '🏆', label: 'Half Century',   desc: 'Solve 50 problems',                unlocked: solvedProblems.length >= 50 },
-    { icon: '🎯', label: 'Quiz Master',    desc: 'Pass 5 aptitude topics',           unlocked: aptitudePassed >= 5 },
+    { icon: '🌱', label: 'First Step',   desc: 'Solve your first problem',  unlocked: solvedProblems.length >= 1 },
+    { icon: '🔥', label: '7-Day Streak', desc: 'Maintain a 7-day streak',   unlocked: streak.count >= 7 },
+    { icon: '💯', label: 'Century',      desc: 'Earn 100 points',           unlocked: points >= 100 },
+    { icon: '🧠', label: 'DSA Explorer', desc: 'Solve 10 problems',         unlocked: solvedProblems.length >= 10 },
+    { icon: '📖', label: 'Phase Master', desc: 'Complete a roadmap phase',  unlocked: phaseStats.some(p => p.pct === 100) },
+    { icon: '⚡', label: 'Speed Demon',  desc: '30-day streak',             unlocked: streak.count >= 30 },
+    { icon: '🏆', label: 'Half Century', desc: 'Solve 50 problems',         unlocked: solvedProblems.length >= 50 },
+    { icon: '🎯', label: 'Quiz Master',  desc: 'Pass 5 aptitude topics',    unlocked: aptitudePassed >= 5 },
   ]
+  const unlockedCount = milestones.filter(m => m.unlocked).length
 
   return (
-    <div>
-      {/* ── Header ── */}
-      <div className="pg-header">
+    <div className="pr-root">
+
+      {/* ══ HERO ══════════════════════════════════════════════════════ */}
+      <div className="pr-hero">
+        {/* Background decorative rings */}
+        <div className="pr-hero-ring-lg" />
+        <div className="pr-hero-ring-sm" />
+
+        <div className="pr-hero-body">
+          {/* Left: identity */}
+          <div className="pr-hero-left">
+            <div className="pr-hero-eyebrow">Learning Progress</div>
+            <h1 className="pr-hero-title">My Journey</h1>
+            <div className="pr-hero-level" style={{ background: level.color + '30', borderColor: level.color + '60', color: '#fff' }}>
+              <span className="pr-level-dot" style={{ background: level.color }} />
+              {level.name}
+            </div>
+          </div>
+
+          {/* Center: overall ring */}
+          <div className="pr-hero-center">
+            <div className="pr-overall-ring">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="9" />
+                <circle cx="55" cy="55" r="46" fill="none" stroke="#fff" strokeWidth="9"
+                  strokeDasharray={`${2 * Math.PI * 46 * overallPct / 100} ${2 * Math.PI * 46}`}
+                  strokeLinecap="round" transform="rotate(-90 55 55)"
+                  style={{ transition: 'stroke-dasharray .8s ease' }} />
+              </svg>
+              <div className="pr-overall-label">
+                <div className="pr-overall-pct">{overallPct}%</div>
+                <div className="pr-overall-sub">Overall</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: stats */}
+          <div className="pr-hero-right">
+            {[
+              { v: solvedProblems.length, l: 'Problems Solved', c: '#a5b4fc' },
+              { v: completedTopics,       l: 'Topics Done',     c: '#6ee7b7' },
+              { v: streak.count,          l: 'Day Streak 🔥',   c: '#fcd34d' },
+              { v: points,               l: 'Total XP ⭐',     c: '#f9a8d4' },
+            ].map(s => (
+              <div key={s.l} className="pr-hstat">
+                <div className="pr-hstat-val" style={{ color: s.c }}>{s.v}</div>
+                <div className="pr-hstat-lbl">{s.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* XP progress bar */}
+        {nextLvl && (
+          <div className="pr-xp-row">
+            <span className="pr-xp-cur">{level.name}</span>
+            <div className="pr-xp-bar-wrap">
+              <div className="pr-xp-bar" style={{ width: `${xpPct}%` }} />
+            </div>
+            <span className="pr-xp-next">{nextLvl.name} ({nextLvl.min - points} XP away)</span>
+          </div>
+        )}
+        {!nextLvl && (
+          <div className="pr-xp-row">
+            <span className="pr-xp-cur" style={{ color: '#fcd34d' }}>🏆 Maximum level reached!</span>
+          </div>
+        )}
+      </div>
+
+      {/* ══ SKILLS ════════════════════════════════════════════════════ */}
+      <div className="pr-section">
+        <div className="pr-section-head">
+          <h3 className="pr-section-title">Skills Overview</h3>
+          <span className="pr-section-sub">Click any skill to practice</span>
+        </div>
+        <div className="pr-card pr-skills-card">
+          <SkillBar label="DSA Problems"  icon="💻" color="#6366f1"
+            pct={dsaPct}      sub={`${solvedProblems.length} of ${TOTAL_PROBLEMS} problems solved`}
+            onClick={() => navigate('/coding-practice')} />
+          <SkillBar label="Aptitude"      icon="🧮" color="#f59e0b"
+            pct={aptitudePct} sub={`${aptitudePassed} of ${aptitudeTopics.length} topics passed`}
+            onClick={() => navigate('/aptitude-training')} />
+          <SkillBar label="Roadmap"       icon="🗺️" color="#10b981"
+            pct={roadmapPct}  sub={`${completedTopics} of ${TOTAL_TOPICS} topics completed`}
+            onClick={() => navigate('/roadmap')} />
+          <SkillBar label="Daily Tasks"   icon="⚡" color="#8b5cf6"
+            pct={Math.round((tasksToday / 3) * 100)}
+            sub={`${tasksToday} of 3 tasks done today`}
+            onClick={() => navigate('/practice/daily')} />
+        </div>
+      </div>
+
+      {/* ══ 2-COL ROW ═════════════════════════════════════════════════ */}
+      <div className="pr-two-col">
+
+        {/* DSA Categories */}
         <div>
-          <h1 className="page-title" style={{ color: '#fff', margin: 0 }}>My Progress</h1>
-          <p style={{ color: 'rgba(255,255,255,.7)', marginTop: 4, fontSize: 14 }}>
-            Detailed view of your learning journey
-          </p>
-        </div>
-        <div className="pg-header-stats">
-          {[
-            { value: solvedProblems.length, label: 'Problems', icon: '💻', color: '#a5b4fc' },
-            { value: completedTopics,       label: 'Topics',   icon: '📚', color: '#6ee7b7' },
-            { value: `🔥 ${streak.count}`, label: 'Streak',   icon: null, color: '#fcd34d' },
-            { value: points,               label: 'Points',   icon: '⭐', color: '#fcd34d' },
-          ].map(s => (
-            <div key={s.label} className="pg-hstat">
-              <div className="pg-hstat-val" style={{ color: s.color }}>{s.value}</div>
-              <div className="pg-hstat-lbl">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Learning Overview ── */}
-      <div className="lov-section">
-        <div className="lov-head">
-          <div>
-            <h3 className="lov-title">Learning Overview</h3>
-            <p className="lov-subtitle">Your progress across all domains</p>
+          <div className="pr-section-head">
+            <h3 className="pr-section-title">DSA Categories</h3>
+            <span className="pr-badge-chip">{solvedProblems.length} / {TOTAL_PROBLEMS}</span>
           </div>
-          <div className="lov-overall">
-            <div className="lov-overall-pct">
-              {Math.round((dsaPct + aptitudePct + roadmapPct) / 3)}%
-            </div>
-            <div className="lov-overall-lbl">Overall</div>
-          </div>
-        </div>
-
-        <div className="lov-grid">
-          {[
-            {
-              pct: dsaPct, color: '#6366f1', glow: '#6366f115',
-              icon: '💻', label: 'DSA Problems',
-              value: solvedProblems.length, total: TOTAL_PROBLEMS, unit: 'solved',
-              route: '/coding-practice',
-              tip: solvedProblems.length === 0 ? 'Start solving!' : dsaPct === 100 ? 'All done!' : `${TOTAL_PROBLEMS - solvedProblems.length} left`,
-            },
-            {
-              pct: aptitudePct, color: '#f59e0b', glow: '#f59e0b15',
-              icon: '🧮', label: 'Aptitude',
-              value: aptitudePassed, total: aptitudeTopics.length, unit: 'topics passed',
-              route: '/aptitude-training',
-              tip: aptitudePassed === 0 ? 'Take your first quiz!' : aptitudePct === 100 ? 'Mastered!' : `${aptitudeTopics.length - aptitudePassed} topics left`,
-            },
-            {
-              pct: roadmapPct, color: '#10b981', glow: '#10b98115',
-              icon: '🗺️', label: 'Roadmap',
-              value: completedTopics, total: TOTAL_TOPICS, unit: 'topics done',
-              route: '/roadmap',
-              tip: completedTopics === 0 ? 'Pick a topic!' : roadmapPct === 100 ? 'Level up!' : `${TOTAL_TOPICS - completedTopics} topics left`,
-            },
-            {
-              pct: Math.round((tasksToday / 3) * 100),
-              color: tasksToday === 3 ? '#10b981' : '#8b5cf6', glow: '#8b5cf615',
-              icon: '⚡', label: "Today's Tasks",
-              value: tasksToday, total: 3, unit: 'completed',
-              route: '/practice/daily',
-              tip: tasksToday === 3 ? 'All done today!' : `${3 - tasksToday} task${3 - tasksToday > 1 ? 's' : ''} remaining`,
-            },
-          ].map(d => (
-            <div key={d.label} className="lov-card" onClick={() => navigate(d.route)}
-              style={{ '--lc': d.color, '--lg': d.glow }}>
-              {/* Glow layer */}
-              <div className="lov-card-glow" />
-
-              {/* Top row */}
-              <div className="lov-card-header">
-                <span className="lov-card-icon">{d.icon}</span>
-                <span className="lov-card-label">{d.label}</span>
-              </div>
-
-              {/* Ring */}
-              <div className="lov-card-ring">
-                <Ring pct={d.pct} size={96} stroke={9} color={d.color} />
-              </div>
-
-              {/* Stats */}
-              <div className="lov-card-score">
-                <span className="lov-score-val" style={{ color: d.color }}>{d.value}</span>
-                <span className="lov-score-sep">/</span>
-                <span className="lov-score-total">{d.total}</span>
-              </div>
-              <div className="lov-card-unit">{d.unit}</div>
-
-              {/* Tip */}
-              <div className="lov-card-tip" style={{ color: d.color }}>{d.tip}</div>
-
-              {/* CTA */}
-              <div className="lov-card-cta">View →</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── DSA by Category ── */}
-      <div className="dcat-section">
-        <div className="dcat-head">
-          <div>
-            <h3 className="dcat-title">DSA by Category</h3>
-            <p className="dcat-subtitle">Problem-solving progress per topic</p>
-          </div>
-          <div className="dcat-total-badge">
-            <span className="dcat-total-num" style={{ color: 'var(--primary)' }}>
-              {solvedProblems.length}
-            </span>
-            <span className="dcat-total-lbl">/ {TOTAL_PROBLEMS} solved</span>
-          </div>
-        </div>
-
-        <div className="dcat-grid">
-          {categoryStats.map(s => {
-            const color = s.pct === 100 ? '#10b981' : CAT_COLORS[s.cat]
-            const isDone = s.pct === 100
-            return (
-              <div key={s.cat} className={`dcat-card${isDone ? ' done' : ''}`}
-                style={{ '--cc': color }}>
-                {/* Icon + Name */}
-                <div className="dcat-card-top">
-                  <div className="dcat-icon-wrap" style={{ background: color + '18' }}>
-                    <span className="dcat-icon">{CAT_ICONS[s.cat]}</span>
+          <div className="pr-card">
+            <div className="pr-cats-grid">
+              {categoryStats.map(s => {
+                const color = s.pct === 100 ? '#10b981' : CAT_COLORS[s.cat]
+                return (
+                  <div key={s.cat} className={`pr-cat${s.pct === 100 ? ' done' : ''}`}
+                    style={{ '--cc': color }}>
+                    <div className="pr-cat-header">
+                      <span className="pr-cat-icon" style={{ background: color + '18' }}>{CAT_ICONS[s.cat]}</span>
+                      {s.pct === 100 && <span className="pr-cat-done-chip">✓</span>}
+                    </div>
+                    <div className="pr-cat-name">{s.cat}</div>
+                    <div className="pr-cat-pct" style={{ color }}>{s.pct}%</div>
+                    <div className="pr-cat-track">
+                      <div className="pr-cat-fill" style={{ width: `${s.pct}%`, background: color }} />
+                    </div>
+                    <div className="pr-cat-count">{s.solved} / {s.total}</div>
                   </div>
-                  {isDone && <span className="dcat-done-chip">✓ Done</span>}
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Activity + Points */}
+        <div className="pr-right-col">
+          {/* Activity */}
+          <div>
+            <div className="pr-section-head">
+              <h3 className="pr-section-title">Activity</h3>
+              <span className="pr-badge-chip">{activeDays} days active</span>
+            </div>
+            <div className="pr-card pr-activity-card">
+              <div className="pr-week-row">
+                {Array.from({ length: 7 }).map((_, i) => {
+                  const d = new Date()
+                  d.setDate(d.getDate() - (6 - i))
+                  const active = streak.history?.includes(d.toDateString())
+                  return (
+                    <div key={i} className="pr-day">
+                      <div className={`pr-day-dot${active ? ' on' : ''}`} />
+                      <div className="pr-day-lbl">
+                        {['Su','Mo','Tu','We','Th','Fr','Sa'][d.getDay()]}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="pr-streak-row">
+                <div className="pr-streak-item">
+                  <span className="pr-streak-num" style={{ color: '#f59e0b' }}>{streak.count}</span>
+                  <span className="pr-streak-lbl">Current Streak 🔥</span>
                 </div>
-
-                <div className="dcat-cat-name">{s.cat}</div>
-
-                {/* Big percentage */}
-                <div className="dcat-pct" style={{ color }}>{s.pct}%</div>
-
-                {/* Thick progress bar */}
-                <div className="dcat-bar-wrap">
-                  <div className="dcat-bar-track">
-                    <div className="dcat-bar-fill"
-                      style={{ width: `${s.pct}%`, background: color }} />
-                  </div>
-                </div>
-
-                {/* Count */}
-                <div className="dcat-count">
-                  <span style={{ color, fontWeight: 700 }}>{s.solved}</span>
-                  <span className="dcat-count-sep"> / {s.total} problems</span>
+                <div className="pr-streak-divider" />
+                <div className="pr-streak-item">
+                  <span className="pr-streak-num" style={{ color: '#10b981' }}>{streak.best ?? streak.count}</span>
+                  <span className="pr-streak-lbl">Best Streak 🏅</span>
                 </div>
               </div>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="grid-2" style={{ marginBottom: 16 }}>
-
-        {/* ── Stats + Streak ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Quick stats */}
-          <div className="card">
-            <h3 className="card-title">Activity Stats</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {[
-                { label: 'Active Days',    value: activeDays,                 icon: '📅', color: '#6366f1' },
-                { label: 'Current Streak', value: `${streak.count} days`,     icon: '🔥', color: '#f59e0b' },
-                { label: 'Best Streak',    value: `${streak.best ?? streak.count} days`, icon: '🏅', color: '#10b981' },
-                { label: 'Tasks Today',    value: `${tasksToday}/3`,          icon: '✅', color: '#8b5cf6' },
-              ].map(s => (
-                <div key={s.label} className="pg-stat-tile" style={{ '--stc': s.color }}>
-                  <div className="pg-stat-icon">{s.icon}</div>
-                  <div className="pg-stat-val">{s.value}</div>
-                  <div className="pg-stat-lbl">{s.label}</div>
-                </div>
-              ))}
+              <div className="pr-tasks-row">
+                {[
+                  { label: 'Coding',    done: dailyTasks.coding },
+                  { label: 'Aptitude',  done: dailyTasks.aptitude },
+                  { label: 'Revision',  done: dailyTasks.revision },
+                ].map(t => (
+                  <div key={t.label} className={`pr-task-chip${t.done ? ' done' : ''}`}>
+                    {t.done ? '✓' : '○'} {t.label}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Points breakdown */}
-          <div className="card">
-            <h3 className="card-title">Points Breakdown</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Points */}
+          <div>
+            <div className="pr-section-head">
+              <h3 className="pr-section-title">Points Breakdown</h3>
+              <span className="pr-badge-chip" style={{ color: 'var(--primary)', background: 'var(--primary-light)', borderColor: '#c7d2fe' }}>
+                {points} ⭐ total
+              </span>
+            </div>
+            <div className="pr-card pr-pts-card">
               {[
-                { label: 'From DSA Problems',  pts: solvedProblems.length * 10, icon: '💻', color: '#6366f1' },
-                { label: 'From Aptitude',      pts: aptitudePassed * 8,         icon: '🧮', color: '#f59e0b' },
-                { label: 'From Roadmap Topics',pts: completedTopics * 8,        icon: '🗺️', color: '#10b981' },
+                { label: 'DSA Problems',   pts: solvedProblems.length * 10, color: '#6366f1', icon: '💻' },
+                { label: 'Aptitude Quiz',  pts: aptitudePassed * 8,         color: '#f59e0b', icon: '🧮' },
+                { label: 'Roadmap Topics', pts: completedTopics * 8,        color: '#10b981', icon: '🗺️' },
               ].map(row => (
-                <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>{row.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3 }}>{row.label}</div>
-                    <div className="pg-bar-track">
-                      <div className="pg-bar-fill" style={{
+                <div key={row.label} className="pr-pts-row">
+                  <div className="pr-pts-icon" style={{ background: row.color + '18' }}>{row.icon}</div>
+                  <div className="pr-pts-bar-group">
+                    <div className="pr-pts-label">{row.label}</div>
+                    <div className="pr-pts-track">
+                      <div className="pr-pts-fill" style={{
                         width: points ? `${Math.min((row.pts / points) * 100, 100)}%` : '0%',
-                        background: row.color,
+                        background: `linear-gradient(90deg, ${row.color}, ${row.color}bb)`,
                       }} />
                     </div>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: row.color, minWidth: 40, textAlign: 'right' }}>
-                    {row.pts}
-                  </span>
+                  <span className="pr-pts-val" style={{ color: row.color }}>{row.pts}</span>
                 </div>
               ))}
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Total Points</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>{points} ⭐</span>
+              <div className="pr-pts-total">
+                <span>Total</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 800, fontSize: 18 }}>{points} ⭐</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Roadmap Phases ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <h3 className="card-title" style={{ marginBottom: 16 }}>Roadmap Phase Breakdown</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-          {phaseStats.map(p => (
-            <div key={p.id} className={`pg-phase-card${p.pct === 100 ? ' done' : ''}`}
-              onClick={() => navigate('/roadmap')} style={{ cursor: 'pointer' }}>
-              <div className="pg-phase-top">
-                <div className="pg-phase-num">Phase {p.id}</div>
-                {p.pct === 100 && <span className="pg-phase-badge">✓ Done</span>}
+      {/* ══ ACHIEVEMENTS ══════════════════════════════════════════════ */}
+      <div className="pr-section">
+        <div className="pr-section-head">
+          <h3 className="pr-section-title">Achievements</h3>
+          <span className="pr-badge-chip" style={{ color: '#f59e0b', background: '#fef3c7', borderColor: '#fde68a' }}>
+            🏅 {unlockedCount} / {milestones.length} unlocked
+          </span>
+        </div>
+        <div className="pr-ach-grid">
+          {milestones.map(m => (
+            <div key={m.label} className={`pr-ach${m.unlocked ? ' unlocked' : ''}`}>
+              <div className="pr-ach-icon-wrap">
+                <span className="pr-ach-icon">{m.icon}</span>
               </div>
-              <div className="pg-phase-title">{p.title}</div>
-              <div className="pg-bar-track" style={{ margin: '10px 0 6px' }}>
-                <div className="pg-bar-fill" style={{
-                  width: `${p.pct}%`,
-                  background: p.pct === 100 ? '#10b981' : '#6366f1',
-                }} />
-              </div>
-              <div className="pg-phase-foot">
-                <span>{p.done}/{p.topics.length} topics</span>
-                <span style={{ fontWeight: 700, color: p.pct === 100 ? '#10b981' : 'var(--primary)' }}>{p.pct}%</span>
-              </div>
+              <div className="pr-ach-name">{m.label}</div>
+              <div className="pr-ach-desc">{m.desc}</div>
+              {m.unlocked
+                ? <div className="pr-ach-earned">Earned ✓</div>
+                : <div className="pr-ach-locked">🔒 Locked</div>
+              }
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Milestones ── */}
-      <div className="card">
-        <h3 className="card-title" style={{ marginBottom: 16 }}>
-          Milestones
-          <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginLeft: 10 }}>
-            {milestones.filter(m => m.unlocked).length}/{milestones.length} unlocked
-          </span>
-        </h3>
-        <div className="pg-milestones">
-          {milestones.map(m => <Milestone key={m.label} {...m} />)}
-        </div>
-      </div>
     </div>
   )
 }
