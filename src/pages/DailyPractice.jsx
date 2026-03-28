@@ -43,8 +43,8 @@ function useTimer() {
 function CodingModal({ task, done, submission, onComplete, onClose }) {
   const { stop } = useTimer()
   const { setPoints } = useApp()
-  const [solved, setSolved] = useState(false)
   const [testScore, setTestScore] = useState(null) // { passed, total, pts }
+  const solvedRef = useRef(false)
   const hintUsedRef = useRef(false)
 
   const handleHintUsed = () => {
@@ -54,15 +54,16 @@ function CodingModal({ task, done, submission, onComplete, onClose }) {
   }
 
   const handleSolve = ({ passed, total } = {}) => {
+    if (solvedRef.current) return  // fire once only
+    solvedRef.current = true
     const timeTaken = stop()
     const score = total ? Math.round((passed / total) * 100) : 100
     const pts = total ? Math.max(1, Math.round((passed / total) * 5)) : 5
     setTestScore({ passed: passed ?? total, total: total ?? 0, pts })
-    setSolved(true)
     onComplete({ format: 'coding', title: task.title, score, passed, total, timeTaken }, pts)
   }
 
-  const isCompleted = done || solved
+  const isCompleted = done || !!testScore
 
   return (
     <div className="pe-modal-overlay">
@@ -86,39 +87,20 @@ function CodingModal({ task, done, submission, onComplete, onClose }) {
           </div>
         </div>
 
-        {isCompleted ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: '#f1f5f9' }}>
-            <span style={{ fontSize: 48 }}>✅</span>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>Challenge Completed!</div>
-            {(testScore || submission?.total) && (
-              <div style={{ display: 'flex', gap: 20, marginTop: 4 }}>
-                <div style={{ textAlign: 'center', background: 'rgba(255,255,255,.08)', borderRadius: 10, padding: '10px 20px' }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: '#22c55e' }}>
-                    {testScore?.passed ?? submission?.passed ?? 0}/{testScore?.total ?? submission?.total ?? 0}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3, textTransform: 'uppercase', letterSpacing: .5 }}>Test Cases</div>
-                </div>
-                <div style={{ textAlign: 'center', background: 'rgba(255,255,255,.08)', borderRadius: 10, padding: '10px 20px' }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: '#fcd34d' }}>
-                    +{testScore?.pts ?? submission?.pts ?? 5} pts
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3, textTransform: 'uppercase', letterSpacing: .5 }}>Earned</div>
-                </div>
-              </div>
-            )}
-            <div style={{ fontSize: 14, color: '#94a3b8' }}>
-              {submission?.timeTaken != null ? `Solved in ${formatTime(submission.timeTaken)}` : ''}
-            </div>
-            <button className="btn btn-secondary" style={{ marginTop: 8 }} onClick={onClose}>Close</button>
-          </div>
-        ) : (
-          <ProblemEditor
-            problem={task}
-            isSolved={false}
-            onSolve={handleSolve}
-            onHintUsed={handleHintUsed}
-          />
-        )}
+        {/* Always show ProblemEditor — completion shown as a banner inside it */}
+        <ProblemEditor
+          problem={task}
+          isSolved={isCompleted}
+          onSolve={handleSolve}
+          onHintUsed={handleHintUsed}
+          solvedMessage={
+            testScore
+              ? `✅ +${testScore.pts} pts · ${testScore.passed}/${testScore.total} test cases passed`
+              : done && submission
+              ? `✅ Already completed · +${submission.pts ?? 5} pts`
+              : null
+          }
+        />
       </div>
     </div>
   )

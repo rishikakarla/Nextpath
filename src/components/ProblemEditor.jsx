@@ -301,7 +301,7 @@ function SubmissionsPanel({ submissions, onLoadCode }) {
 }
 
 // ── Main ProblemEditor ────────────────────────────────────────────────────────
-export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, onSubmit, submissions }) {
+export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, onSubmit, submissions, solvedMessage }) {
   const [langId, setLangId]             = useState(71)
   const [code, setCode]                 = useState(() => problem.starterCode?.[71] || LANGUAGES.find(l => l.id === 71)?.template || '')
   const [customInput, setCustomInput]   = useState('')
@@ -376,10 +376,12 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
     setRunning(false)
   }
 
-  // Submit against ALL test cases
+  // Submit against ALL test cases (falls back to examples if testCases is empty)
   const handleSubmit = async () => {
     if (!code.trim()) return
-    const tcs = problem.testCases || []
+    const testCaseList = problem.testCases || []
+    const examplesAsTc = (problem.examples || []).map(e => ({ input: e.input, expectedOutput: e.output, hidden: false }))
+    const tcs = testCaseList.length > 0 ? testCaseList : examplesAsTc
     if (tcs.length === 0) return
     setSubmitting(true)
     setBottomTab('results')
@@ -650,7 +652,9 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
 
           {/* Already solved banner */}
           {isSolved && (
-            <div className="pe-solved-banner">✅ Problem solved! +10 pts earned.</div>
+            <div className="pe-solved-banner">
+              {solvedMessage || '✅ Problem solved! +10 pts earned.'}
+            </div>
           )}
         </div>
       </div>
