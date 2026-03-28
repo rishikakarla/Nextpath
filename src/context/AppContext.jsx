@@ -240,6 +240,26 @@ export function AppProvider({ children }) {
     })
   }
 
+  const LEVEL_ORDER = ['Beginner', 'Beginner+', 'Intermediate', 'Advanced']
+  const levelUp = () => {
+    const currentLevel = assessmentResult?.level
+    const idx = LEVEL_ORDER.indexOf(currentLevel)
+    const nextLevel = LEVEL_ORDER[idx + 1]
+    if (!nextLevel) return
+    const newResult = { ...assessmentResult, level: nextLevel, leveledUpAt: new Date().toISOString() }
+    setAssessmentResult(newResult)
+    // Reset roadmap progress for the new level
+    setProgress(prev => ({ ...prev, completedTopics: [], roadmap: 0 }))
+    // Bonus XP for leveling up
+    setPoints(p => p + 50)
+    if (auth.currentUser) {
+      setDoc(doc(db, 'users', auth.currentUser.uid), {
+        assessmentResult: newResult,
+        progress: { ...progress, completedTopics: [], roadmap: 0 },
+      }, { merge: true }).catch(console.error)
+    }
+  }
+
   // ── Leaderboard ───────────────────────────────────────────────────────────
   const getLeaderboard = () => {
     const myEntry = user
@@ -258,7 +278,7 @@ export function AppProvider({ children }) {
       taskHistory,
       codingSubmissions, saveSubmission,
       register, login, logout, saveAssessment,
-      completeTask, solveProblem, toggleTopic, getLeaderboard, setPoints,
+      completeTask, solveProblem, toggleTopic, levelUp, getLeaderboard, setPoints,
     }}>
       {children}
     </AppContext.Provider>

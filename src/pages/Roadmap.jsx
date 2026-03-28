@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 
+const LEVEL_ORDER = ['Beginner', 'Beginner+', 'Intermediate', 'Advanced']
+const LEVEL_LABELS = { 'Beginner+': 'Beginner+', 'Intermediate': 'Intermediate', 'Advanced': 'Advanced' }
+const NEXT_LEVEL_COLOR = { 'Beginner+': '#6366f1', 'Intermediate': '#f59e0b', 'Advanced': '#ef4444' }
+
 const LEVEL_MAP   = { 'Beginner': 'beginner', 'Beginner+': 'beginnerPlus', 'Intermediate': 'intermediate', 'Advanced': 'advanced' }
 const LEVEL_COLOR = { beginner: '#10b981', beginnerPlus: '#6366f1', intermediate: '#f59e0b', advanced: '#ef4444' }
 
@@ -62,13 +66,14 @@ function PhaseNode({ idx, status, accent }) {
 
 export default function Roadmap() {
   const navigate = useNavigate()
-  const { progress, assessmentResult } = useApp()
+  const { progress, assessmentResult, levelUp } = useApp()
   const { roadmapPhases: roadmapByLevel } = useContent()
 
   const levelKey = assessmentResult?.level ? (LEVEL_MAP[assessmentResult.level] || 'beginner') : null
   const roadmapPhases = levelKey ? (roadmapByLevel[levelKey] || []) : []
 
   const [open, setOpen] = useState(0)
+  const [showLevelUp, setShowLevelUp] = useState(false)
 
   const TOTAL_TOPICS = roadmapPhases.reduce((a, p) => a + p.topics.length, 0)
   const completedCount = progress.completedTopics?.length ?? 0
@@ -76,6 +81,11 @@ export default function Roadmap() {
     p.topics.every(t => progress.completedTopics?.includes(t.id))
   ).length
   const totalXP = completedCount * 8
+
+  const currentLevel = assessmentResult?.level
+  const currentLevelIdx = LEVEL_ORDER.indexOf(currentLevel)
+  const nextLevel = LEVEL_ORDER[currentLevelIdx + 1] ?? null
+  const isRoadmapComplete = TOTAL_TOPICS > 0 && completedCount >= TOTAL_TOPICS
 
   const getPhaseStatus = (phase, idx) => {
     const done = phase.topics.every(t => progress.completedTopics?.includes(t.id))
@@ -282,6 +292,69 @@ export default function Roadmap() {
           <div style={{ fontWeight: 600, marginBottom: 6 }}>No roadmap configured yet</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
             The <strong>{assessmentResult.level}</strong> track is coming soon. Check back later!
+          </div>
+        </div>
+      )}
+
+      {/* ── Roadmap Complete Banner ── */}
+      {isRoadmapComplete && (
+        <div className="rm-complete-banner">
+          <div className="rm-complete-glow" />
+          <div className="rm-complete-content">
+            <div className="rm-complete-trophy">🏆</div>
+            <h2 className="rm-complete-title">Roadmap Complete!</h2>
+            <p className="rm-complete-sub">
+              You've mastered all <strong>{TOTAL_TOPICS} topics</strong> in the{' '}
+              <strong>{currentLevel}</strong> track and earned{' '}
+              <strong>{totalXP} XP</strong>.
+            </p>
+            <div className="rm-complete-stats">
+              <div className="rm-complete-stat">
+                <div className="rm-complete-stat-val">{phaseDone}</div>
+                <div className="rm-complete-stat-lbl">Phases</div>
+              </div>
+              <div className="rm-complete-stat">
+                <div className="rm-complete-stat-val">{TOTAL_TOPICS}</div>
+                <div className="rm-complete-stat-lbl">Topics</div>
+              </div>
+              <div className="rm-complete-stat">
+                <div className="rm-complete-stat-val">{totalXP}</div>
+                <div className="rm-complete-stat-lbl">XP Earned</div>
+              </div>
+            </div>
+            {nextLevel ? (
+              <button className="rm-levelup-btn" onClick={() => setShowLevelUp(true)}
+                style={{ background: `linear-gradient(135deg, ${NEXT_LEVEL_COLOR[nextLevel]}, ${NEXT_LEVEL_COLOR[nextLevel]}cc)` }}>
+                Level Up to {nextLevel} Track →
+              </button>
+            ) : (
+              <div className="rm-mastered-chip">🎓 You've mastered all levels!</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Level Up Confirmation Modal ── */}
+      {showLevelUp && nextLevel && (
+        <div className="rm-modal-overlay" onClick={() => setShowLevelUp(false)}>
+          <div className="rm-modal" onClick={e => e.stopPropagation()}>
+            <div className="rm-modal-icon">🚀</div>
+            <h3 className="rm-modal-title">Level Up to {nextLevel}?</h3>
+            <p className="rm-modal-body">
+              Your roadmap progress will reset for the <strong>{nextLevel}</strong> track.
+              You'll keep all your XP, solved problems, and daily streaks.
+              A <strong>+50 XP</strong> bonus will be awarded!
+            </p>
+            <div className="rm-modal-actions">
+              <button className="rm-modal-cancel" onClick={() => setShowLevelUp(false)}>
+                Stay on {currentLevel}
+              </button>
+              <button className="rm-modal-confirm"
+                style={{ background: NEXT_LEVEL_COLOR[nextLevel] }}
+                onClick={() => { levelUp(); setShowLevelUp(false) }}>
+                Yes, Level Up! +50 XP
+              </button>
+            </div>
           </div>
         </div>
       )}

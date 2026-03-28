@@ -713,6 +713,88 @@ nav { flex: 1; padding: 12px 0; }
   border-radius: 14px; color: var(--text-secondary);
 }
 
+/* ─── ROADMAP COMPLETION & LEVEL-UP ─────────────────────── */
+.rm-complete-banner {
+  position: relative; overflow: hidden;
+  margin-top: 32px; border-radius: 16px;
+  border: 1px solid #c7d2fe;
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #ede9fe 100%);
+  padding: 40px 32px; text-align: center;
+}
+.rm-complete-glow {
+  position: absolute; inset: -40px; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,.18) 0%, transparent 70%);
+}
+.rm-complete-content { position: relative; }
+.rm-complete-trophy { font-size: 56px; line-height: 1; margin-bottom: 12px; animation: rm-bounce .8s ease; }
+@keyframes rm-bounce {
+  0%,100% { transform: translateY(0); }
+  40%      { transform: translateY(-14px); }
+  60%      { transform: translateY(-7px); }
+}
+.rm-complete-title {
+  font-size: 26px; font-weight: 800; color: var(--primary);
+  margin: 0 0 10px;
+}
+.rm-complete-sub {
+  font-size: 15px; color: var(--text-secondary); margin: 0 0 24px;
+  line-height: 1.7; max-width: 480px; margin-left: auto; margin-right: auto;
+}
+.rm-complete-stats {
+  display: flex; justify-content: center; gap: 32px; margin-bottom: 28px;
+}
+.rm-complete-stat { text-align: center; }
+.rm-complete-stat-val { font-size: 28px; font-weight: 800; color: var(--primary); }
+.rm-complete-stat-lbl { font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
+.rm-levelup-btn {
+  display: inline-block; padding: 14px 32px;
+  border-radius: 12px; border: none; cursor: pointer;
+  color: #fff; font-size: 15px; font-weight: 700;
+  box-shadow: 0 4px 16px rgba(99,102,241,.35);
+  transition: transform .15s, box-shadow .15s;
+}
+.rm-levelup-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(99,102,241,.45); }
+.rm-mastered-chip {
+  display: inline-block; padding: 10px 24px;
+  border-radius: 12px; background: var(--success-light);
+  color: #065f46; font-size: 15px; font-weight: 700;
+  border: 1px solid #a7f3d0;
+}
+
+/* Level-up modal */
+.rm-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.rm-modal {
+  background: var(--card); border-radius: 16px;
+  padding: 36px 32px; max-width: 420px; width: 100%;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  animation: rm-modal-in .25s ease;
+}
+@keyframes rm-modal-in {
+  from { transform: scale(.92); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.rm-modal-icon { font-size: 48px; margin-bottom: 12px; }
+.rm-modal-title { font-size: 20px; font-weight: 800; color: var(--text); margin: 0 0 12px; }
+.rm-modal-body { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin: 0 0 28px; }
+.rm-modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.rm-modal-cancel {
+  padding: 10px 20px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: border-color .15s;
+}
+.rm-modal-cancel:hover { border-color: var(--primary); color: var(--primary); }
+.rm-modal-confirm {
+  padding: 10px 24px; border-radius: 8px; border: none;
+  color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: opacity .15s, transform .15s;
+}
+.rm-modal-confirm:hover { opacity: .9; transform: translateY(-1px); }
+
 /* ─── DAILY PRACTICE ─────────────────────────────────────── */
 .daily-tasks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
