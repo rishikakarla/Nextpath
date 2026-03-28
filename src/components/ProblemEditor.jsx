@@ -232,7 +232,9 @@ function getSamples(problem) {
 }
 
 // ── Submissions Panel ─────────────────────────────────────────────────────────
-function SubmissionsPanel({ submissions }) {
+function SubmissionsPanel({ submissions, onLoadCode }) {
+  const [expanded, setExpanded] = useState(null)
+
   if (!submissions || submissions.length === 0) {
     return (
       <div style={{ padding: '24px 16px', textAlign: 'center', color: '#475569', fontSize: 13, fontStyle: 'italic' }}>
@@ -247,16 +249,48 @@ function SubmissionsPanel({ submissions }) {
         const isPartial = s.passed > 0 && s.passed < s.total
         const color = isAC ? '#10b981' : isPartial ? '#f59e0b' : '#ef4444'
         const label = isAC ? 'Accepted' : isPartial ? 'Partial' : 'Wrong Answer'
+        const isOpen = expanded === i
         return (
-          <div key={i} className="pe-sub-row">
-            <div className="pe-sub-verdict" style={{ color, borderLeftColor: color }}>
-              {isAC ? '✓' : '✗'} {label}
+          <div key={i} className="pe-sub-row-wrap">
+            <div
+              className="pe-sub-row"
+              onClick={() => setExpanded(isOpen ? null : i)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="pe-sub-verdict" style={{ color, borderLeftColor: color }}>
+                {isAC ? '✓' : '✗'} {label}
+              </div>
+              <div className="pe-sub-meta">
+                <span className="pe-sub-score">{s.passed}/{s.total} test cases</span>
+                <span className="pe-sub-lang">{s.langName}</span>
+                <span className="pe-sub-time">{new Date(s.submittedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              <span className="pe-sub-chevron">{isOpen ? '▲' : '▼'}</span>
             </div>
-            <div className="pe-sub-meta">
-              <span className="pe-sub-score">{s.passed}/{s.total} test cases</span>
-              <span className="pe-sub-lang">{s.langName}</span>
-              <span className="pe-sub-time">{new Date(s.submittedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
+
+            {isOpen && (
+              <div className="pe-sub-code-panel">
+                <div className="pe-sub-code-header">
+                  <span style={{ color: '#94a3b8', fontSize: 12 }}>{s.langName}</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="pe-sub-action-btn"
+                      onClick={() => navigator.clipboard?.writeText(s.code)}
+                    >
+                      Copy
+                    </button>
+                    <button
+                      className="pe-sub-action-btn"
+                      style={{ color: '#6366f1', borderColor: '#6366f155' }}
+                      onClick={() => onLoadCode && onLoadCode(s.code, s.langId)}
+                    >
+                      Load into Editor
+                    </button>
+                  </div>
+                </div>
+                <pre className="pe-sub-code-pre">{s.code}</pre>
+              </div>
+            )}
           </div>
         )
       })}
@@ -595,7 +629,17 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
                 {/* ── Submissions tab ── */}
                 {bottomTab === 'submissions' && (
                   <div className="pe-bottom-content">
-                    <SubmissionsPanel submissions={submissions} />
+                    <SubmissionsPanel
+                      submissions={submissions}
+                      onLoadCode={(loadedCode, loadedLangId) => {
+                        setCode(loadedCode)
+                        setLangId(loadedLangId)
+                        setResults(null)
+                        setSampleResults(null)
+                        setCustomResult(null)
+                        setBottomTab('console')
+                      }}
+                    />
                   </div>
                 )}
               </div>

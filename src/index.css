@@ -2780,3 +2780,27 @@ nav { flex: 1; padding: 12px 0; }
   padding: 2px 8px; border-radius: 4px; font-size: 11px;
 }
 .pe-sub-time { color: #475569; }
+
+.pe-sub-row-wrap { border-bottom: 1px solid #1e293b; }
+.pe-sub-row-wrap:last-child { border-bottom: none; }
+.pe-sub-row { border-bottom: none; }
+.pe-sub-chevron { font-size: 10px; color: #475569; margin-left: auto; flex-shrink: 0; }
+.pe-sub-code-panel {
+  background: #0f172a; border-top: 1px solid #1e293b;
+}
+.pe-sub-code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; background: #1e293b;
+}
+.pe-sub-action-btn {
+  font-size: 11px; color: #94a3b8; background: none;
+  border: 1px solid #334155; border-radius: 4px;
+  padding: 3px 10px; cursor: pointer; transition: all .15s;
+}
+.pe-sub-action-btn:hover { color: #fff; border-color: #94a3b8; }
+.pe-sub-code-pre {
+  margin: 0; padding: 14px 16px;
+  color: #e2e8f0; font-size: 12.5px; line-height: 1.7;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  overflow-x: auto; white-space: pre; max-height: 320px; overflow-y: auto;
+}
