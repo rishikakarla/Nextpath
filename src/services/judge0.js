@@ -35,11 +35,35 @@ function base() {
   return USE_RAPIDAPI ? RAPIDAPI_BASE : CE_BASE
 }
 
+// Safe base64 encode — handles unicode via TextEncoder
+function b64encode(str) {
+  const bytes = new TextEncoder().encode(str)
+  let bin = ''
+  bytes.forEach(b => { bin += String.fromCharCode(b) })
+  return btoa(bin)
+}
+
+// Safe base64 decode — handles unicode via TextDecoder
+function b64decode(val) {
+  if (!val) return val
+  try {
+    const bin = atob(val)
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0))
+    return new TextDecoder().decode(bytes)
+  } catch {
+    return val
+  }
+}
+
 export async function submitCode(sourceCode, languageId, stdin = '') {
-  const res = await fetch(`${base()}/submissions?base64_encoded=false&wait=false`, {
+  const res = await fetch(`${base()}/submissions?base64_encoded=true&wait=false`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ source_code: sourceCode, language_id: languageId, stdin }),
+    body: JSON.stringify({
+      source_code: b64encode(sourceCode),
+      language_id: languageId,
+      stdin: b64encode(stdin),
+    }),
   })
   if (!res.ok) {
     const text = await res.text()
@@ -47,11 +71,6 @@ export async function submitCode(sourceCode, languageId, stdin = '') {
   }
   const { token } = await res.json()
   return token
-}
-
-function decodeField(val) {
-  if (!val) return val
-  try { return atob(val) } catch { return val }
 }
 
 export async function getResult(token) {
@@ -63,9 +82,9 @@ export async function getResult(token) {
   const data = await res.json()
   return {
     ...data,
-    stdout: decodeField(data.stdout),
-    stderr: decodeField(data.stderr),
-    compile_output: decodeField(data.compile_output),
+    stdout: b64decode(data.stdout),
+    stderr: b64decode(data.stderr),
+    compile_output: b64decode(data.compile_output),
   }
 }
 
