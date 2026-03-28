@@ -498,6 +498,64 @@ function RoadmapTab({ roadmapByLevel = {}, onUpdate }) {
   const [phaseForm, setPhaseForm] = useState(BLANK_PHASE)
   const [editingTopic, setEditingTopic] = useState(null)
   const [topicForm, setTopicForm] = useState(BLANK_TOPIC)
+  const [jsonPhaseId, setJsonPhaseId] = useState(null)   // which phase's JSON panel is open
+  const [jsonText, setJsonText]       = useState('')
+  const [jsonError, setJsonError]     = useState('')
+  const [jsonSuccess, setJsonSuccess] = useState('')
+
+  const TOPIC_TEMPLATE = `[
+  {
+    "name": "Arrays & Hashing",
+    "description": "Introduction to arrays and hash maps for efficient lookups.",
+    "concepts": [
+      {
+        "heading": "What is an Array?",
+        "body": "An array is a collection of elements stored at contiguous memory locations.",
+        "code": "# Python\\narr = [1, 2, 3, 4, 5]\\nprint(arr[0])  # 1"
+      }
+    ],
+    "keyPoints": [
+      "Array indexing starts from 0",
+      "Access time is O(1), search is O(n)"
+    ],
+    "complexity": { "time": "O(1) access, O(n) search", "space": "O(n)" },
+    "resources": [
+      { "title": "Arrays – YouTube", "url": "https://youtube.com" }
+    ],
+    "quiz": [
+      {
+        "question": "What is the time complexity of accessing an element by index?",
+        "options": ["O(1)", "O(n)", "O(log n)", "O(n²)"],
+        "answer": 0,
+        "explanation": "Array index access is O(1) as it directly uses memory address."
+      }
+    ]
+  }
+]`
+
+  const handleTopicJson = (phaseId) => {
+    setJsonError(''); setJsonSuccess('')
+    let parsed
+    try { parsed = JSON.parse(jsonText.trim()) } catch (e) { setJsonError('Invalid JSON: ' + e.message); return }
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    const errors = []
+    items.forEach((t, i) => { if (!t.name?.trim()) errors.push(`Item ${i+1}: missing "name"`) })
+    if (errors.length) { setJsonError(errors.join('\n')); return }
+    const newTopics = items.map(t => ({
+      ...BLANK_TOPIC, ...t,
+      id: `t${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      resources:   t.resources   || [],
+      quiz:        t.quiz        || [],
+      concepts:    t.concepts    || [],
+      keyPoints:   t.keyPoints   || [],
+      complexity:  t.complexity  || { time: '', space: '' },
+    }))
+    const updated = phases.map(p => p.id === phaseId ? { ...p, topics: [...p.topics, ...newTopics] } : p)
+    updateLevel(updated)
+    setJsonSuccess(`✅ ${newTopics.length} topic${newTopics.length > 1 ? 's' : ''} added!`)
+    setJsonText('')
+    setTimeout(() => { setJsonPhaseId(null); setJsonSuccess('') }, 1800)
+  }
 
   // Reset UI when switching levels
   const switchLevel = (key) => {
@@ -623,8 +681,42 @@ function RoadmapTab({ roadmapByLevel = {}, onUpdate }) {
                 <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                     <span style={{ fontWeight: 600, fontSize: 13 }}>Topics</span>
-                    <Btn sm onClick={() => { setTopicForm(BLANK_TOPIC); setEditingTopic({ phaseId: phase.id, topicId: 'new' }) }}>+ Add Topic</Btn>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Btn sm variant="ghost" onClick={() => {
+                        setJsonPhaseId(jsonPhaseId === phase.id ? null : phase.id)
+                        setJsonText(''); setJsonError(''); setJsonSuccess('')
+                        setEditingTopic(null)
+                      }}>
+                        {jsonPhaseId === phase.id ? '✕ Close JSON' : '📋 Paste JSON'}
+                      </Btn>
+                      <Btn sm onClick={() => { setTopicForm(BLANK_TOPIC); setEditingTopic({ phaseId: phase.id, topicId: 'new' }); setJsonPhaseId(null) }}>+ Add Topic</Btn>
+                    </div>
                   </div>
+
+                  {/* JSON paste panel */}
+                  {jsonPhaseId === phase.id && (
+                    <div style={{ background: 'var(--card)', border: '2px solid var(--primary)', borderRadius: 8, padding: 14, marginBottom: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>📋 Paste JSON to add topics</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Single object <code>{'{...}'}</code> or array <code>{'[{...}]'}</code> for multiple topics at once.</div>
+                        </div>
+                        <Btn sm variant="ghost" onClick={() => setJsonText(TOPIC_TEMPLATE)}>Load Template</Btn>
+                      </div>
+                      <textarea
+                        value={jsonText}
+                        onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
+                        placeholder={'Paste your topic JSON here…\n\nClick "Load Template" to see all supported fields.'}
+                        style={{ ...s.inp, minHeight: 200, fontFamily: 'monospace', fontSize: 12, resize: 'vertical' }}
+                      />
+                      {jsonError && <div style={{ marginTop: 6, padding: '7px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 12, color: '#b91c1c', whiteSpace: 'pre-line' }}>{jsonError}</div>}
+                      {jsonSuccess && <div style={{ marginTop: 6, padding: '7px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 12, color: '#065f46', fontWeight: 700 }}>{jsonSuccess}</div>}
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <Btn variant="success" onClick={() => handleTopicJson(phase.id)}>⬆ Upload Topics</Btn>
+                        <Btn variant="ghost" onClick={() => { setJsonPhaseId(null); setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Cancel</Btn>
+                      </div>
+                    </div>
+                  )}
 
                   {editingTopic?.phaseId === phase.id && editingTopic?.topicId === 'new' && (
                     <TopicForm form={topicForm} setForm={setTopicForm} onSave={saveTopic} onCancel={() => setEditingTopic(null)}
