@@ -504,12 +504,14 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
                       </span>
                     )}
                   </button>
-                  <button className={`pe-bottom-tab${bottomTab === 'submissions' ? ' active' : ''}`} onClick={() => setBottomTab('submissions')}>
-                    Submissions
-                    {submissions?.length > 0 && (
-                      <span className="pe-tab-badge" style={{ background: '#334155', color: '#94a3b8' }}>{submissions.length}</span>
-                    )}
-                  </button>
+                  {submissions !== undefined && (
+                    <button className={`pe-bottom-tab${bottomTab === 'submissions' ? ' active' : ''}`} onClick={() => setBottomTab('submissions')}>
+                      Submissions
+                      {submissions?.length > 0 && (
+                        <span className="pe-tab-badge" style={{ background: '#334155', color: '#94a3b8' }}>{submissions.length}</span>
+                      )}
+                    </button>
+                  )}
                   <span className="pe-bottom-hint">▶ Run checks sample cases · ⚡ Submit checks all test cases</span>
                 </div>
 
