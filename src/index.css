@@ -2758,3 +2758,25 @@ nav { flex: 1; padding: 12px 0; }
   margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border);
   flex-wrap: wrap;
 }
+
+/* ── Submissions Panel ────────────────────────────────────────────────────── */
+.pe-subs-list { padding: 8px 0; }
+.pe-sub-row {
+  padding: 10px 16px; border-bottom: 1px solid #1e293b;
+  display: flex; align-items: center; gap: 16px;
+}
+.pe-sub-row:last-child { border-bottom: none; }
+.pe-sub-verdict {
+  font-size: 13px; font-weight: 700;
+  border-left: 3px solid; padding-left: 10px; min-width: 130px;
+}
+.pe-sub-meta {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 12px; color: #64748b; flex-wrap: wrap;
+}
+.pe-sub-score { font-weight: 600; color: #94a3b8; }
+.pe-sub-lang {
+  background: #1e293b; color: #94a3b8;
+  padding: 2px 8px; border-radius: 4px; font-size: 11px;
+}
+.pe-sub-time { color: #475569; }

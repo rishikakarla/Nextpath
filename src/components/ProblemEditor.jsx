@@ -32,7 +32,7 @@ function VerdictChip({ verdict }) {
 }
 
 // ── Problem Panel ─────────────────────────────────────────────────────────────
-function ProblemPanel({ problem }) {
+function ProblemPanel({ problem, onHintUsed }) {
   const [activeEx, setActiveEx] = useState(0)
   const diffColor = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' }[problem.difficulty] || '#6366f1'
 
@@ -231,8 +231,41 @@ function getSamples(problem) {
     .map(tc => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
 }
 
+// ── Submissions Panel ─────────────────────────────────────────────────────────
+function SubmissionsPanel({ submissions }) {
+  if (!submissions || submissions.length === 0) {
+    return (
+      <div style={{ padding: '24px 16px', textAlign: 'center', color: '#475569', fontSize: 13, fontStyle: 'italic' }}>
+        No submissions yet. Click ⚡ Submit to run against all test cases.
+      </div>
+    )
+  }
+  return (
+    <div className="pe-subs-list">
+      {submissions.map((s, i) => {
+        const isAC = s.passed === s.total
+        const isPartial = s.passed > 0 && s.passed < s.total
+        const color = isAC ? '#10b981' : isPartial ? '#f59e0b' : '#ef4444'
+        const label = isAC ? 'Accepted' : isPartial ? 'Partial' : 'Wrong Answer'
+        return (
+          <div key={i} className="pe-sub-row">
+            <div className="pe-sub-verdict" style={{ color, borderLeftColor: color }}>
+              {isAC ? '✓' : '✗'} {label}
+            </div>
+            <div className="pe-sub-meta">
+              <span className="pe-sub-score">{s.passed}/{s.total} test cases</span>
+              <span className="pe-sub-lang">{s.langName}</span>
+              <span className="pe-sub-time">{new Date(s.submittedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Main ProblemEditor ────────────────────────────────────────────────────────
-export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed }) {
+export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, onSubmit, submissions }) {
   const [langId, setLangId]             = useState(71)
   const [code, setCode]                 = useState(() => problem.starterCode?.[71] || LANGUAGES.find(l => l.id === 71)?.template || '')
   const [customInput, setCustomInput]   = useState('')
@@ -333,8 +366,12 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed }
     setResults(newResults)
     setSubmitting(false)
 
+    const passCount = newResults.filter(r => r.verdict === 'pass').length
+    const langName = SUPPORTED_LANGS.find(l => l.id === langId)?.name || 'Unknown'
+    if (onSubmit) {
+      onSubmit({ passed: passCount, total: newResults.length, langId, langName, code, submittedAt: new Date().toISOString() })
+    }
     if (onSolve && !isSolved) {
-      const passCount = newResults.filter(r => r.verdict === 'pass').length
       onSolve({ passed: passCount, total: newResults.length })
     }
   }
@@ -347,7 +384,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed }
       <div className="pe-body">
         {/* Left — Problem */}
         <div className="pe-left">
-          <ProblemPanel problem={problem} />
+          <ProblemPanel problem={problem} onHintUsed={onHintUsed} />
         </div>
 
         {/* Right — Editor + Results */}
@@ -417,6 +454,12 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed }
                       <span className={`pe-tab-badge ${results.every(r => r.verdict === 'pass') ? 'pass' : 'fail'}`}>
                         {results.filter(r => r.verdict === 'pass').length}/{results.length}
                       </span>
+                    )}
+                  </button>
+                  <button className={`pe-bottom-tab${bottomTab === 'submissions' ? ' active' : ''}`} onClick={() => setBottomTab('submissions')}>
+                    Submissions
+                    {submissions?.length > 0 && (
+                      <span className="pe-tab-badge" style={{ background: '#334155', color: '#94a3b8' }}>{submissions.length}</span>
                     )}
                   </button>
                   <span className="pe-bottom-hint">▶ Run checks sample cases · ⚡ Submit checks all test cases</span>
@@ -546,6 +589,13 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed }
                           Click ⚡ Submit to run against all test cases
                         </div>
                     }
+                  </div>
+                )}
+
+                {/* ── Submissions tab ── */}
+                {bottomTab === 'submissions' && (
+                  <div className="pe-bottom-content">
+                    <SubmissionsPanel submissions={submissions} />
                   </div>
                 )}
               </div>

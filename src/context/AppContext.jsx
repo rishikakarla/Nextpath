@@ -27,6 +27,7 @@ export function AppProvider({ children }) {
   const [assessmentResult, setAssessmentResult] = useState(null)
   const [quizAttempts, setQuizAttempts] = useState({})
   const [taskHistory, setTaskHistory] = useState({})
+  const [codingSubmissions, setCodingSubmissions] = useState({})
 
   // Prevents syncing state back to Firestore right after it was loaded from there
   const dataLoaded = useRef(false)
@@ -47,6 +48,7 @@ export function AppProvider({ children }) {
           setAssessmentResult(data.assessmentResult || null)
           setQuizAttempts(data.quizAttempts || {})
           setTaskHistory(data.taskHistory || {})
+          setCodingSubmissions(data.codingSubmissions || {})
           // Delay enabling sync so the load-triggered effects don't write back to Firestore
           setTimeout(() => { dataLoaded.current = true }, 0)
           // Backfill leaderboard entry with latest data on every login
@@ -71,6 +73,7 @@ export function AppProvider({ children }) {
         setAssessmentResult(null)
         setQuizAttempts({})
         setTaskHistory({})
+        setCodingSubmissions({})
       }
       setAuthLoading(false)
     })
@@ -90,6 +93,7 @@ export function AppProvider({ children }) {
   useEffect(() => { syncField('points', points) }, [points])
   useEffect(() => { syncField('quizAttempts', quizAttempts) }, [quizAttempts])
   useEffect(() => { syncField('taskHistory', taskHistory) }, [taskHistory])
+  useEffect(() => { syncField('codingSubmissions', codingSubmissions) }, [codingSubmissions])
 
   // ── Public leaderboard entry (readable by all authenticated users) ──────────
   useEffect(() => {
@@ -120,6 +124,7 @@ export function AppProvider({ children }) {
       assessmentResult: null,
       quizAttempts: {},
       taskHistory: {},
+      codingSubmissions: {},
     })
     setUser({ uid: cred.user.uid, email, ...profileWithMeta })
     setStreak(DEFAULT_STREAK)
@@ -206,6 +211,14 @@ export function AppProvider({ children }) {
     setProgress(prev => ({ ...prev, dsa: Math.min(100, prev.dsa + 4) }))
   }
 
+  // ── Coding Submissions ────────────────────────────────────────────────────
+  const saveSubmission = (problemId, submission) => {
+    setCodingSubmissions(prev => ({
+      ...prev,
+      [problemId]: [submission, ...(prev[problemId] || [])].slice(0, 20),
+    }))
+  }
+
   // ── Quiz Attempts ─────────────────────────────────────────────────────────
   const saveQuizAttempt = (topicId, attempt) => {
     setQuizAttempts(prev => ({
@@ -243,6 +256,7 @@ export function AppProvider({ children }) {
       user, authLoading, streak, progress, solvedProblems, dailyTasks, points, assessmentResult,
       quizAttempts, saveQuizAttempt,
       taskHistory,
+      codingSubmissions, saveSubmission,
       register, login, logout, saveAssessment,
       completeTask, solveProblem, toggleTopic, getLeaderboard, setPoints,
     }}>

@@ -4,7 +4,7 @@ import { useContent } from '../context/ContentContext'
 import ProblemEditor from '../components/ProblemEditor'
 
 export default function CodingPractice() {
-  const { solvedProblems, solveProblem } = useApp()
+  const { solvedProblems, solveProblem, codingSubmissions, saveSubmission } = useApp()
   const { codingProblems } = useContent()
   const [cat, setCat] = useState('All')
   const [modal, setModal] = useState(null)
@@ -84,6 +84,8 @@ export default function CodingPractice() {
               problem={modal}
               isSolved={solvedProblems.includes(modal.id)}
               onSolve={() => solveProblem(modal.id)}
+              onSubmit={sub => saveSubmission(modal.id, sub)}
+              submissions={codingSubmissions[modal.id] || []}
             />
           </div>
         </div>
