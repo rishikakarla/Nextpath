@@ -55,7 +55,16 @@ function b64decode(val) {
   }
 }
 
+// Java (62): Judge0 always compiles as Main.java — rename any public class to Main
+function normalizeJava(code, languageId) {
+  if (languageId !== 62) return code
+  return code.replace(/public\s+class\s+(\w+)/, (match, name) =>
+    name === 'Main' ? match : `public class Main`
+  )
+}
+
 export async function submitCode(sourceCode, languageId, stdin = '') {
+  sourceCode = normalizeJava(sourceCode, languageId)
   const res = await fetch(`${base()}/submissions?base64_encoded=true&wait=false`, {
     method: 'POST',
     headers: headers(),
