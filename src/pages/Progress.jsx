@@ -25,15 +25,6 @@ function Ring({ pct, size = 80, stroke = 8, color = '#6366f1', label, sub }) {
   )
 }
 
-// ── Bar ───────────────────────────────────────────────────────────────────────
-function Bar({ pct, color }) {
-  return (
-    <div className="pg-bar-track">
-      <div className="pg-bar-fill" style={{ width: `${pct}%`, background: color }} />
-    </div>
-  )
-}
-
 // ── Milestone ─────────────────────────────────────────────────────────────────
 function Milestone({ icon, label, desc, unlocked }) {
   return (
@@ -209,32 +200,61 @@ export default function Progress() {
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginBottom: 16 }}>
-        {/* ── DSA by Category ── */}
-        <div className="card">
-          <h3 className="card-title">DSA by Category</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {categoryStats.map(s => (
-              <div key={s.cat}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 16 }}>{CAT_ICONS[s.cat]}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>{s.cat}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.solved}/{s.total}</span>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99,
-                      background: s.pct === 100 ? '#d1fae5' : 'var(--primary-light)',
-                      color: s.pct === 100 ? '#065f46' : 'var(--primary)',
-                    }}>{s.pct}%</span>
-                  </div>
-                </div>
-                <Bar pct={s.pct} color={s.pct === 100 ? '#10b981' : CAT_COLORS[s.cat]} />
-              </div>
-            ))}
+      {/* ── DSA by Category ── */}
+      <div className="dcat-section">
+        <div className="dcat-head">
+          <div>
+            <h3 className="dcat-title">DSA by Category</h3>
+            <p className="dcat-subtitle">Problem-solving progress per topic</p>
+          </div>
+          <div className="dcat-total-badge">
+            <span className="dcat-total-num" style={{ color: 'var(--primary)' }}>
+              {solvedProblems.length}
+            </span>
+            <span className="dcat-total-lbl">/ {TOTAL_PROBLEMS} solved</span>
           </div>
         </div>
+
+        <div className="dcat-grid">
+          {categoryStats.map(s => {
+            const color = s.pct === 100 ? '#10b981' : CAT_COLORS[s.cat]
+            const isDone = s.pct === 100
+            return (
+              <div key={s.cat} className={`dcat-card${isDone ? ' done' : ''}`}
+                style={{ '--cc': color }}>
+                {/* Icon + Name */}
+                <div className="dcat-card-top">
+                  <div className="dcat-icon-wrap" style={{ background: color + '18' }}>
+                    <span className="dcat-icon">{CAT_ICONS[s.cat]}</span>
+                  </div>
+                  {isDone && <span className="dcat-done-chip">✓ Done</span>}
+                </div>
+
+                <div className="dcat-cat-name">{s.cat}</div>
+
+                {/* Big percentage */}
+                <div className="dcat-pct" style={{ color }}>{s.pct}%</div>
+
+                {/* Thick progress bar */}
+                <div className="dcat-bar-wrap">
+                  <div className="dcat-bar-track">
+                    <div className="dcat-bar-fill"
+                      style={{ width: `${s.pct}%`, background: color }} />
+                  </div>
+                </div>
+
+                {/* Count */}
+                <div className="dcat-count">
+                  <span style={{ color, fontWeight: 700 }}>{s.solved}</span>
+                  <span className="dcat-count-sep"> / {s.total} problems</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="grid-2" style={{ marginBottom: 16 }}>
 
         {/* ── Stats + Streak ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
