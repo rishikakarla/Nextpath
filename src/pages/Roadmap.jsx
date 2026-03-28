@@ -200,7 +200,7 @@ export default function Roadmap() {
       {/* ── Topic Modal ─────────────────────────────────────────────────────── */}
       {topicModal && (
         <div className="problem-modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
-          <div className="problem-modal" style={{ maxWidth: 580, maxHeight: '88vh', overflowY: 'auto' }}>
+          <div className="problem-modal" style={{ maxWidth: 720, maxHeight: '88vh', overflowY: 'auto' }}>
 
             {/* Header */}
             <div className="modal-header">
@@ -217,41 +217,85 @@ export default function Roadmap() {
 
             {/* ── Step: Content ─────────────────────────────────────────── */}
             {step === 'content' && (
-              <>
+              <div className="gfg-article">
+                {/* GFG-style green header */}
+                <div className="gfg-header">
+                  <div className="gfg-breadcrumb">DSA → {topicModal.topic.name}</div>
+                  <h1 className="gfg-title">{topicModal.topic.name}</h1>
+                  {isDone && <span className="gfg-done-badge">✓ Completed</span>}
+                </div>
+
+                {/* Introduction */}
                 {topicModal.topic.description && (
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                      About this Topic
+                  <p className="gfg-intro">{topicModal.topic.description}</p>
+                )}
+
+                {/* Concept Sections */}
+                {(topicModal.topic.concepts||[]).map((c, i) => (
+                  <div key={i} className="gfg-section">
+                    <h2 className="gfg-section-heading">{c.heading}</h2>
+                    {c.body && <p className="gfg-section-body">{c.body}</p>}
+                    {c.code && (
+                      <div className="gfg-code-block">
+                        <div className="gfg-code-header">
+                          <span>Example</span>
+                          <button className="gfg-copy-btn" onClick={() => navigator.clipboard?.writeText(c.code)}>Copy</button>
+                        </div>
+                        <pre className="gfg-code-pre"><code>{c.code}</code></pre>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Algorithm Complexity */}
+                {(topicModal.topic.complexity?.time || topicModal.topic.complexity?.space) && (
+                  <div className="gfg-section">
+                    <h2 className="gfg-section-heading">Complexity Analysis</h2>
+                    <div className="gfg-complexity-table">
+                      {topicModal.topic.complexity.time && (
+                        <div className="gfg-complexity-row">
+                          <span className="gfg-complexity-label">⏱ Time Complexity</span>
+                          <code className="gfg-complexity-val">{topicModal.topic.complexity.time}</code>
+                        </div>
+                      )}
+                      {topicModal.topic.complexity.space && (
+                        <div className="gfg-complexity-row">
+                          <span className="gfg-complexity-label">💾 Space Complexity</span>
+                          <code className="gfg-complexity-val">{topicModal.topic.complexity.space}</code>
+                        </div>
+                      )}
                     </div>
-                    <p style={{ fontSize: 14, lineHeight: 1.75, margin: 0 }}>{topicModal.topic.description}</p>
                   </div>
                 )}
 
+                {/* Key Points */}
+                {(topicModal.topic.keyPoints||[]).length > 0 && (
+                  <div className="gfg-keypoints">
+                    <div className="gfg-keypoints-title">⭐ Key Points to Remember</div>
+                    <ul className="gfg-keypoints-list">
+                      {topicModal.topic.keyPoints.map((kp, i) => (
+                        <li key={i}>{kp}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Resources */}
                 {topicModal.topic.resources?.length > 0 && (
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
-                      Learning Resources
-                    </div>
+                  <div className="gfg-section">
+                    <h2 className="gfg-section-heading">📺 Learning Resources</h2>
                     {topicModal.topic.resources.map((r, i) => (
-                      <a key={i} href={r.url} target="_blank" rel="noreferrer" style={{
-                        display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
-                        background: 'var(--bg)', borderRadius: 8, marginBottom: 8,
-                        textDecoration: 'none', color: 'var(--text)',
-                        border: '1px solid var(--border)', fontSize: 14,
-                      }}>
-                        <span style={{ fontSize: 20, flexShrink: 0 }}>▶</span>
-                        <span style={{ flex: 1, fontWeight: 500 }}>{r.title || r.url}</span>
-                        <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 700 }}>Watch →</span>
+                      <a key={i} href={r.url} target="_blank" rel="noreferrer" className="gfg-resource-link">
+                        <span className="gfg-resource-icon">▶</span>
+                        <span className="gfg-resource-title">{r.title || r.url}</span>
+                        <span className="gfg-resource-cta">Watch →</span>
                       </a>
                     ))}
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, fontStyle: 'italic' }}>
-                      Videos open in a new tab. You can skip and come back anytime.
-                    </div>
                   </div>
                 )}
 
-                {!topicModal.topic.description && !topicModal.topic.resources?.length && (
-                  <div style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20, fontStyle: 'italic' }}>
+                {!topicModal.topic.description && !topicModal.topic.concepts?.length && !topicModal.topic.resources?.length && (
+                  <div style={{ color: 'var(--text-muted)', fontSize: 14, margin: '20px 0', fontStyle: 'italic' }}>
                     No content added for this topic yet.
                   </div>
                 )}
@@ -260,7 +304,7 @@ export default function Roadmap() {
                   <AttemptsTable attempts={quizAttempts[topicModal.topic.id]} />
                 )}
 
-                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <div className="gfg-actions">
                   {isDone ? (
                     <button className="btn btn-ghost" onClick={closeModal}>Close</button>
                   ) : quiz.length > 0 ? (
@@ -279,7 +323,7 @@ export default function Roadmap() {
                     </>
                   )}
                 </div>
-              </>
+              </div>
             )}
 
             {/* ── Step: Quiz ────────────────────────────────────────────── */}

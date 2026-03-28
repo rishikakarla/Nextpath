@@ -473,7 +473,12 @@ function QuestionForm({ form, set, setOpt, onSave, onCancel }) {
 
 // ── Roadmap ───────────────────────────────────────────────────────────────────
 const BLANK_PHASE = { title: '', duration: '2 weeks' }
-const BLANK_TOPIC = { name: '', description: '', resources: [], quiz: [] }
+const BLANK_TOPIC = {
+  name: '', description: '', resources: [], quiz: [],
+  concepts: [],           // [{heading, body, code}]
+  keyPoints: [],          // [string]
+  complexity: { time: '', space: '' },
+}
 
 const ROADMAP_LEVELS = [
   { key: 'beginner',     label: 'Beginner',      color: '#10b981' },
@@ -658,15 +663,73 @@ function RoadmapTab({ roadmapByLevel = {}, onUpdate }) {
 }
 
 function TopicForm({ form, setForm, onSave, onCancel, addResource, removeResource, setResource, isNew }) {
+  const addConcept    = () => setForm(f => ({ ...f, concepts: [...(f.concepts||[]), { heading: '', body: '', code: '' }] }))
+  const removeConcept = i  => setForm(f => ({ ...f, concepts: f.concepts.filter((_,idx)=>idx!==i) }))
+  const setConcept    = (i,k,v) => setForm(f => ({ ...f, concepts: f.concepts.map((c,idx)=>idx===i?{...c,[k]:v}:c) }))
+  const addKP         = () => setForm(f => ({ ...f, keyPoints: [...(f.keyPoints||[]), ''] }))
+  const removeKP      = i  => setForm(f => ({ ...f, keyPoints: f.keyPoints.filter((_,idx)=>idx!==i) }))
+  const setKP         = (i,v) => setForm(f => ({ ...f, keyPoints: f.keyPoints.map((k,idx)=>idx===i?v:k) }))
+
   return (
     <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 14, marginBottom: 10, border: '1px solid var(--primary)' }}>
       <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12 }}>{isNew ? 'New Topic' : 'Edit Topic'}</div>
       <Field label="Topic Name">
         <input style={s.inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Binary Trees & Traversals" />
       </Field>
-      <Field label="Description">
-        <textarea style={{ ...s.inp, height: 80, resize: 'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Explain this topic briefly..." />
+      <Field label="Introduction / Overview">
+        <textarea style={{ ...s.inp, height: 80, resize: 'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief introduction shown at the top of the article..." />
       </Field>
+
+      {/* Concept Sections */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <label style={s.lbl}>Concept Sections (GeeksforGeeks style)</label>
+          <Btn sm variant="ghost" onClick={addConcept}>+ Add Section</Btn>
+        </div>
+        {(form.concepts||[]).map((c,i) => (
+          <div key={i} style={{ background: 'var(--card)', borderRadius: 8, padding: 12, marginBottom: 10, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Section {i+1}</span>
+              <Btn sm variant="danger" onClick={() => removeConcept(i)}>Remove</Btn>
+            </div>
+            <Field label="Heading"><input style={s.inp} value={c.heading} onChange={e=>setConcept(i,'heading',e.target.value)} placeholder="e.g. What is a Binary Tree?" /></Field>
+            <Field label="Explanation"><textarea style={{ ...s.inp, minHeight: 80, resize: 'vertical' }} value={c.body} onChange={e=>setConcept(i,'body',e.target.value)} placeholder="Explain this concept in detail..." /></Field>
+            <Field label="Code Example (optional)"><textarea style={{ ...s.inp, minHeight: 100, resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} value={c.code||''} onChange={e=>setConcept(i,'code',e.target.value)} placeholder={"# Python\ndef example():\n    pass"} /></Field>
+          </div>
+        ))}
+        {(!form.concepts||form.concepts.length===0) && <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>No sections yet. Add sections to explain key concepts.</div>}
+      </div>
+
+      {/* Key Points */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <label style={s.lbl}>Key Points / Must Know</label>
+          <Btn sm variant="ghost" onClick={addKP}>+ Add Point</Btn>
+        </div>
+        {(form.keyPoints||[]).map((kp,i) => (
+          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+            <input style={s.inp} value={kp} onChange={e=>setKP(i,e.target.value)} placeholder="e.g. Time complexity is O(n)" />
+            <Btn sm variant="danger" onClick={()=>removeKP(i)}>✕</Btn>
+          </div>
+        ))}
+        {(!form.keyPoints||form.keyPoints.length===0) && <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>No key points added.</div>}
+      </div>
+
+      {/* Complexity */}
+      <div style={{ marginBottom: 14 }}>
+        <label style={s.lbl}>Algorithm Complexity</label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div>
+            <label style={{ ...s.lbl, marginBottom: 3 }}>Time Complexity</label>
+            <input style={s.inp} value={form.complexity?.time||''} onChange={e=>setForm(f=>({...f,complexity:{...(f.complexity||{}),time:e.target.value}}))} placeholder="e.g. O(n log n)" />
+          </div>
+          <div>
+            <label style={{ ...s.lbl, marginBottom: 3 }}>Space Complexity</label>
+            <input style={s.inp} value={form.complexity?.space||''} onChange={e=>setForm(f=>({...f,complexity:{...(f.complexity||{}),space:e.target.value}}))} placeholder="e.g. O(n)" />
+          </div>
+        </div>
+      </div>
+
       <div style={{ marginBottom: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <label style={s.lbl}>Learning Resources</label>
