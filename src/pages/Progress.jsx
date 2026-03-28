@@ -128,30 +128,84 @@ export default function Progress() {
         </div>
       </div>
 
-      {/* ── Domain Rings ── */}
-      <div className="card pg-domains">
-        <h3 className="card-title" style={{ marginBottom: 20 }}>Learning Overview</h3>
-        <div className="pg-rings-row">
-          <div className="pg-domain-block" onClick={() => navigate('/practice/daily')} style={{ cursor: 'pointer' }}>
-            <Ring pct={dsaPct} size={100} stroke={9} color="#6366f1"
-              label="DSA Problems" sub={`${solvedProblems.length} / ${TOTAL_PROBLEMS}`} />
+      {/* ── Learning Overview ── */}
+      <div className="lov-section">
+        <div className="lov-head">
+          <div>
+            <h3 className="lov-title">Learning Overview</h3>
+            <p className="lov-subtitle">Your progress across all domains</p>
           </div>
-          <div className="pg-domain-sep" />
-          <div className="pg-domain-block" onClick={() => navigate('/aptitude-training')} style={{ cursor: 'pointer' }}>
-            <Ring pct={aptitudePct} size={100} stroke={9} color="#f59e0b"
-              label="Aptitude" sub={`${aptitudePassed} / ${aptitudeTopics.length} topics`} />
+          <div className="lov-overall">
+            <div className="lov-overall-pct">
+              {Math.round((dsaPct + aptitudePct + roadmapPct) / 3)}%
+            </div>
+            <div className="lov-overall-lbl">Overall</div>
           </div>
-          <div className="pg-domain-sep" />
-          <div className="pg-domain-block" onClick={() => navigate('/roadmap')} style={{ cursor: 'pointer' }}>
-            <Ring pct={roadmapPct} size={100} stroke={9} color="#10b981"
-              label="Roadmap" sub={`${completedTopics} / ${TOTAL_TOPICS} topics`} />
-          </div>
-          <div className="pg-domain-sep" />
-          <div className="pg-domain-block">
-            <Ring pct={Math.round((tasksToday / 3) * 100)} size={100} stroke={9}
-              color={tasksToday === 3 ? '#10b981' : '#6366f1'}
-              label="Today's Tasks" sub={`${tasksToday} / 3 done`} />
-          </div>
+        </div>
+
+        <div className="lov-grid">
+          {[
+            {
+              pct: dsaPct, color: '#6366f1', glow: '#6366f115',
+              icon: '💻', label: 'DSA Problems',
+              value: solvedProblems.length, total: TOTAL_PROBLEMS, unit: 'solved',
+              route: '/coding-practice',
+              tip: solvedProblems.length === 0 ? 'Start solving!' : dsaPct === 100 ? 'All done!' : `${TOTAL_PROBLEMS - solvedProblems.length} left`,
+            },
+            {
+              pct: aptitudePct, color: '#f59e0b', glow: '#f59e0b15',
+              icon: '🧮', label: 'Aptitude',
+              value: aptitudePassed, total: aptitudeTopics.length, unit: 'topics passed',
+              route: '/aptitude-training',
+              tip: aptitudePassed === 0 ? 'Take your first quiz!' : aptitudePct === 100 ? 'Mastered!' : `${aptitudeTopics.length - aptitudePassed} topics left`,
+            },
+            {
+              pct: roadmapPct, color: '#10b981', glow: '#10b98115',
+              icon: '🗺️', label: 'Roadmap',
+              value: completedTopics, total: TOTAL_TOPICS, unit: 'topics done',
+              route: '/roadmap',
+              tip: completedTopics === 0 ? 'Pick a topic!' : roadmapPct === 100 ? 'Level up!' : `${TOTAL_TOPICS - completedTopics} topics left`,
+            },
+            {
+              pct: Math.round((tasksToday / 3) * 100),
+              color: tasksToday === 3 ? '#10b981' : '#8b5cf6', glow: '#8b5cf615',
+              icon: '⚡', label: "Today's Tasks",
+              value: tasksToday, total: 3, unit: 'completed',
+              route: '/practice/daily',
+              tip: tasksToday === 3 ? 'All done today!' : `${3 - tasksToday} task${3 - tasksToday > 1 ? 's' : ''} remaining`,
+            },
+          ].map(d => (
+            <div key={d.label} className="lov-card" onClick={() => navigate(d.route)}
+              style={{ '--lc': d.color, '--lg': d.glow }}>
+              {/* Glow layer */}
+              <div className="lov-card-glow" />
+
+              {/* Top row */}
+              <div className="lov-card-header">
+                <span className="lov-card-icon">{d.icon}</span>
+                <span className="lov-card-label">{d.label}</span>
+              </div>
+
+              {/* Ring */}
+              <div className="lov-card-ring">
+                <Ring pct={d.pct} size={96} stroke={9} color={d.color} />
+              </div>
+
+              {/* Stats */}
+              <div className="lov-card-score">
+                <span className="lov-score-val" style={{ color: d.color }}>{d.value}</span>
+                <span className="lov-score-sep">/</span>
+                <span className="lov-score-total">{d.total}</span>
+              </div>
+              <div className="lov-card-unit">{d.unit}</div>
+
+              {/* Tip */}
+              <div className="lov-card-tip" style={{ color: d.color }}>{d.tip}</div>
+
+              {/* CTA */}
+              <div className="lov-card-cta">View →</div>
+            </div>
+          ))}
         </div>
       </div>
 
