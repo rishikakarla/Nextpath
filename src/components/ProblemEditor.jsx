@@ -121,10 +121,10 @@ function ProblemPanel({ problem, onHintUsed }) {
 }
 
 // ── Results Panel ─────────────────────────────────────────────────────────────
-function ResultsPanel({ results, problem, running }) {
+function ResultsPanel({ results, testCases, running }) {
   if (!results && !running) return null
 
-  const testCases      = problem.testCases || []
+  testCases = testCases || []
   const isStillRunning = results?.some(r => r.verdict === 'running')
   const allPassed      = results && !isStillRunning && results.every(r => r.verdict === 'pass')
   const passCount      = results?.filter(r => r.verdict === 'pass').length ?? 0
@@ -225,12 +225,22 @@ function ResultsPanel({ results, problem, running }) {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 function getSamples(problem) {
-  const examples = problem.examples || []
+  const examples = (problem.examples || []).filter(e => e.input?.trim())
   if (examples.length > 0)
     return examples.map(ex => ({ input: ex.input, expectedOutput: ex.output }))
   return (problem.testCases || [])
-    .filter(tc => !tc.hidden)
+    .filter(tc => !tc.hidden && tc.input?.trim())
     .map(tc => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+}
+
+// Returns the canonical test case list for submission:
+// uses testCases (non-empty) falling back to examples when testCases are blank
+function getSubmitTcs(problem) {
+  const tcs = (problem.testCases || []).filter(tc => tc.input?.trim())
+  if (tcs.length > 0) return tcs
+  return (problem.examples || [])
+    .filter(e => e.input?.trim())
+    .map(e => ({ input: e.input, expectedOutput: e.output, hidden: false }))
 }
 
 // ── Submissions Panel ─────────────────────────────────────────────────────────
@@ -311,6 +321,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
   const [running, setRunning]           = useState(false)
   const [submitting, setSubmitting]     = useState(false)
   const [results, setResults]           = useState(null)
+  const [submittedTcs, setSubmittedTcs] = useState([])
   const [bottomTab, setBottomTab]       = useState('console')
   const textareaRef                     = useRef(null)
 
@@ -379,10 +390,9 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
   // Submit against ALL test cases (falls back to examples if testCases is empty)
   const handleSubmit = async () => {
     if (!code.trim()) return
-    const testCaseList = problem.testCases || []
-    const examplesAsTc = (problem.examples || []).map(e => ({ input: e.input, expectedOutput: e.output, hidden: false }))
-    const tcs = testCaseList.length > 0 ? testCaseList : examplesAsTc
+    const tcs = getSubmitTcs(problem)
     if (tcs.length === 0) return
+    setSubmittedTcs(tcs)
     setSubmitting(true)
     setBottomTab('results')
     setResults(tcs.map(() => ({ verdict: 'running' })))
@@ -622,7 +632,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
                 {bottomTab === 'results' && (
                   <div className="pe-bottom-content">
                     {results || submitting
-                      ? <ResultsPanel results={results} problem={problem} running={submitting} />
+                      ? <ResultsPanel results={results} testCases={submittedTcs} running={submitting} />
                       : <div style={{ padding: '20px 16px', color: '#2a3a55', fontSize: 13, fontStyle: 'italic' }}>
                           Click ⚡ Submit to run against all test cases
                         </div>
