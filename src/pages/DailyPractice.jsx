@@ -121,9 +121,7 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
     const pct = questions.length ? Math.round((correct / questions.length) * 100) : 0
     setScore({ correct, total: questions.length, pct, timeTaken })
     setSubmitted(true)
-    if (pct >= 80) {
-      onComplete({ format: 'quiz', score: pct, correct, total: questions.length, answers, timeTaken })
-    }
+    onComplete({ format: 'quiz', score: pct, correct, total: questions.length, answers, timeTaken })
   }
 
   const allAnswered = questions.length > 0 && Object.keys(answers).length === questions.length
@@ -215,7 +213,7 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
                 <div style={{ marginTop: 6, fontWeight: 600, fontSize: 15 }}>{score.correct} / {score.total} correct</div>
                 <div style={{ marginTop: 4, fontSize: 13, opacity: .8 }}>⏱ {formatTime(score.timeTaken)}</div>
                 <div style={{ marginTop: 6, fontSize: 13, fontWeight: 700 }}>
-                  {score.pct >= 80 ? '🎉 Passed! Task marked complete.' : '❌ Need 80% to pass. Try again!'}
+                  {score.pct >= 80 ? '🎉 Excellent! Task marked complete.' : '📝 Quiz submitted. This is your final score.'}
                 </div>
               </div>
 
