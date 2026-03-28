@@ -49,13 +49,24 @@ export async function submitCode(sourceCode, languageId, stdin = '') {
   return token
 }
 
+function decodeField(val) {
+  if (!val) return val
+  try { return atob(val) } catch { return val }
+}
+
 export async function getResult(token) {
   const res = await fetch(
-    `${base()}/submissions/${token}?base64_encoded=false&fields=status,stdout,stderr,compile_output,time,memory`,
+    `${base()}/submissions/${token}?base64_encoded=true&fields=status,stdout,stderr,compile_output,time,memory`,
     { headers: USE_RAPIDAPI ? headers() : {} }
   )
   if (!res.ok) throw new Error(`Failed to fetch result (${res.status})`)
-  return res.json()
+  const data = await res.json()
+  return {
+    ...data,
+    stdout: decodeField(data.stdout),
+    stderr: decodeField(data.stderr),
+    compile_output: decodeField(data.compile_output),
+  }
 }
 
 // Submits code and polls until execution completes.

@@ -165,7 +165,7 @@ function ResultsPanel({ results, problem, running }) {
                 <span className="pe-tc-label">Test Case {i + 1}</span>
                 <VerdictChip verdict={r?.verdict} />
               </div>
-              {r && r.verdict !== 'pass' && r.verdict !== 'running' && (
+              {r && r.verdict !== 'running' && (
                 <div className="pe-tc-detail">
                   <div className="pe-tc-io">
                     <div className="pe-io-label">Input</div>
@@ -176,9 +176,11 @@ function ResultsPanel({ results, problem, running }) {
                     <pre className="pe-io-pre">{tc.expectedOutput}</pre>
                   </div>
                   <div className="pe-tc-io">
-                    <div className="pe-io-label" style={{ color: '#ef4444' }}>Got</div>
-                    <pre className="pe-io-pre pe-io-wrong">
-                      {r.stdout || r.stderr || r.compile_output || `(${r.status?.description})`}
+                    <div className="pe-io-label" style={{ color: r.verdict === 'pass' ? '#10b981' : '#ef4444' }}>
+                      Your Output
+                    </div>
+                    <pre className={`pe-io-pre${r.verdict !== 'pass' ? ' pe-io-wrong' : ''}`}>
+                      {r.stdout || r.stderr || r.compile_output || '(no output)'}
                     </pre>
                   </div>
                 </div>
@@ -566,7 +568,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
                                 </span>
                               ) : (
                                 <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12.5, color: 'inherit' }}>
-                                  {sr.stdout || sr.stderr || sr.compile_output || `(${sr.status?.description})`}
+                                  {sr.stdout || sr.stderr || sr.compile_output || '(no output)'}
                                 </pre>
                               )}
                             </div>
