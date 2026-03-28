@@ -51,10 +51,37 @@ const BLANK_PROB = {
 }
 
 
+const JSON_TEMPLATE = `{
+  "title": "Two Sum",
+  "category": "Arrays",
+  "difficulty": "Easy",
+  "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+  "inputFormat": "First line: array elements separated by spaces\\nSecond line: target integer",
+  "outputFormat": "Two space-separated indices",
+  "constraints": "2 <= nums.length <= 10^4\\n-10^9 <= nums[i] <= 10^9",
+  "hint": "Use a hash map to store seen values.",
+  "examples": [
+    { "input": "2 7 11 15\\n9", "output": "0 1", "explanation": "nums[0] + nums[1] = 9" }
+  ],
+  "testCases": [
+    { "input": "2 7 11 15\\n9", "expectedOutput": "0 1", "hidden": false },
+    { "input": "3 2 4\\n6",     "expectedOutput": "1 2", "hidden": true }
+  ],
+  "starterCode": {
+    "71": "# Python\\ndef solution():\\n    pass",
+    "63": "// JavaScript\\nfunction solution() {}",
+    "54": "// C++\\n#include<bits/stdc++.h>\\nusing namespace std;"
+  }
+}`
+
 function CodingProblemsTab({ problems = [], onUpdate }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(BLANK_PROB)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [jsonMode, setJsonMode] = useState(false)
+  const [jsonText, setJsonText] = useState('')
+  const [jsonError, setJsonError] = useState('')
+  const [jsonSuccess, setJsonSuccess] = useState('')
 
   const deepClone = (p) => ({
     ...p,
@@ -78,14 +105,88 @@ function CodingProblemsTab({ problems = [], onUpdate }) {
     onUpdate(problems.filter(p => p.id !== id))
   }
 
+  const handleJsonUpload = () => {
+    setJsonError('')
+    setJsonSuccess('')
+    let parsed
+    try {
+      parsed = JSON.parse(jsonText.trim())
+    } catch (e) {
+      setJsonError('Invalid JSON: ' + e.message)
+      return
+    }
+    // Support single object or array of objects
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    const errors = []
+    items.forEach((item, idx) => {
+      if (!item.title?.trim()) errors.push(`Item ${idx + 1}: missing "title"`)
+      if (!item.description?.trim()) errors.push(`Item ${idx + 1}: missing "description"`)
+    })
+    if (errors.length) { setJsonError(errors.join('\n')); return }
+
+    const newProblems = items.map(item => ({
+      ...BLANK_PROB,
+      ...item,
+      examples:    (item.examples  || [{ input: '', output: '', explanation: '' }]),
+      testCases:   (item.testCases || [{ input: '', expectedOutput: '', hidden: false }]),
+      starterCode: { 71: '', 63: '', 54: '', ...(item.starterCode || {}) },
+      id: Date.now() + Math.random(),
+    }))
+    onUpdate([...problems, ...newProblems])
+    setJsonSuccess(`✅ ${newProblems.length} problem${newProblems.length > 1 ? 's' : ''} added successfully!`)
+    setJsonText('')
+    setTimeout(() => { setJsonMode(false); setJsonSuccess('') }, 1800)
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>
           Coding Problems <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>({problems.length})</span>
         </h2>
-        <Btn onClick={() => { setForm(BLANK_PROB); setEditing('new') }}>+ Add Problem</Btn>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Btn variant="ghost" onClick={() => { setJsonMode(m => !m); setJsonError(''); setJsonSuccess('') }}>
+            {jsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
+          </Btn>
+          <Btn onClick={() => { setForm(BLANK_PROB); setEditing('new'); setJsonMode(false) }}>+ Add Problem</Btn>
+        </div>
       </div>
+
+      {/* JSON paste panel */}
+      {jsonMode && (
+        <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📋 Paste JSON to Upload Problem(s)</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Paste a single object <code>{'{...}'}</code> or an array <code>{'[{...},{...}]'}</code> to add multiple at once.</div>
+            </div>
+            <Btn sm variant="ghost" onClick={() => setJsonText(JSON_TEMPLATE)}>Load Template</Btn>
+          </div>
+
+          <textarea
+            value={jsonText}
+            onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
+            placeholder={'Paste your JSON here…\n\nClick "Load Template" to see the expected format.'}
+            style={{ ...s.inp, minHeight: 260, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
+          />
+
+          {jsonError && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>
+              {jsonError}
+            </div>
+          )}
+          {jsonSuccess && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>
+              {jsonSuccess}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <Btn onClick={handleJsonUpload} variant="success">⬆ Upload Problem(s)</Btn>
+            <Btn variant="ghost" onClick={() => { setJsonMode(false); setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Cancel</Btn>
+          </div>
+        </div>
+      )}
 
       {editing === 'new' && (
         <ActiveCard>
