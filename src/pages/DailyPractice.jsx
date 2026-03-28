@@ -58,9 +58,10 @@ function CodingModal({ task, done, submission, onComplete, onClose }) {
     solvedRef.current = true
     const timeTaken = stop()
     const score = total ? Math.round((passed / total) * 100) : 100
-    const pts = total ? Math.max(1, Math.round((passed / total) * 5)) : 5
+    // 0–10 pts proportional to test cases passed; 0 if nothing passes
+    const pts = total ? Math.round((passed / total) * 10) : 10
     setTestScore({ passed: passed ?? total, total: total ?? 0, pts })
-    onComplete({ format: 'coding', title: task.title, score, passed, total, timeTaken }, pts)
+    onComplete({ format: 'coding', title: task.title, score, passed, total, timeTaken, pts }, pts)
   }
 
   const isCompleted = done || !!testScore
@@ -119,9 +120,11 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
     let correct = 0
     questions.forEach((q, i) => { if (answers[i] === q.answer) correct++ })
     const pct = questions.length ? Math.round((correct / questions.length) * 100) : 0
-    setScore({ correct, total: questions.length, pct, timeTaken })
+    // 1–5 pts proportional to correct answers; minimum 1 for attempting
+    const pts = questions.length ? Math.max(1, Math.round((correct / questions.length) * 5)) : 5
+    setScore({ correct, total: questions.length, pct, timeTaken, pts })
     setSubmitted(true)
-    onComplete({ format: 'quiz', score: pct, correct, total: questions.length, answers, timeTaken })
+    onComplete({ format: 'quiz', score: pct, correct, total: questions.length, answers, timeTaken, pts }, pts)
   }
 
   const allAnswered = questions.length > 0 && Object.keys(answers).length === questions.length
@@ -211,7 +214,8 @@ function QuizModal({ task, done, submission, onComplete, onClose, typeLabel = 'A
               <div className={`dp-score-box ${score.pct >= 80 ? 'pass' : 'fail'}`}>
                 <div className="dp-score-num">{score.pct}%</div>
                 <div style={{ marginTop: 6, fontWeight: 600, fontSize: 15 }}>{score.correct} / {score.total} correct</div>
-                <div style={{ marginTop: 4, fontSize: 13, opacity: .8 }}>⏱ {formatTime(score.timeTaken)}</div>
+                <div style={{ marginTop: 4, fontSize: 13, fontWeight: 700, color: '#fbbf24' }}>+{score.pts} pts earned</div>
+                <div style={{ marginTop: 2, fontSize: 13, opacity: .8 }}>⏱ {formatTime(score.timeTaken)}</div>
                 <div style={{ marginTop: 6, fontSize: 13, fontWeight: 700 }}>
                   {score.pct >= 80 ? '🎉 Excellent! Task marked complete.' : '📝 Quiz submitted. This is your final score.'}
                 </div>
@@ -357,7 +361,7 @@ function TaskCard({ section, tasks, done, submission, currentDay, onComplete }) 
             >
               <span>✅</span>
               <span>
-                Completed · +5 pts
+                Completed · +{submission?.pts ?? 5} pts
                 {submission?.score !== undefined && ` · ${submission.score}%`}
                 {submission?.timeTaken != null && ` · ⏱ ${formatTime(submission.timeTaken)}`}
               </span>
@@ -371,7 +375,7 @@ function TaskCard({ section, tasks, done, submission, currentDay, onComplete }) 
               style={{ marginTop: 12, width: '100%' }}
               onClick={() => setOpen(true)}
             >
-              {isCoding ? 'Open Challenge' : 'Start Quiz'} · +5 pts
+              {isCoding ? 'Open Challenge · up to +10 pts' : section.key === 'revision' ? 'Start Revision · +5 pts' : 'Start Quiz · up to +5 pts'}
             </button>
           )
         )}
