@@ -240,7 +240,7 @@ export function AppProvider({ children }) {
     })
   }
 
-  const LEVEL_ORDER = ['Beginner', 'Beginner+', 'Intermediate', 'Advanced']
+  const LEVEL_ORDER = ['Rookie', 'Explorer', 'Coder', 'Master']
   const levelUp = () => {
     const currentLevel = assessmentResult?.level
     const idx = LEVEL_ORDER.indexOf(currentLevel)

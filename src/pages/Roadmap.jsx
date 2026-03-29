@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 
-const LEVEL_ORDER = ['Beginner', 'Beginner+', 'Intermediate', 'Advanced']
-const LEVEL_LABELS = { 'Beginner+': 'Beginner+', 'Intermediate': 'Intermediate', 'Advanced': 'Advanced' }
-const NEXT_LEVEL_COLOR = { 'Beginner+': '#6366f1', 'Intermediate': '#f59e0b', 'Advanced': '#ef4444' }
+const LEVEL_ORDER = ['Rookie', 'Explorer', 'Coder', 'Master']
+const NEXT_LEVEL_COLOR = { 'Explorer': '#6366f1', 'Coder': '#f59e0b', 'Master': '#ef4444' }
 
-const LEVEL_MAP   = { 'Beginner': 'beginner', 'Beginner+': 'beginnerPlus', 'Intermediate': 'intermediate', 'Advanced': 'advanced' }
+const LEVEL_MAP   = { 'Rookie': 'beginner', 'Explorer': 'beginnerPlus', 'Coder': 'intermediate', 'Master': 'advanced' }
 const LEVEL_COLOR = { beginner: '#10b981', beginnerPlus: '#6366f1', intermediate: '#f59e0b', advanced: '#ef4444' }
 
 const PHASE_ACCENT = [

@@ -10,12 +10,12 @@ function bestAttempt(attempts = []) {
 }
 
 const LEVEL_COLOR = {
-  Beginner:     { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },
-  Intermediate: { bg: '#e0e7ff', text: '#3730a3', border: '#a5b4fc' },
-  Advanced:     { bg: '#fce7f3', text: '#9d174d', border: '#f9a8d4' },
+  Rookie:   { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },
+  Coder:    { bg: '#e0e7ff', text: '#3730a3', border: '#a5b4fc' },
+  Master:   { bg: '#fce7f3', text: '#9d174d', border: '#f9a8d4' },
 }
 const LEVEL_BADGE_CLASS = {
-  Beginner: 'badge-success', Intermediate: 'badge-primary', Advanced: 'badge-danger',
+  Rookie: 'badge-success', Coder: 'badge-primary', Master: 'badge-danger',
 }
 
 // ── Topic card ────────────────────────────────────────────────────────────────

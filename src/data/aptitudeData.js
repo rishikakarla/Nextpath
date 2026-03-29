@@ -1,5 +1,5 @@
 // Aptitude Training Data — modules + quizzes per topic
-// level: 'Beginner' | 'Intermediate' | 'Advanced'
+// level: 'Rookie' | 'Coder' | 'Master'
 
 export const APTITUDE_TOPICS = [
   // ── BEGINNER ──────────────────────────────────────────────────────────────
@@ -7,7 +7,7 @@ export const APTITUDE_TOPICS = [
     id: 'number-systems',
     title: 'Number Systems',
     icon: '🔢',
-    level: 'Beginner',
+    level: 'Rookie',
     description: 'Understand types of numbers, divisibility rules, HCF and LCM.',
     module: {
       concepts: [
@@ -72,7 +72,7 @@ export const APTITUDE_TOPICS = [
     id: 'percentages',
     title: 'Percentages',
     icon: '%',
-    level: 'Beginner',
+    level: 'Rookie',
     description: 'Master percentage calculations, increase/decrease and comparisons.',
     module: {
       concepts: [
@@ -132,7 +132,7 @@ export const APTITUDE_TOPICS = [
     id: 'ratio-proportion',
     title: 'Ratio & Proportion',
     icon: '⚖️',
-    level: 'Beginner',
+    level: 'Rookie',
     description: 'Learn ratios, proportions and their real-world applications.',
     module: {
       concepts: [
@@ -192,7 +192,7 @@ export const APTITUDE_TOPICS = [
     id: 'simple-compound-interest',
     title: 'Simple & Compound Interest',
     icon: '💰',
-    level: 'Beginner',
+    level: 'Rookie',
     description: 'Calculate interest, understand the power of compounding.',
     module: {
       concepts: [
@@ -253,7 +253,7 @@ export const APTITUDE_TOPICS = [
     id: 'time-work',
     title: 'Time & Work',
     icon: '🔧',
-    level: 'Intermediate',
+    level: 'Coder',
     description: 'Solve work-rate problems, pipes & cisterns, and efficiency questions.',
     module: {
       concepts: [
@@ -313,7 +313,7 @@ export const APTITUDE_TOPICS = [
     id: 'speed-distance-time',
     title: 'Speed, Distance & Time',
     icon: '🚀',
-    level: 'Intermediate',
+    level: 'Coder',
     description: 'Tackle trains, boats, relative speed and average speed problems.',
     module: {
       concepts: [
@@ -373,7 +373,7 @@ export const APTITUDE_TOPICS = [
     id: 'averages-mixtures',
     title: 'Averages & Mixtures',
     icon: '🧪',
-    level: 'Intermediate',
+    level: 'Coder',
     description: 'Average calculations and the alligation method for mixing quantities.',
     module: {
       concepts: [
@@ -433,7 +433,7 @@ export const APTITUDE_TOPICS = [
     id: 'profit-loss',
     title: 'Profit, Loss & Discount',
     icon: '🏷️',
-    level: 'Intermediate',
+    level: 'Coder',
     description: 'Cost price, selling price, profit percentage, and discount calculations.',
     module: {
       concepts: [
@@ -494,7 +494,7 @@ export const APTITUDE_TOPICS = [
     id: 'permutation-combination',
     title: 'Permutation & Combination',
     icon: '🎲',
-    level: 'Advanced',
+    level: 'Master',
     description: 'Counting principles, arrangements, selections and their applications.',
     module: {
       concepts: [
@@ -554,7 +554,7 @@ export const APTITUDE_TOPICS = [
     id: 'probability',
     title: 'Probability',
     icon: '🎯',
-    level: 'Advanced',
+    level: 'Master',
     description: 'Events, conditional probability, independent events and expectation.',
     module: {
       concepts: [
@@ -614,7 +614,7 @@ export const APTITUDE_TOPICS = [
     id: 'data-interpretation',
     title: 'Data Interpretation',
     icon: '📊',
-    level: 'Advanced',
+    level: 'Master',
     description: 'Read and analyse tables, bar charts, pie charts and line graphs.',
     module: {
       concepts: [
@@ -674,7 +674,7 @@ export const APTITUDE_TOPICS = [
     id: 'logical-reasoning',
     title: 'Logical Reasoning',
     icon: '🧠',
-    level: 'Advanced',
+    level: 'Master',
     description: 'Syllogisms, blood relations, coding-decoding and series completion.',
     module: {
       concepts: [
@@ -737,13 +737,13 @@ export const APTITUDE_TOPICS = [
 ]
 
 // Map level names to display order
-export const LEVEL_ORDER = ['Beginner', 'Intermediate', 'Advanced']
+export const LEVEL_ORDER = ['Rookie', 'Coder', 'Master']
 
 // Determine recommended level from assessmentResult
 export function getRecommendedLevel(assessmentResult) {
-  if (!assessmentResult) return 'Beginner'
+  if (!assessmentResult) return 'Rookie'
   const { level } = assessmentResult
-  if (level === 'Advanced') return 'Advanced'
-  if (level === 'Intermediate') return 'Intermediate'
-  return 'Beginner'
+  if (level === 'Master') return 'Master'
+  if (level === 'Coder') return 'Coder'
+  return 'Rookie'
 }

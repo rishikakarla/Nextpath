@@ -81,7 +81,7 @@ export default function TopicPage() {
   const { progress, toggleTopic, quizAttempts, saveQuizAttempt, assessmentResult } = useApp()
   const { roadmapPhases: roadmapByLevel } = useContent()
 
-  const LEVEL_MAP = { 'Beginner': 'beginner', 'Beginner+': 'beginnerPlus', 'Intermediate': 'intermediate', 'Advanced': 'advanced' }
+  const LEVEL_MAP = { 'Rookie': 'beginner', 'Explorer': 'beginnerPlus', 'Coder': 'intermediate', 'Master': 'advanced' }
   const levelKey = assessmentResult?.level ? (LEVEL_MAP[assessmentResult.level] || 'beginner') : null
   const roadmapPhases = levelKey ? (roadmapByLevel[levelKey] || []) : Object.values(roadmapByLevel).flat()
 

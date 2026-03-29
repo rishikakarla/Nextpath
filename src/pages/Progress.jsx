@@ -7,8 +7,7 @@ const LEVELS = [
   { min: 0,    max: 99,   name: 'Rookie',   color: '#94a3b8', next: 100  },
   { min: 100,  max: 299,  name: 'Explorer', color: '#10b981', next: 300  },
   { min: 300,  max: 599,  name: 'Coder',    color: '#6366f1', next: 600  },
-  { min: 600,  max: 999,  name: 'Ninja',    color: '#8b5cf6', next: 1000 },
-  { min: 1000, max: Infinity, name: 'Master', color: '#f59e0b', next: null },
+  { min: 600,  max: Infinity, name: 'Master', color: '#f59e0b', next: null },
 ]
 const getLvl = pts => LEVELS.find(l => pts >= l.min && pts <= l.max) || LEVELS[0]
 

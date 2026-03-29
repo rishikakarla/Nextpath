@@ -5,10 +5,10 @@ import { useContent } from '../context/ContentContext'
 
 function getResult(score, total) {
   const pct = (score / total) * 100
-  if (pct >= 80) return { level: 'Advanced', track: 'Fast Track', weakArea: 'Dynamic Programming', color: '#10b981' }
-  if (pct >= 60) return { level: 'Intermediate', track: 'Standard Track', weakArea: 'Trees & Graphs', color: '#6366f1' }
-  if (pct >= 40) return { level: 'Beginner+', track: 'Foundation+', weakArea: 'Problem Solving', color: '#f59e0b' }
-  return { level: 'Beginner', track: 'Foundation', weakArea: 'Programming Basics', color: '#ef4444' }
+  if (pct >= 80) return { level: 'Master',   track: 'Fast Track',   weakArea: 'Dynamic Programming', color: '#10b981' }
+  if (pct >= 60) return { level: 'Coder',    track: 'Standard Track', weakArea: 'Trees & Graphs',   color: '#6366f1' }
+  if (pct >= 40) return { level: 'Explorer', track: 'Foundation+',  weakArea: 'Problem Solving',    color: '#f59e0b' }
+  return { level: 'Rookie',   track: 'Foundation',   weakArea: 'Programming Basics',  color: '#ef4444' }
 }
 
 export default function Assessment() {

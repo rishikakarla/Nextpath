@@ -481,10 +481,10 @@ const BLANK_TOPIC = {
 }
 
 const ROADMAP_LEVELS = [
-  { key: 'beginner',     label: 'Beginner',      color: '#10b981' },
-  { key: 'beginnerPlus', label: 'Beginner+',     color: '#6366f1' },
-  { key: 'intermediate', label: 'Intermediate',  color: '#f59e0b' },
-  { key: 'advanced',     label: 'Advanced',      color: '#ef4444' },
+  { key: 'beginner',     label: 'Rookie',    color: '#10b981' },
+  { key: 'beginnerPlus', label: 'Explorer',  color: '#6366f1' },
+  { key: 'intermediate', label: 'Coder',     color: '#f59e0b' },
+  { key: 'advanced',     label: 'Master',    color: '#ef4444' },
 ]
 
 function RoadmapTab({ roadmapByLevel = {}, onUpdate }) {
@@ -1235,9 +1235,9 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
 }
 
 // ── Aptitude Training ─────────────────────────────────────────────────────────
-const AT_LEVELS = ['Beginner', 'Intermediate', 'Advanced']
+const AT_LEVELS = ['Rookie', 'Coder', 'Master']
 const BLANK_AT_TOPIC = {
-  title: '', icon: '📚', level: 'Beginner', description: '',
+  title: '', icon: '📚', level: 'Rookie', description: '',
   module: { concepts: [{ heading: '', body: '' }] },
   quiz: [{ q: '', options: ['', '', '', ''], answer: 0, explanation: '' }],
 }
@@ -1341,8 +1341,8 @@ function AptitudeTab({ topics = [], onUpdate }) {
                 <span style={{ flex: 1, fontWeight: 600, fontSize: 14, minWidth: 140 }}>{topic.title}</span>
                 <span style={{
                   fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20,
-                  background: topic.level === 'Beginner' ? '#d1fae5' : topic.level === 'Intermediate' ? '#e0e7ff' : '#fce7f3',
-                  color: topic.level === 'Beginner' ? '#065f46' : topic.level === 'Intermediate' ? '#3730a3' : '#9d174d',
+                  background: topic.level === 'Rookie' ? '#d1fae5' : topic.level === 'Coder' ? '#e0e7ff' : '#fce7f3',
+                  color: topic.level === 'Rookie' ? '#065f46' : topic.level === 'Coder' ? '#3730a3' : '#9d174d',
                 }}>
                   {topic.level}
                 </span>
