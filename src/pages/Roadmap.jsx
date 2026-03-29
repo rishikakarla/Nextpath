@@ -6,12 +6,12 @@ import { useContent } from '../context/ContentContext'
 const LEVEL_ORDER     = ['Rookie', 'Explorer', 'Coder', 'Master']
 const NEXT_LEVEL_COLOR = { Explorer: '#6366f1', Coder: '#f59e0b', Master: '#ef4444' }
 const LEVEL_MAP        = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'intermediate', Master: 'advanced' }
-const LEVEL_COLOR      = { beginner: '#10b981', beginnerPlus: '#6366f1', intermediate: '#f59e0b', advanced: '#ef4444' }
+const LEVEL_COLOR      = { beginner: '#6366f1', beginnerPlus: '#8b5cf6', intermediate: '#f59e0b', advanced: '#ef4444' }
 
 // World themes per phase index
 const WORLDS = [
-  { emoji: '🌿', name: 'World',   from: '#166534', mid: '#16a34a', to: '#4ade80', light: '#dcfce7' },
-  { emoji: '⚡', name: 'World',   from: '#3730a3', mid: '#6366f1', to: '#a5b4fc', light: '#eef2ff' },
+  { emoji: '🌌', name: 'World',   from: '#1e1b4b', mid: '#6366f1', to: '#a5b4fc', light: '#eef2ff' },
+  { emoji: '⚡', name: 'World',   from: '#3730a3', mid: '#4f46e5', to: '#818cf8', light: '#e0e7ff' },
   { emoji: '🌊', name: 'World',   from: '#0e7490', mid: '#06b6d4', to: '#67e8f9', light: '#ecfeff' },
   { emoji: '🔥', name: 'World',   from: '#b45309', mid: '#f59e0b', to: '#fde68a', light: '#fffbeb' },
   { emoji: '🌟', name: 'World',   from: '#7e22ce', mid: '#a855f7', to: '#d8b4fe', light: '#faf5ff' },
@@ -21,7 +21,7 @@ function topicType(topic) {
   if (topic.quiz?.length > 0 && topic.resources?.length > 0) return { label: 'Quiz + Video', icon: '🎯', color: '#8b5cf6' }
   if (topic.quiz?.length > 0) return { label: `${topic.quiz.length}Q Quiz`, icon: '📝', color: '#6366f1' }
   if (topic.resources?.length > 0) return { label: 'Video', icon: '▶', color: '#ef4444' }
-  return { label: 'Read', icon: '📖', color: '#10b981' }
+  return { label: 'Read', icon: '📖', color: '#6366f1' }
 }
 
 function Stars({ done, total }) {
@@ -47,13 +47,13 @@ function TopicNode({ topic, idx, isDone, isCurrent, canOpen, world, onClick }) {
       {/* Circle badge */}
       <div className="gm-node-badge" style={{
         background: isDone
-          ? 'linear-gradient(135deg,#10b981,#34d399)'
+          ? 'linear-gradient(135deg,#6366f1,#818cf8)'
           : isCurrent
           ? `linear-gradient(135deg,${world.mid},${world.to})`
           : canOpen
           ? `linear-gradient(135deg,${world.mid}88,${world.to}66)`
           : 'linear-gradient(135deg,#334155,#475569)',
-        boxShadow: isCurrent ? `0 0 20px ${world.mid}66` : isDone ? '0 0 14px #10b98144' : 'none',
+        boxShadow: isCurrent ? `0 0 20px ${world.mid}66` : isDone ? '0 0 14px #6366f144' : 'none',
       }}>
         {isDone ? '✓' : !canOpen ? '🔒' : isCurrent ? '▶' : idx + 1}
       </div>
