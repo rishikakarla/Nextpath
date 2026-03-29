@@ -9,73 +9,86 @@ function bestAttempt(attempts = []) {
   return attempts.reduce((best, a) => (a.score > (best?.score ?? -1) ? a : best), null)
 }
 
-const LEVEL_COLOR = {
-  Rookie:   { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },
-  Coder:    { bg: '#e0e7ff', text: '#3730a3', border: '#a5b4fc' },
-  Master:   { bg: '#fce7f3', text: '#9d174d', border: '#f9a8d4' },
-}
-const LEVEL_BADGE_CLASS = {
-  Rookie: 'badge-success', Coder: 'badge-primary', Master: 'badge-danger',
+const LEVEL_META = {
+  Rookie: { color: '#10b981', light: '#d1fae5', border: '#6ee7b7', label: 'Beginner', icon: '🟢', gradient: 'linear-gradient(135deg,#10b981,#06b6d4)' },
+  Coder:  { color: '#6366f1', light: '#eef2ff', border: '#a5b4fc', label: 'Intermediate', icon: '🔷', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
+  Master: { color: '#ef4444', light: '#fef2f2', border: '#fca5a5', label: 'Advanced', icon: '🔴', gradient: 'linear-gradient(135deg,#ef4444,#f59e0b)' },
 }
 
-// ── Topic card ────────────────────────────────────────────────────────────────
+// ── Topic Card ────────────────────────────────────────────────────────────────
 function TopicCard({ topic, attempts, recommended, onClick }) {
-  const best    = bestAttempt(attempts)
-  const pct     = best ? Math.round(best.score) : null
-  const solved  = pct !== null && pct >= 60
-  const lc      = LEVEL_COLOR[topic.level]
+  const best   = bestAttempt(attempts)
+  const pct    = best ? Math.round(best.score) : null
+  const solved = pct !== null && pct >= 60
+  const lm     = LEVEL_META[topic.level]
 
   return (
     <div
-      className={`at-card${solved ? ' at-card-done' : ''}${recommended ? ' at-card-recommended' : ''}`}
+      className={`at-card${solved ? ' at-card-done' : ''}${recommended ? ' at-card-rec' : ''}`}
       onClick={() => onClick(topic)}
-      style={{ '--lc-bg': lc.bg, '--lc-border': lc.border }}
     >
-      {recommended && <div className="at-recommended-tag">⭐ Recommended for you</div>}
+      {recommended && <div className="at-rec-ribbon">⭐ Recommended</div>}
 
-      <div className="at-card-top">
-        <span className="at-card-icon">{topic.icon}</span>
-        <span className={`badge ${LEVEL_BADGE_CLASS[topic.level]}`}>{topic.level}</span>
+      {/* Colored header strip */}
+      <div className="at-card-header" style={{ background: lm.gradient }}>
+        <span className="at-card-big-icon">{topic.icon}</span>
+        <span className="at-card-level-pill" style={{ background: 'rgba(255,255,255,.2)', color: '#fff' }}>
+          {topic.level}
+        </span>
+        {solved && <div className="at-card-solved-ring">✓</div>}
       </div>
 
-      <div className="at-card-title">{topic.title}</div>
-      <div className="at-card-desc">{topic.description}</div>
+      <div className="at-card-body">
+        <div className="at-card-title">{topic.title}</div>
+        <div className="at-card-desc">{topic.description}</div>
 
-      <div className="at-card-footer">
-        <span className="at-card-meta">{topic.quiz.length} questions</span>
-        {pct !== null ? (
-          <span className={`at-score-badge ${solved ? 'pass' : 'fail'}`}>
-            Best: {pct}%
-          </span>
-        ) : (
-          <span className="at-score-badge untried">Not attempted</span>
+        <div className="at-card-footer">
+          <span className="at-card-qcount">📝 {topic.quiz.length} questions</span>
+          {pct !== null ? (
+            <span className={`at-score-pill${solved ? ' pass' : ' warn'}`}>
+              {solved ? '✓' : '~'} {pct}%
+            </span>
+          ) : (
+            <span className="at-score-pill untried">Not tried</span>
+          )}
+        </div>
+
+        {pct !== null && (
+          <div className="at-card-bar">
+            <div
+              className="at-card-bar-fill"
+              style={{
+                width: pct + '%',
+                background: solved ? '#10b981' : '#f59e0b',
+              }}
+            />
+          </div>
         )}
       </div>
-
-      {pct !== null && (
-        <div className="at-progress-bar-wrap">
-          <div className="at-progress-bar-fill" style={{ width: pct + '%', background: solved ? '#10b981' : '#f59e0b' }} />
-        </div>
-      )}
     </div>
   )
 }
 
-// ── Learn tab ─────────────────────────────────────────────────────────────────
+// ── Learn Tab ─────────────────────────────────────────────────────────────────
 function LearnTab({ topic }) {
   return (
     <div className="at-learn">
       {topic.module.concepts.map((c, i) => (
         <div key={i} className="at-concept-block">
-          <div className="at-concept-heading">{c.heading}</div>
-          <pre className="at-concept-body">{c.body}</pre>
+          <div className="at-concept-num">
+            <span>{i + 1}</span>
+          </div>
+          <div className="at-concept-content">
+            <div className="at-concept-heading">{c.heading}</div>
+            <pre className="at-concept-body">{c.body}</pre>
+          </div>
         </div>
       ))}
     </div>
   )
 }
 
-// ── Quiz tab ──────────────────────────────────────────────────────────────────
+// ── Quiz Tab ──────────────────────────────────────────────────────────────────
 function QuizTab({ topic, onComplete }) {
   const [answers, setAnswers]     = useState({})
   const [submitted, setSubmitted] = useState(false)
@@ -100,28 +113,39 @@ function QuizTab({ topic, onComplete }) {
 
   const reset = () => { setAnswers({}); setSubmitted(false); setScore(null) }
 
+  const answered = Object.keys(answers).length
+
   return (
     <div className="at-quiz">
       {score && (
-        <div className={`at-quiz-result ${score.pct >= 60 ? 'pass' : 'fail'}`}>
-          <div className="at-quiz-result-score">{score.pct}%</div>
-          <div className="at-quiz-result-label">
+        <div className={`at-result-box${score.pct >= 60 ? ' pass' : ' fail'}`}>
+          <div className="at-result-score">{score.pct}%</div>
+          <div className="at-result-detail">
             {score.correct}/{score.total} correct &nbsp;·&nbsp;
-            {score.pct >= 60 ? '✅ Passed' : '❌ Keep practising'}
+            {score.pct >= 60 ? '✅ Passed!' : '❌ Keep practising'}
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={reset} style={{ marginTop: 8 }}>Try Again</button>
+          <button className="btn btn-ghost btn-sm" onClick={reset} style={{ marginTop: 10 }}>
+            🔄 Try Again
+          </button>
         </div>
       )}
 
       {questions.map((q, qi) => {
-        const chosen   = answers[qi]
-        const isRight  = submitted && chosen === q.answer
-        const isWrong  = submitted && chosen !== undefined && chosen !== q.answer
+        const chosen  = answers[qi]
+        const isRight = submitted && chosen === q.answer
+        const isWrong = submitted && chosen !== undefined && chosen !== q.answer
 
         return (
-          <div key={qi} className={`at-question${submitted ? ' at-question-done' : ''}`}>
-            <div className="at-question-num">Q{qi + 1}</div>
-            <div className="at-question-text">{q.q}</div>
+          <div key={qi} className={`at-question${submitted ? ' done' : ''}`}>
+            <div className="at-q-header">
+              <span className="at-q-num">Q{qi + 1}</span>
+              {submitted && (
+                <span className={`at-q-status${isRight ? ' correct' : ' wrong'}`}>
+                  {isRight ? '✓ Correct' : '✗ Wrong'}
+                </span>
+              )}
+            </div>
+            <div className="at-q-text">{q.q}</div>
 
             <div className="at-options">
               {q.options.map((opt, oi) => {
@@ -143,7 +167,8 @@ function QuizTab({ topic, onComplete }) {
 
             {submitted && (
               <div className="at-explanation">
-                {isRight ? '✅' : '❌'} <strong>Explanation:</strong> {q.explanation}
+                <span className="at-expl-icon">{isRight ? '💡' : '📖'}</span>
+                <span><strong>Explanation:</strong> {q.explanation}</span>
               </div>
             )}
           </div>
@@ -152,12 +177,14 @@ function QuizTab({ topic, onComplete }) {
 
       {!submitted && (
         <button
-          className="btn btn-primary"
-          style={{ width: '100%', padding: 12, marginTop: 8 }}
+          className="at-submit-btn"
+          disabled={answered < questions.length}
           onClick={submit}
-          disabled={Object.keys(answers).length < questions.length}
         >
-          Submit Quiz ({Object.keys(answers).length}/{questions.length} answered)
+          Submit Quiz
+          <span className="at-submit-progress">
+            {answered}/{questions.length} answered
+          </span>
         </button>
       )}
     </div>
@@ -167,37 +194,44 @@ function QuizTab({ topic, onComplete }) {
 // ── Topic Modal ───────────────────────────────────────────────────────────────
 function TopicModal({ topic, attempts, onComplete, onClose }) {
   const [tab, setTab] = useState('learn')
-  const lc = LEVEL_COLOR[topic.level]
+  const lm   = LEVEL_META[topic.level]
+  const best = bestAttempt(attempts)
 
   return (
     <div className="at-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="at-modal">
-        {/* Header */}
-        <div className="at-modal-header" style={{ borderBottom: `3px solid ${lc.border}` }}>
-          <div className="at-modal-icon">{topic.icon}</div>
-          <div className="at-modal-meta">
-            <div className="at-modal-title">{topic.title}</div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
-              <span className={`badge ${LEVEL_BADGE_CLASS[topic.level]}`}>{topic.level}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{topic.quiz.length} questions</span>
-              {bestAttempt(attempts) && (
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  Best: {Math.round(bestAttempt(attempts).score)}%
-                  &nbsp;·&nbsp;{attempts.length} attempt{attempts.length !== 1 ? 's' : ''}
-                </span>
+        {/* Modal Header */}
+        <div className="at-modal-hdr" style={{ background: lm.gradient }}>
+          <div className="at-modal-hdr-left">
+            <span className="at-modal-big-icon">{topic.icon}</span>
+            <div>
+              <div className="at-modal-level-tag">{lm.icon} {topic.level} · {topic.quiz.length} questions</div>
+              <div className="at-modal-title">{topic.title}</div>
+              {best && (
+                <div className="at-modal-best">
+                  Best score: {Math.round(best.score)}% · {attempts.length} attempt{attempts.length !== 1 ? 's' : ''}
+                </div>
               )}
             </div>
           </div>
-          <button className="dp-modal-close" onClick={onClose}>✕</button>
+          <button className="at-modal-close" onClick={onClose}>✕</button>
         </div>
 
         {/* Tabs */}
         <div className="at-tabs">
-          <button className={`at-tab${tab === 'learn' ? ' active' : ''}`} onClick={() => setTab('learn')}>
+          <button
+            className={`at-tab${tab === 'learn' ? ' active' : ''}`}
+            style={tab === 'learn' ? { borderBottomColor: lm.color, color: lm.color } : {}}
+            onClick={() => setTab('learn')}
+          >
             📖 Learn
           </button>
-          <button className={`at-tab${tab === 'quiz' ? ' active' : ''}`} onClick={() => setTab('quiz')}>
-            📝 Quiz
+          <button
+            className={`at-tab${tab === 'quiz' ? ' active' : ''}`}
+            style={tab === 'quiz' ? { borderBottomColor: lm.color, color: lm.color } : {}}
+            onClick={() => setTab('quiz')}
+          >
+            🧠 Quiz
           </button>
         </div>
 
@@ -219,7 +253,7 @@ export default function AptitudeTraining() {
   const { aptitudeTopics } = useContent()
 
   const [levelFilter, setLevelFilter] = useState('All')
-  const [modal, setModal]             = useState(null) // topic object
+  const [modal, setModal]             = useState(null)
 
   const recommended = getRecommendedLevel(assessmentResult)
 
@@ -230,7 +264,6 @@ export default function AptitudeTraining() {
     [levelFilter, aptitudeTopics]
   )
 
-  // overall stats
   const totalTopics    = aptitudeTopics.length
   const attemptedCount = aptitudeTopics.filter(t => (quizAttempts[t.id] || []).length > 0).length
   const passedCount    = aptitudeTopics.filter(t => {
@@ -244,71 +277,116 @@ export default function AptitudeTraining() {
 
   return (
     <div>
-      {/* Page header */}
-      <div className="page-header">
-        <h1 className="page-title">Aptitude Training</h1>
-        <p className="page-subtitle">
-          Level-based modules and quizzes to sharpen your aptitude skills
-        </p>
+      {/* ── Hero Banner ── */}
+      <div className="at-hero">
+        {/* Decorative math symbols */}
+        <div className="at-hero-symbols" aria-hidden="true">
+          <span>Σ</span><span>π</span><span>∞</span><span>√</span>
+          <span>÷</span><span>∧</span><span>∫</span><span>Δ</span>
+          <span>%</span><span>∑</span><span>≠</span><span>∴</span>
+        </div>
+
+        <div className="at-hero-left">
+          <div className="at-hero-eyebrow">🧮 Quantitative Reasoning · Logic</div>
+          <div className="at-hero-title">Aptitude Training</div>
+          <div className="at-hero-sub">Sharpen your maths and logical thinking skills</div>
+          {assessmentResult?.level && (
+            <div className="at-hero-badge" style={{ background: LEVEL_META[assessmentResult.level]?.color + '33' || '#6366f133', borderColor: LEVEL_META[assessmentResult.level]?.color + '66' || '#6366f166', color: LEVEL_META[assessmentResult.level]?.color || '#6366f1' }}>
+              <span className="at-hero-badge-dot" style={{ background: LEVEL_META[assessmentResult.level]?.color || '#6366f1' }} />
+              {assessmentResult.level} Level
+            </div>
+          )}
+        </div>
+
+        <div className="at-hero-stats">
+          {[
+            { val: totalTopics,    lbl: 'Topics',    icon: '📚' },
+            { val: attemptedCount, lbl: 'Attempted',  icon: '✏️' },
+            { val: passedCount,    lbl: 'Passed',     icon: '✅' },
+            { val: assessmentResult?.level || '—', lbl: 'Your Level', icon: '🎯' },
+          ].map(s => (
+            <div key={s.lbl} className="at-hero-stat">
+              <div className="at-hero-stat-icon">{s.icon}</div>
+              <div className="at-hero-stat-val">{s.val}</div>
+              <div className="at-hero-stat-lbl">{s.lbl}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="at-stats-row">
-        <div className="at-stat-card">
-          <div className="at-stat-num">{totalTopics}</div>
-          <div className="at-stat-label">Topics</div>
-        </div>
-        <div className="at-stat-card">
-          <div className="at-stat-num">{attemptedCount}</div>
-          <div className="at-stat-label">Attempted</div>
-        </div>
-        <div className="at-stat-card">
-          <div className="at-stat-num" style={{ color: 'var(--success)' }}>{passedCount}</div>
-          <div className="at-stat-label">Passed (≥60%)</div>
-        </div>
-        <div className="at-stat-card">
-          <div className="at-stat-num" style={{ color: 'var(--primary)' }}>
-            {assessmentResult ? assessmentResult.level : '—'}
-          </div>
-          <div className="at-stat-label">Your Level</div>
-        </div>
+      {/* ── Level Filter ── */}
+      <div className="at-filter-bar">
+        <button
+          className={`at-filter-btn${levelFilter === 'All' ? ' active' : ''}`}
+          onClick={() => setLevelFilter('All')}
+        >
+          All Topics
+          <span className="at-filter-count">{aptitudeTopics.length}</span>
+        </button>
+        {LEVEL_ORDER.map(l => {
+          const lm = LEVEL_META[l]
+          const count = aptitudeTopics.filter(t => t.level === l).length
+          return (
+            <button
+              key={l}
+              className={`at-filter-btn${levelFilter === l ? ' active' : ''}`}
+              style={levelFilter === l ? { borderColor: lm.color, color: lm.color, background: lm.light } : {}}
+              onClick={() => setLevelFilter(l)}
+            >
+              {lm.icon} {l}
+              <span className="at-filter-count">{count}</span>
+              {l === recommended && <span className="at-filter-rec">★</span>}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Level filter */}
-      <div className="category-tabs" style={{ marginBottom: 24 }}>
-        {['All', ...LEVEL_ORDER].map(l => (
-          <button
-            key={l}
-            className={`category-tab${levelFilter === l ? ' active' : ''}`}
-            onClick={() => setLevelFilter(l)}
-          >
-            {l}
-            {l !== 'All' && (
-              <span style={{ marginLeft: 4, opacity: .7 }}>
-                ({aptitudeTopics.filter(t => t.level === l).length})
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Topic grid */}
+      {/* ── Topic Sections ── */}
       {LEVEL_ORDER.filter(l => levelFilter === 'All' || levelFilter === l).map(level => {
         const topics = filtered.filter(t => t.level === level)
         if (!topics.length) return null
+        const lm = LEVEL_META[level]
+        const levelPassed = topics.filter(t => {
+          const b = bestAttempt(quizAttempts[t.id])
+          return b && b.score >= 60
+        }).length
+
         return (
-          <div key={level} className="at-level-section">
-            <div className="at-level-heading">
-              <span
-                className="at-level-dot"
-                style={{ background: LEVEL_COLOR[level].border }}
-              />
-              {level}
-              <span className="at-level-count">{topics.length} topics</span>
-              {level === recommended && (
-                <span className="at-level-rec-tag">⭐ Your recommended level</span>
-              )}
+          <div key={level} className="at-section">
+            {/* Section header */}
+            <div className="at-section-hdr">
+              <div className="at-section-hdr-left">
+                <div className="at-section-accent" style={{ background: lm.gradient }} />
+                <div>
+                  <div className="at-section-title">
+                    {lm.icon} {level}
+                    {level === recommended && (
+                      <span className="at-section-rec-tag" style={{ background: lm.light, color: lm.color, borderColor: lm.border }}>
+                        ⭐ Recommended for you
+                      </span>
+                    )}
+                  </div>
+                  <div className="at-section-meta" style={{ color: lm.color }}>
+                    {lm.label} · {topics.length} topics · {levelPassed} passed
+                  </div>
+                </div>
+              </div>
+              <div className="at-section-progress-ring">
+                <svg width="44" height="44" viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="17" fill="none" stroke={lm.border} strokeWidth="4"/>
+                  <circle cx="22" cy="22" r="17" fill="none" stroke={lm.color} strokeWidth="4"
+                    strokeDasharray={`${2 * Math.PI * 17 * (topics.length ? levelPassed / topics.length : 0) * 100 / 100} ${2 * Math.PI * 17}`}
+                    strokeLinecap="round" transform="rotate(-90 22 22)"
+                    style={{ transition: 'stroke-dasharray .8s ease' }}
+                  />
+                </svg>
+                <span className="at-section-ring-pct" style={{ color: lm.color }}>
+                  {topics.length ? Math.round((levelPassed / topics.length) * 100) : 0}%
+                </span>
+              </div>
             </div>
+
+            {/* Cards grid */}
             <div className="at-grid">
               {topics.map(topic => (
                 <TopicCard
@@ -324,7 +402,7 @@ export default function AptitudeTraining() {
         )
       })}
 
-      {/* Modal */}
+      {/* ── Modal ── */}
       {modal && (
         <TopicModal
           topic={modal}
