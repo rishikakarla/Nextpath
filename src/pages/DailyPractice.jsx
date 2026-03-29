@@ -643,44 +643,24 @@ export default function DailyPractice() {
       <div className="dp-hero">
         <div className="dp-hero-left">
           <div className="dp-hero-eyebrow">Daily Practice</div>
-          <h1 className="dp-hero-title">
+          <div className="dp-hero-title">
             Day <span className="dp-hero-day">{currentDay}</span>
-          </h1>
-          <p className="dp-hero-sub">Complete all 3 quests to keep your streak alive</p>
-
-          {/* XP Bar */}
-          <div className="dp-hero-xp-wrap">
-            <div className="dp-hero-xp-label">
-              <span>⚡ Daily XP</span>
-              <span className="dp-hero-xp-count">{xpEarned} / {MAX_XP}</span>
-            </div>
-            <div className="dp-hero-xp-track">
-              <div className="dp-hero-xp-fill" style={{ width: `${xpPct}%` }} />
-              {xpPct > 0 && <div className="dp-hero-xp-glow" style={{ left: `${xpPct}%` }} />}
-            </div>
           </div>
+          <div className="dp-hero-sub">Complete all 3 tasks to maintain your streak</div>
+          {allDone && <div className="dp-hero-badge">🎉 All done for today!</div>}
         </div>
-
-        <div className="dp-hero-right">
-          {/* Streak */}
-          <div className="dp-streak-box">
-            <div className="dp-streak-fire">🔥</div>
-            <div className="dp-streak-count">{streak.count}</div>
-            <div className="dp-streak-label">day streak</div>
-          </div>
-
-          {/* Quest progress circles */}
-          <div className="dp-quest-progress">
-            {SECTIONS.map((sec, i) => (
-              <div key={sec.key} className="dp-qp-item">
-                {i > 0 && <div className={`dp-qp-line${dailyTasks[SECTIONS[i - 1].key] ? ' done' : ''}`} />}
-                <div className={`dp-qp-circle${dailyTasks[sec.key] ? ' done' : ''}`} style={{ '--qp-color': sec.color }}>
-                  {dailyTasks[sec.key] ? '✓' : sec.icon}
-                </div>
-                <div className="dp-qp-label">{sec.label.split(' ')[0]}</div>
-              </div>
-            ))}
-          </div>
+        <div className="dp-hero-stats">
+          {[
+            { val: `🔥 ${streak.count}`, lbl: 'Day Streak' },
+            { val: `⚡ ${xpEarned}/${MAX_XP}`, lbl: 'XP Today' },
+            { val: `${doneCount}/3`, lbl: 'Tasks Done' },
+            { val: `Day ${currentDay}`, lbl: 'Progress' },
+          ].map(s => (
+            <div key={s.lbl} className="dp-hero-stat">
+              <div className="dp-hero-stat-val">{s.val}</div>
+              <div className="dp-hero-stat-lbl">{s.lbl}</div>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -816,92 +816,29 @@ nav { flex: 1; padding: 12px 0; }
 
 /* Hero Banner */
 .dp-hero {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a5f 100%);
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 20px;
+  background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 55%, #4f46e5 100%);
   border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px;
-  position: relative; overflow: hidden;
+  color: #fff; box-shadow: 0 8px 32px #4338ca33;
 }
-.dp-hero::before {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 80% 50%, rgba(99,102,241,.25) 0%, transparent 60%);
-  pointer-events: none;
+.dp-hero-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dp-hero-eyebrow { font-size: 13px; font-weight: 600; opacity: .75; letter-spacing: .4px; }
+.dp-hero-title { font-size: 30px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
+.dp-hero-day { opacity: .85; }
+.dp-hero-sub { font-size: 13px; opacity: .7; margin-top: 2px; }
+.dp-hero-badge {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 700;
 }
-.dp-hero-left { flex: 1; min-width: 0; }
-.dp-hero-eyebrow {
-  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-  color: #a5b4fc; margin-bottom: 8px;
+.dp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dp-hero-stat {
+  text-align: center; background: rgba(255,255,255,.1);
+  border-radius: 10px; padding: 12px 8px;
+  border: 1px solid rgba(255,255,255,.12);
 }
-.dp-hero-title {
-  font-size: 36px; font-weight: 900; color: #fff; margin: 0 0 6px; line-height: 1.1;
-}
-.dp-hero-day {
-  color: #a5b4fc;
-  text-shadow: 0 0 20px rgba(165,180,252,.6);
-}
-.dp-hero-sub { font-size: 14px; color: #94a3b8; margin: 0 0 20px; }
-
-/* XP Bar in hero */
-.dp-hero-xp-wrap { max-width: 380px; }
-.dp-hero-xp-label {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 6px;
-}
-.dp-hero-xp-count { color: #a5b4fc; font-weight: 700; }
-.dp-hero-xp-track {
-  height: 10px; background: rgba(255,255,255,.1); border-radius: 99px;
-  overflow: hidden; position: relative;
-}
-.dp-hero-xp-fill {
-  height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg, #6366f1, #a78bfa);
-  transition: width .8s cubic-bezier(.4,0,.2,1);
-  position: relative;
-}
-.dp-hero-xp-fill::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.3) 50%, transparent 100%);
-  animation: dp-shimmer 2s infinite;
-}
-@keyframes dp-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* Streak box */
-.dp-hero-right {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 20px; flex-shrink: 0;
-}
-.dp-streak-box {
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
-  border-radius: 16px; padding: 16px 22px; text-align: center; min-width: 90px;
-}
-.dp-streak-fire { font-size: 28px; animation: dp-pulse-fire 1.5s ease-in-out infinite; }
-@keyframes dp-pulse-fire {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-}
-.dp-streak-count { font-size: 28px; font-weight: 900; color: #fbbf24; line-height: 1.1; margin: 2px 0; }
-.dp-streak-label { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
-
-/* Quest progress circles */
-.dp-quest-progress { display: flex; align-items: center; gap: 0; }
-.dp-qp-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.dp-qp-line {
-  width: 32px; height: 2px; background: rgba(255,255,255,.15); margin-bottom: 20px;
-  transition: background .3s;
-}
-.dp-qp-line.done { background: #22c55e; }
-.dp-qp-circle {
-  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center;
-  justify-content: center; font-size: 18px; border: 2px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.08); color: #fff; transition: all .3s; cursor: default;
-}
-.dp-qp-circle.done {
-  background: #22c55e; border-color: #22c55e;
-  font-size: 16px; font-weight: 800; color: #fff;
-  box-shadow: 0 0 12px rgba(34,197,94,.5);
-}
-.dp-qp-label { font-size: 10px; color: #94a3b8; font-weight: 600; text-align: center; white-space: nowrap; }
+.dp-hero-stat-val { font-size: 20px; font-weight: 800; line-height: 1; }
+.dp-hero-stat-lbl { font-size: 11px; opacity: .7; font-weight: 600; margin-top: 5px; text-transform: uppercase; letter-spacing: .5px; }
 
 /* Status Banner */
 .dp-status-banner {
@@ -1096,13 +1033,12 @@ nav { flex: 1; padding: 12px 0; }
 /* Responsive */
 @media (max-width: 900px) {
   .dp-quests-grid { grid-template-columns: 1fr; }
-  .dp-hero { flex-direction: column; }
-  .dp-hero-right { flex-direction: row; align-items: center; width: 100%; }
-  .dp-quest-progress { flex: 1; justify-content: center; }
+  .dp-hero { grid-template-columns: 1fr; }
+  .dp-hero-stats { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
   .dp-hero { padding: 20px; }
-  .dp-hero-title { font-size: 26px; }
+  .dp-hero-title { font-size: 24px; }
 }
 
 /* ─── CODING PRACTICE ────────────────────────────────────── */
