@@ -546,7 +546,7 @@ nav { flex: 1; padding: 12px 0; }
 .gm-hero {
   position: relative; overflow: hidden;
   background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  border-radius: 18px; margin-bottom: 28px; padding: 32px 28px 0;
+  border-radius: var(--radius-lg); margin-bottom: 20px; padding: 28px 32px 0;
 }
 .gm-hero-stars {
   position: absolute; inset: 0; pointer-events: none;
@@ -594,7 +594,7 @@ nav { flex: 1; padding: 12px 0; }
 .gm-chip-l { font-size: 10px; color: rgba(255,255,255,.5); font-weight: 600; margin-top: 2px; }
 .gm-hero-xpbar {
   position: relative; display: flex; align-items: center; gap: 10px;
-  background: rgba(0,0,0,.3); margin: 0 -28px; padding: 10px 28px;
+  background: rgba(0,0,0,.3); margin: 0 -32px; padding: 10px 32px;
   border-top: 1px solid rgba(255,255,255,.07);
 }
 .gm-xp-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.5); white-space: nowrap; }
@@ -818,7 +818,7 @@ nav { flex: 1; padding: 12px 0; }
 .dp-hero {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;
   background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a5f 100%);
-  border-radius: 20px; padding: 32px 36px; margin-bottom: 20px;
+  border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px;
   position: relative; overflow: hidden;
 }
 .dp-hero::before {
