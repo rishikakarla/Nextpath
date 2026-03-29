@@ -3,18 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 
-const LEVEL_ORDER     = ['Rookie', 'Explorer', 'Coder', 'Master']
+const LEVEL_ORDER      = ['Rookie', 'Explorer', 'Coder', 'Master']
 const NEXT_LEVEL_COLOR = { Explorer: '#6366f1', Coder: '#f59e0b', Master: '#ef4444' }
 const LEVEL_MAP        = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'intermediate', Master: 'advanced' }
 const LEVEL_COLOR      = { beginner: '#6366f1', beginnerPlus: '#8b5cf6', intermediate: '#f59e0b', advanced: '#ef4444' }
 
-// World themes per phase index
-const WORLDS = [
-  { emoji: '🌌', name: 'World',   from: '#1e1b4b', mid: '#6366f1', to: '#a5b4fc', light: '#eef2ff' },
-  { emoji: '⚡', name: 'World',   from: '#3730a3', mid: '#4f46e5', to: '#818cf8', light: '#e0e7ff' },
-  { emoji: '🌊', name: 'World',   from: '#0e7490', mid: '#06b6d4', to: '#67e8f9', light: '#ecfeff' },
-  { emoji: '🔥', name: 'World',   from: '#b45309', mid: '#f59e0b', to: '#fde68a', light: '#fffbeb' },
-  { emoji: '🌟', name: 'World',   from: '#7e22ce', mid: '#a855f7', to: '#d8b4fe', light: '#faf5ff' },
+const PHASES = [
+  { icon: '🚀', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)', accent: '#6366f1' },
+  { icon: '⚡', gradient: 'linear-gradient(135deg,#3730a3,#4f46e5)', accent: '#4f46e5' },
+  { icon: '🌊', gradient: 'linear-gradient(135deg,#0e7490,#06b6d4)', accent: '#06b6d4' },
+  { icon: '🔥', gradient: 'linear-gradient(135deg,#b45309,#f59e0b)', accent: '#f59e0b' },
+  { icon: '🌟', gradient: 'linear-gradient(135deg,#7e22ce,#a855f7)', accent: '#a855f7' },
 ]
 
 function topicType(topic) {
@@ -24,77 +23,80 @@ function topicType(topic) {
   return { label: 'Read', icon: '📖', color: '#6366f1' }
 }
 
-function Stars({ done, total }) {
-  const filled = Math.round((done / total) * 3)
+function ProgressRing({ pct, color, size = 56 }) {
+  const r = (size - 8) / 2
+  const circ = 2 * Math.PI * r
   return (
-    <div className="gm-stars">
-      {[0,1,2].map(i => (
-        <span key={i} className={`gm-star${i < filled ? ' lit' : ''}`}>★</span>
-      ))}
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="5"/>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="5"
+        strokeDasharray={`${circ * pct / 100} ${circ}`}
+        strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}
+        style={{ transition: 'stroke-dasharray 1s ease' }}
+      />
+      <text x={size/2} y={size/2 + 1} textAnchor="middle" dominantBaseline="middle"
+        style={{ fontSize: 11, fontWeight: 800, fill: '#fff' }}>
+        {pct}%
+      </text>
+    </svg>
   )
 }
 
-function TopicNode({ topic, idx, isDone, isCurrent, canOpen, world, onClick }) {
-  const type = topicType(topic)
+function TopicRow({ topic, idx, isDone, isCurrent, canOpen, accent, onClick }) {
+  const type  = topicType(topic)
   const state = isDone ? 'done' : isCurrent ? 'current' : canOpen ? 'open' : 'locked'
 
   return (
-    <div className={`gm-node gm-node-${state}`} onClick={() => canOpen && onClick(topic)}>
-      {/* Pulse ring on current */}
-      {isCurrent && <div className="gm-pulse-ring" />}
+    <div className={`rm-topic-row rm-topic-${state}`} onClick={() => canOpen && onClick(topic)}>
+      {isCurrent && <div className="rm-topic-pulse" style={{ borderColor: accent }} />}
 
-      {/* Circle badge */}
-      <div className="gm-node-badge" style={{
-        background: isDone
-          ? 'linear-gradient(135deg,#6366f1,#818cf8)'
-          : isCurrent
-          ? `linear-gradient(135deg,${world.mid},${world.to})`
-          : canOpen
-          ? `linear-gradient(135deg,${world.mid}88,${world.to}66)`
-          : 'linear-gradient(135deg,#334155,#475569)',
-        boxShadow: isCurrent ? `0 0 20px ${world.mid}66` : isDone ? '0 0 14px #6366f144' : 'none',
+      <div className="rm-topic-num" style={{
+        background: isDone ? '#6366f1' : isCurrent ? accent : canOpen ? accent + '33' : '#334155',
+        color: isDone || isCurrent ? '#fff' : canOpen ? accent : '#64748b',
       }}>
         {isDone ? '✓' : !canOpen ? '🔒' : isCurrent ? '▶' : idx + 1}
       </div>
 
-      {/* Content */}
-      <div className="gm-node-name">{topic.name}</div>
-      <div className="gm-node-row">
-        <span className="gm-node-type-chip" style={{ color: type.color, background: type.color + '18' }}>
-          {type.icon} {type.label}
-        </span>
-      </div>
-      <div className={`gm-node-xp${isDone ? ' earned' : ''}`}>
-        {isDone ? '✓ +8 XP' : '+8 XP'}
+      <div className="rm-topic-body">
+        <div className="rm-topic-name">{topic.name}</div>
+        <div className="rm-topic-meta">
+          <span className="rm-topic-type-chip" style={{ color: type.color, background: type.color + '18' }}>
+            {type.icon} {type.label}
+          </span>
+          <span className={`rm-topic-xp${isDone ? ' done' : ''}`}>
+            {isDone ? '✓ +8 XP earned' : '+8 XP'}
+          </span>
+        </div>
       </div>
 
-      {/* Play/Done CTA */}
-      {isCurrent && <div className="gm-node-play" style={{ background: `linear-gradient(135deg,${world.mid},${world.to})` }}>▶ PLAY</div>}
-      {isDone && <div className="gm-node-done-tag">Completed</div>}
+      <div className="rm-topic-action">
+        {isDone && <span className="rm-done-tag">Done</span>}
+        {isCurrent && <span className="rm-play-tag" style={{ background: accent }}>▶ Start</span>}
+        {!isDone && !isCurrent && canOpen && <span className="rm-open-tag">Open →</span>}
+      </div>
     </div>
   )
 }
 
 export default function Roadmap() {
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
   const { progress, assessmentResult, levelUp } = useApp()
   const { roadmapPhases: roadmapByLevel } = useContent()
 
-  const levelKey     = assessmentResult?.level ? (LEVEL_MAP[assessmentResult.level] || 'beginner') : null
+  const levelKey      = assessmentResult?.level ? (LEVEL_MAP[assessmentResult.level] || 'beginner') : null
   const roadmapPhases = levelKey ? (roadmapByLevel[levelKey] || []) : []
   const [openPhase, setOpenPhase] = useState(0)
   const [showLevelUp, setShowLevelUp] = useState(false)
 
-  const TOTAL_TOPICS    = roadmapPhases.reduce((a, p) => a + p.topics.length, 0)
-  const completedCount  = progress.completedTopics?.length ?? 0
-  const phaseDone       = roadmapPhases.filter(p => p.topics.every(t => progress.completedTopics?.includes(t.id))).length
-  const totalXP         = completedCount * 8
-  const overallPct      = TOTAL_TOPICS ? Math.round((completedCount / TOTAL_TOPICS) * 100) : 0
-  const currentLevel    = assessmentResult?.level
-  const nextLevel       = LEVEL_ORDER[LEVEL_ORDER.indexOf(currentLevel) + 1] ?? null
-  const isComplete      = TOTAL_TOPICS > 0 && completedCount >= TOTAL_TOPICS
-  const lvColor         = LEVEL_COLOR[levelKey] || '#6366f1'
+  const TOTAL_TOPICS   = roadmapPhases.reduce((a, p) => a + p.topics.length, 0)
+  const completedCount = progress.completedTopics?.length ?? 0
+  const phaseDone      = roadmapPhases.filter(p => p.topics.every(t => progress.completedTopics?.includes(t.id))).length
+  const totalXP        = completedCount * 8
+  const overallPct     = TOTAL_TOPICS ? Math.round((completedCount / TOTAL_TOPICS) * 100) : 0
+  const currentLevel   = assessmentResult?.level
+  const nextLevel      = LEVEL_ORDER[LEVEL_ORDER.indexOf(currentLevel) + 1] ?? null
+  const isComplete     = TOTAL_TOPICS > 0 && completedCount >= TOTAL_TOPICS
+  const lvColor        = LEVEL_COLOR[levelKey] || '#6366f1'
 
   const getPhaseStatus = (phase, idx) => {
     if (phase.topics.every(t => progress.completedTopics?.includes(t.id))) return 'completed'
@@ -106,181 +108,127 @@ export default function Roadmap() {
   }
 
   return (
-    <div className="gm-root">
+    <div className="rm-root">
 
-      {/* ══ HERO BANNER ════════════════════════════════════════════ */}
-      <div className="gm-hero" style={{ '--lc': lvColor }}>
-        {/* Stars bg decoration */}
-        <div className="gm-hero-stars" />
-
-        <div className="gm-hero-inner">
-          <div className="gm-hero-left">
-            <div className="gm-hero-eyebrow">🗺️ Adventure Map</div>
-            <h1 className="gm-hero-title">Learning Roadmap</h1>
-            {assessmentResult?.level && (
-              <div className="gm-hero-level" style={{ background: lvColor + '22', borderColor: lvColor + '55', color: lvColor }}>
-                <span className="gm-lvl-dot" style={{ background: lvColor }} />
-                {assessmentResult.level} Track
-              </div>
-            )}
-          </div>
-
-          {/* XP Ring */}
-          {levelKey && (
-            <div className="gm-hero-ring">
-              <svg width="96" height="96" viewBox="0 0 96 96">
-                <circle cx="48" cy="48" r="38" fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="8"/>
-                <circle cx="48" cy="48" r="38" fill="none" stroke={lvColor} strokeWidth="8"
-                  strokeDasharray={`${2 * Math.PI * 38 * overallPct / 100} ${2 * Math.PI * 38}`}
-                  strokeLinecap="round" transform="rotate(-90 48 48)"
-                  style={{ transition: 'stroke-dasharray 1s ease' }}
-                />
-              </svg>
-              <div className="gm-ring-center">
-                <div className="gm-ring-pct" style={{ color: lvColor }}>{overallPct}%</div>
-                <div className="gm-ring-sub">done</div>
-              </div>
+      {/* ── Hero Banner ── */}
+      <div className="rm-hero">
+        <div className="rm-hero-left">
+          <div className="rm-hero-eyebrow">🗺️ Learning Path</div>
+          <div className="rm-hero-title">Learning Roadmap</div>
+          {assessmentResult?.level && (
+            <div className="rm-hero-badge" style={{ background: lvColor + '33', borderColor: lvColor + '66', color: lvColor }}>
+              <span className="rm-hero-badge-dot" style={{ background: lvColor }} />
+              {assessmentResult.level} Track
             </div>
           )}
-
-          {/* Stats chips */}
-          {levelKey && (
-            <div className="gm-hero-chips">
-              {[
-                { v: `${phaseDone}/${roadmapPhases.length}`, l: 'Worlds', e: '🌍' },
-                { v: `${completedCount}/${TOTAL_TOPICS}`,    l: 'Levels', e: '🎮' },
-                { v: `${totalXP} XP`,                        l: 'Earned',  e: '⚡' },
-              ].map(c => (
-                <div key={c.l} className="gm-hero-chip">
-                  <span className="gm-chip-e">{c.e}</span>
-                  <span className="gm-chip-v">{c.v}</span>
-                  <span className="gm-chip-l">{c.l}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="rm-hero-sub">Master every topic and level up your skills</div>
         </div>
-
-        {/* XP progress bar */}
-        {levelKey && (
-          <div className="gm-hero-xpbar">
-            <span className="gm-xp-label">Overall Progress</span>
-            <div className="gm-xp-track">
-              <div className="gm-xp-fill" style={{ width: `${overallPct}%`, background: lvColor }} />
+        <div className="rm-hero-stats">
+          {[
+            { val: `${phaseDone}/${roadmapPhases.length || '—'}`, lbl: 'Phases Done' },
+            { val: `${completedCount}/${TOTAL_TOPICS || '—'}`,    lbl: 'Topics Done' },
+            { val: `${totalXP} XP`,                               lbl: 'XP Earned'   },
+            { val: `${overallPct}%`,                              lbl: 'Complete'     },
+          ].map(s => (
+            <div key={s.lbl} className="rm-hero-stat">
+              <div className="rm-hero-stat-val">{s.val}</div>
+              <div className="rm-hero-stat-lbl">{s.lbl}</div>
             </div>
-            <span className="gm-xp-pct" style={{ color: lvColor }}>{overallPct}%</span>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
-      {/* ══ NO ASSESSMENT ══════════════════════════════════════════ */}
+      {/* ── No Assessment ── */}
       {!levelKey && (
-        <div className="gm-no-assessment">
-          <div className="gm-no-assess-icon">🎯</div>
-          <h3>Unlock Your Adventure!</h3>
-          <p>Take the assessment to get a personalized learning roadmap.</p>
-          <a href="/assessment" className="gm-assess-btn">Start Assessment →</a>
+        <div className="rm-no-assess">
+          <div className="rm-no-assess-icon">🎯</div>
+          <h3>Unlock Your Roadmap</h3>
+          <p>Take the assessment to get a personalized learning path tailored to your level.</p>
+          <a href="/assessment" className="rm-assess-btn">Start Assessment →</a>
         </div>
       )}
 
-      {/* ══ WORLD CARDS ════════════════════════════════════════════ */}
+      {/* ── Phase Cards ── */}
       {levelKey && roadmapPhases.length > 0 && (
-        <div className="gm-worlds">
+        <div className="rm-phases">
           {roadmapPhases.map((phase, idx) => {
-            const status  = getPhaseStatus(phase, idx)
-            const world   = WORLDS[idx % WORLDS.length]
-            const done    = phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length
-            const pct     = Math.round((done / phase.topics.length) * 100)
-            const isOpen  = openPhase === idx
+            const status   = getPhaseStatus(phase, idx)
+            const ph       = PHASES[idx % PHASES.length]
+            const done     = phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length
+            const total    = phase.topics.length
+            const pct      = total ? Math.round((done / total) * 100) : 0
+            const isOpen   = openPhase === idx
             const isLocked = status === 'locked'
             const isDone   = status === 'completed'
 
             return (
-              <div key={phase.id} className={`gm-world${isLocked ? ' locked' : ''}${isDone ? ' completed' : ''}`}>
+              <div key={phase.id} className={`rm-phase${isLocked ? ' locked' : ''}${isDone ? ' done' : ''}`}>
 
-                {/* World Header */}
-                <div className="gm-world-header" style={{
-                  background: isLocked
-                    ? 'linear-gradient(135deg,#1e293b,#334155)'
-                    : `linear-gradient(135deg,${world.from},${world.mid})`,
-                }}
-                  onClick={() => !isLocked && setOpenPhase(isOpen ? -1 : idx)}>
+                {/* Phase Header */}
+                <div
+                  className="rm-phase-header"
+                  style={{ '--ph-gradient': ph.gradient, '--ph-accent': ph.accent }}
+                  onClick={() => !isLocked && setOpenPhase(isOpen ? -1 : idx)}
+                >
+                  {isLocked && <div className="rm-phase-lock-veil" />}
 
-                  {/* Lock overlay */}
-                  {isLocked && <div className="gm-world-lock-overlay" />}
+                  <div className="rm-phase-icon-wrap" style={{ background: isLocked ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.18)' }}>
+                    {isDone ? '✓' : isLocked ? '🔒' : ph.icon}
+                  </div>
 
-                  <div className="gm-world-hdr-left">
-                    <div className="gm-world-num" style={{
-                      background: isLocked ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.2)'
-                    }}>
-                      {isDone ? '✓' : isLocked ? '🔒' : world.emoji}
-                    </div>
-                    <div>
-                      <div className="gm-world-label">World {idx + 1}</div>
-                      <div className="gm-world-title">{phase.title}</div>
-                      <div className="gm-world-meta">
-                        {isLocked
-                          ? '🔒 Complete previous world to unlock'
-                          : `${phase.duration} · ${done}/${phase.topics.length} levels`}
-                      </div>
+                  <div className="rm-phase-info">
+                    <div className="rm-phase-label">Phase {idx + 1}</div>
+                    <div className="rm-phase-title">{phase.title}</div>
+                    <div className="rm-phase-meta">
+                      {isLocked
+                        ? '🔒 Complete previous phase to unlock'
+                        : `${phase.duration} · ${done}/${total} topics`}
                     </div>
                   </div>
 
-                  <div className="gm-world-hdr-right">
-                    {!isLocked && <Stars done={done} total={phase.topics.length} />}
-                    {isDone && <span className="gm-world-badge-done">🏆 CLEARED!</span>}
-                    {status === 'active' && !isDone && (
-                      <span className="gm-world-badge-active">IN PROGRESS</span>
-                    )}
+                  <div className="rm-phase-right">
+                    {!isLocked && <ProgressRing pct={pct} color={isDone ? '#22c55e' : ph.accent} size={52} />}
+                    {isDone && <span className="rm-phase-badge-done">🏆 Done</span>}
+                    {status === 'active' && !isDone && <span className="rm-phase-badge-active">In Progress</span>}
                     {!isLocked && (
-                      <svg className={`gm-chevron${isOpen ? ' open' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M4 6l4 4 4-4" stroke="rgba(255,255,255,.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <svg className={`rm-chevron${isOpen ? ' open' : ''}`} width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M4.5 7l4.5 4.5L13.5 7" stroke="rgba(255,255,255,.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     )}
                   </div>
                 </div>
 
-                {/* Progress bar under header */}
+                {/* Thin progress bar */}
                 {!isLocked && (
-                  <div className="gm-world-progbar">
-                    <div className="gm-world-progfill" style={{
-                      width: `${pct}%`,
-                      background: `linear-gradient(90deg,${world.mid},${world.to})`,
-                    }} />
+                  <div className="rm-phase-progbar">
+                    <div className="rm-phase-progfill" style={{ width: `${pct}%`, background: ph.gradient }} />
                   </div>
                 )}
 
-                {/* Topic Nodes (open state) */}
+                {/* Topic List */}
                 {isOpen && !isLocked && (
-                  <div className="gm-topics-area" style={{ '--wlight': world.light }}>
-                    {/* path connector decoration */}
-                    <div className="gm-path-bg" />
+                  <div className="rm-topics-list">
+                    {phase.topics.map((topic, ti) => {
+                      const isDoneTopic = progress.completedTopics?.includes(topic.id)
+                      const prevDone    = phase.topics.slice(0, ti).every(t => progress.completedTopics?.includes(t.id))
+                      const isCurrent   = !isDoneTopic && prevDone && status !== 'locked'
+                      return (
+                        <TopicRow
+                          key={topic.id}
+                          topic={topic}
+                          idx={ti}
+                          isDone={isDoneTopic}
+                          isCurrent={isCurrent}
+                          canOpen={status !== 'locked'}
+                          accent={ph.accent}
+                          onClick={() => navigate(`/roadmap/topic/${topic.id}`)}
+                        />
+                      )
+                    })}
 
-                    <div className="gm-nodes-grid">
-                      {phase.topics.map((topic, ti) => {
-                        const isDoneTopic = progress.completedTopics?.includes(topic.id)
-                        const prevDone    = phase.topics.slice(0, ti).every(t => progress.completedTopics?.includes(t.id))
-                        const isCurrent   = !isDoneTopic && prevDone && status !== 'locked'
-                        return (
-                          <TopicNode
-                            key={topic.id}
-                            topic={topic}
-                            idx={ti}
-                            isDone={isDoneTopic}
-                            isCurrent={isCurrent}
-                            canOpen={status !== 'locked'}
-                            world={world}
-                            onClick={() => navigate(`/roadmap/topic/${topic.id}`)}
-                          />
-                        )
-                      })}
-                    </div>
-
-                    {/* World complete badge */}
                     {isDone && (
-                      <div className="gm-world-cleared">
-                        <span>🏆</span>
-                        <span>World Cleared! You earned <strong>{phase.topics.length * 8} XP</strong></span>
+                      <div className="rm-phase-cleared">
+                        🏆 Phase Complete! You earned <strong>{total * 8} XP</strong>
                       </div>
                     )}
                   </div>
@@ -291,59 +239,61 @@ export default function Roadmap() {
         </div>
       )}
 
-      {/* ══ ROADMAP COMPLETE ═══════════════════════════════════════ */}
+      {/* ── Roadmap Complete ── */}
       {isComplete && (
-        <div className="gm-complete">
-          <div className="gm-complete-confetti" />
-          <div className="gm-complete-inner">
-            <div className="gm-complete-trophy">🏆</div>
-            <h2 className="gm-complete-title">Roadmap Cleared!</h2>
-            <p className="gm-complete-sub">
-              You conquered all <strong>{TOTAL_TOPICS} levels</strong> on the <strong>{currentLevel}</strong> track!
+        <div className="rm-complete">
+          <div className="rm-complete-bg" />
+          <div className="rm-complete-inner">
+            <div className="rm-complete-trophy">🏆</div>
+            <h2 className="rm-complete-title">Roadmap Complete!</h2>
+            <p className="rm-complete-sub">
+              You mastered all <strong>{TOTAL_TOPICS} topics</strong> on the <strong>{currentLevel}</strong> track!
             </p>
-            <div className="gm-complete-stats">
+            <div className="rm-complete-stats">
               {[
-                { v: phaseDone,    l: 'Worlds Cleared', e: '🌍' },
-                { v: TOTAL_TOPICS, l: 'Levels Done',    e: '🎮' },
+                { v: phaseDone,    l: 'Phases Cleared', e: '🎯' },
+                { v: TOTAL_TOPICS, l: 'Topics Done',    e: '📚' },
                 { v: `${totalXP}`, l: 'XP Earned',      e: '⚡' },
               ].map(s => (
-                <div key={s.l} className="gm-complete-stat">
-                  <div className="gm-cs-e">{s.e}</div>
-                  <div className="gm-cs-v">{s.v}</div>
-                  <div className="gm-cs-l">{s.l}</div>
+                <div key={s.l} className="rm-complete-stat">
+                  <div className="rm-cs-e">{s.e}</div>
+                  <div className="rm-cs-v">{s.v}</div>
+                  <div className="rm-cs-l">{s.l}</div>
                 </div>
               ))}
             </div>
             {nextLevel ? (
-              <button className="gm-levelup-btn" onClick={() => setShowLevelUp(true)}>
+              <button className="rm-levelup-btn" onClick={() => setShowLevelUp(true)}>
                 🚀 Level Up to {nextLevel} Track
               </button>
             ) : (
-              <div className="gm-mastered">🎓 You've mastered all levels! Legend!</div>
+              <div className="rm-mastered">🎓 You've mastered all levels — Legend!</div>
             )}
           </div>
         </div>
       )}
 
-      {/* ══ LEVEL UP MODAL ═════════════════════════════════════════ */}
+      {/* ── Level Up Modal ── */}
       {showLevelUp && nextLevel && (
-        <div className="gm-modal-overlay" onClick={() => setShowLevelUp(false)}>
-          <div className="gm-modal" onClick={e => e.stopPropagation()}>
-            <div className="gm-modal-icon">🚀</div>
-            <h3 className="gm-modal-title">Level Up to {nextLevel}?</h3>
-            <p className="gm-modal-body">
+        <div className="rm-modal-overlay" onClick={() => setShowLevelUp(false)}>
+          <div className="rm-modal" onClick={e => e.stopPropagation()}>
+            <div className="rm-modal-icon">🚀</div>
+            <h3 className="rm-modal-title">Level Up to {nextLevel}?</h3>
+            <p className="rm-modal-body">
               Your roadmap resets for the <strong>{nextLevel}</strong> track.
-              Keep all XP, solved problems, and streaks.
+              All XP, solved problems, and streaks carry over.
               Bonus: <strong>+50 XP!</strong>
             </p>
-            <div className="gm-modal-btns">
-              <button className="gm-modal-cancel" onClick={() => setShowLevelUp(false)}>
+            <div className="rm-modal-btns">
+              <button className="rm-modal-cancel" onClick={() => setShowLevelUp(false)}>
                 Stay on {currentLevel}
               </button>
-              <button className="gm-modal-confirm"
+              <button
+                className="rm-modal-confirm"
                 style={{ background: NEXT_LEVEL_COLOR[nextLevel] ?? '#6366f1' }}
-                onClick={() => { levelUp(); setShowLevelUp(false) }}>
-                Yes! Level Up +50 XP
+                onClick={() => { levelUp(); setShowLevelUp(false) }}
+              >
+                Yes, Level Up! +50 XP
               </button>
             </div>
           </div>
@@ -351,9 +301,9 @@ export default function Roadmap() {
       )}
 
       {levelKey && roadmapPhases.length === 0 && (
-        <div className="gm-empty">
+        <div className="rm-empty">
           <div style={{ fontSize: 48, marginBottom: 12 }}>🗺️</div>
-          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>World coming soon!</div>
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>Coming soon!</div>
           <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
             The <strong>{assessmentResult.level}</strong> track is being built. Check back soon!
           </div>
