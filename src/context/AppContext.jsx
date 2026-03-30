@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { MOCK_LEADERBOARD } from '../data/appData'
-import { auth, db } from '../firebase'
+import { auth, db, googleProvider, githubProvider } from '../firebase'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth'
@@ -150,6 +151,41 @@ export function AppProvider({ children }) {
     // onAuthStateChanged handles loading user data
   }
 
+  const loginWithSocial = async (provider) => {
+    const cred = await signInWithPopup(auth, provider)
+    const firebaseUser = cred.user
+    const docSnap = await getDoc(doc(db, 'users', firebaseUser.uid))
+    if (!docSnap.exists()) {
+      // New user via social auth — create minimal profile
+      const profile = {
+        name: firebaseUser.displayName || '',
+        email: firebaseUser.email || '',
+        college: '', branch: '', yearOfStudy: '', careerGoal: '',
+        createdAt: new Date().toISOString(),
+      }
+      const defaultDaily = DEFAULT_DAILY()
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
+        profile, streak: DEFAULT_STREAK, progress: DEFAULT_PROGRESS,
+        solvedProblems: [], dailyTasks: defaultDaily, points: 0,
+        assessmentResult: null, quizAttempts: {}, taskHistory: {}, codingSubmissions: {},
+      })
+      setDoc(doc(db, 'leaderboard', firebaseUser.uid), {
+        uid: firebaseUser.uid, name: profile.name, college: '',
+        points: 0, streak: 0, updatedAt: new Date().toISOString(),
+      }, { merge: true }).catch(console.error)
+      setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...profile })
+      setStreak(DEFAULT_STREAK); setProgress(DEFAULT_PROGRESS)
+      setSolvedProblems([]); setDailyTasks(defaultDaily); setPoints(0)
+      setAssessmentResult(null)
+      setTimeout(() => { dataLoaded.current = true }, 0)
+      return { isNewUser: true }
+    }
+    return { isNewUser: false }
+  }
+
+  const loginWithGoogle = () => loginWithSocial(googleProvider)
+  const loginWithGithub = () => loginWithSocial(githubProvider)
+
   const logout = async () => {
     dataLoaded.current = false
     await signOut(auth)
@@ -277,7 +313,7 @@ export function AppProvider({ children }) {
       quizAttempts, saveQuizAttempt,
       taskHistory,
       codingSubmissions, saveSubmission,
-      register, login, logout, saveAssessment,
+      register, login, loginWithGoogle, loginWithGithub, logout, saveAssessment,
       completeTask, solveProblem, toggleTopic, levelUp, getLeaderboard, setPoints,
     }}>
       {children}
