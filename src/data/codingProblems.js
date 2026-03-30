@@ -13,16 +13,8 @@ export const CODING_PROBLEMS = [
     constraints: '2 ≤ N ≤ 10⁴\n-10⁹ ≤ nums[i] ≤ 10⁹\n-10⁹ ≤ target ≤ 10⁹',
     hint: 'Use a hash map to store each number\'s complement. One pass is enough.',
     examples: [
-      {
-        input: '4 9\n2 7 11 15',
-        output: '0 1',
-        explanation: 'nums[0] + nums[1] = 2 + 7 = 9. So output is 0 1.',
-      },
-      {
-        input: '3 6\n3 2 4',
-        output: '1 2',
-        explanation: 'nums[1] + nums[2] = 2 + 4 = 6.',
-      },
+      { input: '4 9\n2 7 11 15', output: '0 1', explanation: 'nums[0] + nums[1] = 2 + 7 = 9. So output is 0 1.' },
+      { input: '3 6\n3 2 4',     output: '1 2', explanation: 'nums[1] + nums[2] = 2 + 4 = 6.' },
     ],
     testCases: [
       { input: '4 9\n2 7 11 15',   expectedOutput: '0 1', hidden: false },
@@ -34,34 +26,27 @@ export const CODING_PROBLEMS = [
     starterCode: {
       71: `n, target = map(int, input().split())
 nums = list(map(int, input().split()))
-seen = {}
-for i, num in enumerate(nums):
-    complement = target - num
-    if complement in seen:
-        print(seen[complement], i)
-        break
-    seen[num] = i`,
+
+# Write your solution here
+# Find indices i and j such that nums[i] + nums[j] == target
+# Print: i j`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
 const [n, target] = lines[0].split(' ').map(Number);
 const nums = lines[1].split(' ').map(Number);
-const seen = new Map();
-for (let i = 0; i < nums.length; i++) {
-  const comp = target - nums[i];
-  if (seen.has(comp)) { console.log(seen.get(comp) + ' ' + i); break; }
-  seen.set(nums[i], i);
-}`,
+
+// Write your solution here
+// Find indices i and j such that nums[i] + nums[j] === target
+// console.log(i + ' ' + j);`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
     int n, target; cin >> n >> target;
     vector<int> nums(n);
     for(auto &x: nums) cin >> x;
-    unordered_map<int,int> seen;
-    for(int i=0;i<n;i++){
-        int comp = target - nums[i];
-        if(seen.count(comp)){ cout << seen[comp] << " " << i; return 0; }
-        seen[nums[i]] = i;
-    }
+
+    // Write your solution here
+    // Find indices i and j such that nums[i] + nums[j] == target
+    // cout << i << " " << j;
 }`,
     },
   },
@@ -88,27 +73,25 @@ int main(){
     starterCode: {
       71: `n = int(input())
 nums = list(map(int, input().split()))
-max_sum = cur = nums[0]
-for x in nums[1:]:
-    cur = max(x, cur + x)
-    max_sum = max(max_sum, cur)
-print(max_sum)`,
+
+# Write your solution here
+# Find the maximum sum of any contiguous subarray
+# print(max_sum)`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
 const nums = lines[1].split(' ').map(Number);
-let maxSum = nums[0], cur = nums[0];
-for (let i = 1; i < nums.length; i++) {
-  cur = Math.max(nums[i], cur + nums[i]);
-  maxSum = Math.max(maxSum, cur);
-}
-console.log(maxSum);`,
+
+// Write your solution here
+// Find the maximum sum of any contiguous subarray
+// console.log(maxSum);`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n; cin>>n;
-    vector<int> a(n); for(auto &x:a) cin>>x;
-    int mx=a[0],cur=a[0];
-    for(int i=1;i<n;i++){ cur=max(a[i],cur+a[i]); mx=max(mx,cur); }
-    cout<<mx;
+    int n; cin >> n;
+    vector<int> a(n); for(auto &x: a) cin >> x;
+
+    // Write your solution here
+    // Find the maximum sum of any contiguous subarray
+    // cout << maxSum;
 }`,
     },
   },
@@ -135,27 +118,25 @@ int main(){
     starterCode: {
       71: `n = int(input())
 prices = list(map(int, input().split()))
-min_price = float('inf')
-max_profit = 0
-for p in prices:
-    min_price = min(min_price, p)
-    max_profit = max(max_profit, p - min_price)
-print(max_profit)`,
+
+# Write your solution here
+# Find the max profit from one buy-sell transaction
+# print(max_profit)`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
 const prices = lines[1].split(' ').map(Number);
-let minP = Infinity, maxProfit = 0;
-for (const p of prices) {
-  minP = Math.min(minP, p);
-  maxProfit = Math.max(maxProfit, p - minP);
-}
-console.log(maxProfit);`,
+
+// Write your solution here
+// Find the max profit from one buy-sell transaction
+// console.log(maxProfit);`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n; cin>>n;
-    int minP=INT_MAX, profit=0, p;
-    for(int i=0;i<n;i++){ cin>>p; minP=min(minP,p); profit=max(profit,p-minP); }
-    cout<<profit;
+    int n; cin >> n;
+    vector<int> prices(n); for(auto &x: prices) cin >> x;
+
+    // Write your solution here
+    // Find the max profit from one buy-sell transaction
+    // cout << profit;
 }`,
     },
   },
@@ -182,22 +163,26 @@ int main(){
     starterCode: {
       71: `n, k = map(int, input().split())
 nums = list(map(int, input().split()))
-k %= n
-nums = nums[-k:] + nums[:-k] if k else nums
-print(*nums)`,
+
+# Write your solution here
+# Rotate nums to the right by k steps
+# print(*nums)`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
-const [n,k] = lines[0].split(' ').map(Number);
+const [n, k] = lines[0].split(' ').map(Number);
 const nums = lines[1].split(' ').map(Number);
-const r = k % n;
-const res = [...nums.slice(n-r), ...nums.slice(0,n-r)];
-console.log(res.join(' '));`,
+
+// Write your solution here
+// Rotate nums to the right by k steps
+// console.log(nums.join(' '));`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n,k; cin>>n>>k; k%=n;
-    vector<int> a(n); for(auto &x:a) cin>>x;
-    rotate(a.begin(), a.begin()+(n-k), a.end());
-    for(int i=0;i<n;i++) cout<<a[i]<<" \n"[i==n-1];
+    int n, k; cin >> n >> k;
+    vector<int> a(n); for(auto &x: a) cin >> x;
+
+    // Write your solution here
+    // Rotate a to the right by k steps
+    // for(int i=0;i<n;i++) cout << a[i] << " \n"[i==n-1];
 }`,
     },
   },
@@ -223,19 +208,23 @@ int main(){
     ],
     starterCode: {
       71: `s = input()
-filtered = [c.lower() for c in s if c.isalnum()]
-print(str(filtered == filtered[::-1]).lower())`,
+
+# Write your solution here
+# Check if s is a palindrome (ignore non-alphanumeric, case-insensitive)
+# print("true" or "false")`,
       63: `const s = require('fs').readFileSync('/dev/stdin','utf8').trim();
-const f = s.toLowerCase().replace(/[^a-z0-9]/g,'');
-console.log(String(f === f.split('').reverse().join('')));`,
+
+// Write your solution here
+// Check if s is a palindrome (ignore non-alphanumeric, case-insensitive)
+// console.log("true" or "false");`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    string s; getline(cin,s);
-    string t;
-    for(char c:s) if(isalnum(c)) t+=tolower(c);
-    string r(t.rbegin(),t.rend());
-    cout<<(t==r?"true":"false");
+    string s; getline(cin, s);
+
+    // Write your solution here
+    // Check if s is a palindrome (ignore non-alphanumeric, case-insensitive)
+    // cout << "true" or "false";
 }`,
     },
   },
@@ -262,30 +251,27 @@ int main(){
     starterCode: {
       71: `n = int(input())
 strs = [input() for _ in range(n)]
-prefix = strs[0]
-for s in strs[1:]:
-    while not s.startswith(prefix):
-        prefix = prefix[:-1]
-        if not prefix: break
-print(prefix)`,
+
+# Write your solution here
+# Find the longest common prefix among all strings
+# print(prefix)`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
 const n = Number(lines[0]);
-const strs = lines.slice(1, n+1);
-let prefix = strs[0];
-for (let i = 1; i < strs.length; i++) {
-  while (!strs[i].startsWith(prefix)) prefix = prefix.slice(0,-1);
-}
-console.log(prefix);`,
+const strs = lines.slice(1, n + 1);
+
+// Write your solution here
+// Find the longest common prefix among all strings
+// console.log(prefix);`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n; cin>>n; cin.ignore();
+    int n; cin >> n; cin.ignore();
     vector<string> v(n);
-    for(auto &s:v) getline(cin,s);
-    sort(v.begin(),v.end());
-    string a=v[0],b=v.back(); int i=0;
-    while(i<(int)a.size()&&a[i]==b[i]) i++;
-    cout<<a.substr(0,i);
+    for(auto &s: v) getline(cin, s);
+
+    // Write your solution here
+    // Find the longest common prefix among all strings
+    // cout << prefix;
 }`,
     },
   },
@@ -310,22 +296,26 @@ int main(){
       { input: 'listen\nsilent',  expectedOutput: 'true',  hidden: true  },
     ],
     starterCode: {
-      71: `from collections import Counter
-s = input()
+      71: `s = input()
 t = input()
-print(str(Counter(s) == Counter(t)).lower())`,
+
+# Write your solution here
+# Check if t is an anagram of s
+# print("true" or "false")`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
-const [s,t] = lines;
-const count = s => [...s].reduce((m,c)=>(m.set(c,(m.get(c)||0)+1),m),new Map());
-const a=count(s),b=count(t);
-const ok=[...a].every(([k,v])=>b.get(k)===v)&&a.size===b.size;
-console.log(String(ok));`,
+const [s, t] = lines;
+
+// Write your solution here
+// Check if t is an anagram of s
+// console.log("true" or "false");`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    string s,t; cin>>s>>t;
-    sort(s.begin(),s.end()); sort(t.begin(),t.end());
-    cout<<(s==t?"true":"false");
+    string s, t; cin >> s >> t;
+
+    // Write your solution here
+    // Check if t is an anagram of s
+    // cout << "true" or "false";
 }`,
     },
   },
@@ -343,29 +333,31 @@ int main(){
       { input: '0', output: '0',  explanation: 'Base case.' },
     ],
     testCases: [
-      { input: '4',  expectedOutput: '3',   hidden: false },
-      { input: '0',  expectedOutput: '0',   hidden: false },
-      { input: '1',  expectedOutput: '1',   hidden: true  },
-      { input: '10', expectedOutput: '55',  hidden: true  },
-      { input: '20', expectedOutput: '6765',hidden: true  },
+      { input: '4',  expectedOutput: '3',    hidden: false },
+      { input: '0',  expectedOutput: '0',    hidden: false },
+      { input: '1',  expectedOutput: '1',    hidden: true  },
+      { input: '10', expectedOutput: '55',   hidden: true  },
+      { input: '20', expectedOutput: '6765', hidden: true  },
     ],
     starterCode: {
       71: `n = int(input())
-a, b = 0, 1
-for _ in range(n):
-    a, b = b, a + b
-print(a)`,
+
+# Write your solution here
+# Compute the nth Fibonacci number
+# print(result)`,
       63: `const n = Number(require('fs').readFileSync('/dev/stdin','utf8').trim());
-let a=0,b=1;
-for(let i=0;i<n;i++){[a,b]=[b,a+b];}
-console.log(a);`,
+
+// Write your solution here
+// Compute the nth Fibonacci number
+// console.log(result);`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n; cin>>n;
-    long long a=0,b=1;
-    for(int i=0;i<n;i++){long long t=a+b;a=b;b=t;}
-    cout<<a;
+    int n; cin >> n;
+
+    // Write your solution here
+    // Compute the nth Fibonacci number
+    // cout << result;
 }`,
     },
   },
@@ -383,31 +375,35 @@ int main(){
       { input: '2.1 3',   output: '9.261',   explanation: '2.1^3 = 9.261.' },
     ],
     testCases: [
-      { input: '2.0 10',  expectedOutput: '1024',     hidden: false },
-      { input: '2.1 3',   expectedOutput: '9.261',    hidden: false },
-      { input: '2.0 0',   expectedOutput: '1',        hidden: true  },
-      { input: '1.0 100', expectedOutput: '1',        hidden: true  },
-      { input: '3.0 5',   expectedOutput: '243',      hidden: true  },
+      { input: '2.0 10',  expectedOutput: '1024',  hidden: false },
+      { input: '2.1 3',   expectedOutput: '9.261', hidden: false },
+      { input: '2.0 0',   expectedOutput: '1',     hidden: true  },
+      { input: '1.0 100', expectedOutput: '1',     hidden: true  },
+      { input: '3.0 5',   expectedOutput: '243',   hidden: true  },
     ],
     starterCode: {
-      71: `x, n = input().split()
-x = float(x); n = int(n)
-result = x ** n
-if result == int(result):
-    print(int(result))
-else:
-    print(round(result, 5))`,
-      63: `const [x,n] = require('fs').readFileSync('/dev/stdin','utf8').trim().split(' ');
-const res = Math.pow(parseFloat(x), parseInt(n));
-if(res===Math.round(res)) console.log(Math.round(res));
-else console.log(parseFloat(res.toFixed(5)));`,
+      71: `parts = input().split()
+x = float(parts[0])
+n = int(parts[1])
+
+# Write your solution here
+# Compute x raised to the power n
+# Print as integer if whole, else up to 5 decimal places`,
+      63: `const [xStr, nStr] = require('fs').readFileSync('/dev/stdin','utf8').trim().split(' ');
+const x = parseFloat(xStr);
+const n = parseInt(nStr);
+
+// Write your solution here
+// Compute x raised to the power n
+// Print as integer if whole, else up to 5 decimal places`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    double x; int n; cin>>x>>n;
-    double res=pow(x,n);
-    if(res==(long long)res) cout<<(long long)res;
-    else cout<<fixed<<setprecision(5)<<res;
+    double x; int n; cin >> x >> n;
+
+    // Write your solution here
+    // Compute x raised to the power n
+    // Print as integer if whole, else up to 5 decimal places
 }`,
     },
   },
@@ -433,33 +429,28 @@ int main(){
       { input: '3', expectedOutput: 'Move disk 1 from A to C\nMove disk 2 from A to B\nMove disk 1 from C to B\nMove disk 3 from A to C\nMove disk 1 from B to A\nMove disk 2 from B to C\nMove disk 1 from A to C', hidden: true },
     ],
     starterCode: {
-      71: `def hanoi(n, src, aux, dst):
-    if n == 1:
-        print(f"Move disk 1 from {src} to {dst}")
-        return
-    hanoi(n-1, src, dst, aux)
-    print(f"Move disk {n} from {src} to {dst}")
-    hanoi(n-1, aux, src, dst)
+      71: `n = int(input())
 
-n = int(input())
-hanoi(n, 'A', 'B', 'C')`,
-      63: `function hanoi(n,src,aux,dst){
-  if(n===1){console.log(\`Move disk 1 from \${src} to \${dst}\`);return;}
-  hanoi(n-1,src,dst,aux);
-  console.log(\`Move disk \${n} from \${src} to \${dst}\`);
-  hanoi(n-1,aux,src,dst);
-}
-const n=Number(require('fs').readFileSync('/dev/stdin','utf8').trim());
-hanoi(n,'A','B','C');`,
+# Write your solution here
+# Print all moves to solve Tower of Hanoi for n disks
+# Each move format: "Move disk D from X to Y"
+# Move from rod 'A' to rod 'C' using rod 'B'`,
+      63: `const n = Number(require('fs').readFileSync('/dev/stdin','utf8').trim());
+
+// Write your solution here
+// Print all moves to solve Tower of Hanoi for n disks
+// Each move format: "Move disk D from X to Y"
+// Move from rod 'A' to rod 'C' using rod 'B'`,
       54: `#include<bits/stdc++.h>
 using namespace std;
-void hanoi(int n,char s,char a,char d){
-    if(n==1){cout<<"Move disk 1 from "<<s<<" to "<<d<<"\\n";return;}
-    hanoi(n-1,s,d,a);
-    cout<<"Move disk "<<n<<" from "<<s<<" to "<<d<<"\\n";
-    hanoi(n-1,a,s,d);
-}
-int main(){int n;cin>>n;hanoi(n,'A','B','C');}`,
+int main(){
+    int n; cin >> n;
+
+    // Write your solution here
+    // Print all moves to solve Tower of Hanoi for n disks
+    // Each move format: "Move disk D from X to Y"
+    // Move from rod 'A' to rod 'C' using rod 'B'
+}`,
     },
   },
 
@@ -483,17 +474,25 @@ int main(){int n;cin>>n;hanoi(n,'A','B','C');}`,
     ],
     starterCode: {
       71: `nums = list(map(int, input().split()))
-print(*nums[::-1])`,
-      63: `const nums = require('fs').readFileSync('/dev/stdin','utf8').trim().split(' ');
-console.log(nums.reverse().join(' '));`,
+
+# Write your solution here
+# Reverse the list (simulate linked list reversal with three pointers)
+# print(*reversed_nums)`,
+      63: `const nums = require('fs').readFileSync('/dev/stdin','utf8').trim().split(' ').map(Number);
+
+// Write your solution here
+// Reverse the list (simulate linked list reversal with three pointers)
+// console.log(reversed.join(' '));`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
     vector<int> a; int x;
-    string line; getline(cin,line);
-    istringstream ss(line); while(ss>>x) a.push_back(x);
-    reverse(a.begin(),a.end());
-    for(int i=0;i<(int)a.size();i++) cout<<a[i]<<" \n"[i+1==(int)a.size()];
+    string line; getline(cin, line);
+    istringstream ss(line); while(ss >> x) a.push_back(x);
+
+    // Write your solution here
+    // Reverse the list (simulate linked list reversal with three pointers)
+    // for(int i=0;i<(int)a.size();i++) cout << a[i] << " ";
 }`,
     },
   },
@@ -517,18 +516,28 @@ int main(){
       { input: '1\n-1',        expectedOutput: 'false', hidden: true  },
     ],
     starterCode: {
-      71: `_ = input()  # node values (not needed for this simulation)
-pos = int(input())
-print("true" if pos >= 0 else "false")`,
+      71: `nodes = input().split()  # node values
+pos = int(input())       # tail connects to this index (-1 = no cycle)
+
+# Write your solution here
+# Determine if a cycle exists based on pos
+# print("true" or "false")`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
+const nodes = lines[0].split(' ');
 const pos = parseInt(lines[1]);
-console.log(pos >= 0 ? 'true' : 'false');`,
+
+// Write your solution here
+// Determine if a cycle exists based on pos
+// console.log("true" or "false");`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    string line; getline(cin,line);
-    int pos; cin>>pos;
-    cout<<(pos>=0?"true":"false");
+    string line; getline(cin, line);
+    int pos; cin >> pos;
+
+    // Write your solution here
+    // Determine if a cycle exists based on pos
+    // cout << "true" or "false";
 }`,
     },
   },
@@ -556,23 +565,28 @@ int main(){
 l2 = input().strip()
 a = [] if l1 == 'null' else list(map(int, l1.split()))
 b = [] if l2 == 'null' else list(map(int, l2.split()))
-merged = sorted(a + b)
-print(*merged) if merged else print('null')`,
+
+# Write your solution here
+# Merge the two sorted lists using two pointers
+# Print space-separated result, or "null" if empty`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
-const a = lines[0]==='null'?[]:lines[0].split(' ').map(Number);
-const b = lines[1]==='null'?[]:lines[1].split(' ').map(Number);
-const merged=[...a,...b].sort((x,y)=>x-y);
-console.log(merged.length?merged.join(' '):'null');`,
+const a = lines[0] === 'null' ? [] : lines[0].split(' ').map(Number);
+const b = lines[1] === 'null' ? [] : lines[1].split(' ').map(Number);
+
+// Write your solution here
+// Merge the two sorted lists using two pointers
+// console.log(merged.length ? merged.join(' ') : 'null');`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    string la,lb; getline(cin,la); getline(cin,lb);
-    vector<int> v;
-    if(la!="null"){istringstream s(la);int x;while(s>>x)v.push_back(x);}
-    if(lb!="null"){istringstream s(lb);int x;while(s>>x)v.push_back(x);}
-    sort(v.begin(),v.end());
-    if(v.empty())cout<<"null";
-    else for(int i=0;i<(int)v.size();i++)cout<<v[i]<<" \n"[i+1==(int)v.size()];
+    string la, lb; getline(cin, la); getline(cin, lb);
+    vector<int> a, b;
+    if(la != "null"){ istringstream s(la); int x; while(s >> x) a.push_back(x); }
+    if(lb != "null"){ istringstream s(lb); int x; while(s >> x) b.push_back(x); }
+
+    // Write your solution here
+    // Merge the two sorted vectors using two pointers
+    // Print space-separated result, or "null" if empty
 }`,
     },
   },
@@ -598,38 +612,23 @@ int main(){
     ],
     starterCode: {
       71: `s = input()
-stack = []
-pairs = {')':'(', '}':'{', ']':'['}
-for c in s:
-    if c in '({[':
-        stack.append(c)
-    elif not stack or stack[-1] != pairs[c]:
-        print('false'); exit()
-    else:
-        stack.pop()
-print('true' if not stack else 'false')`,
+
+# Write your solution here
+# Use a stack to check if brackets are valid
+# print("true" or "false")`,
       63: `const s = require('fs').readFileSync('/dev/stdin','utf8').trim();
-const map={')':'(','}':'{',']':'['};
-const stack=[];
-for(const c of s){
-  if('({['.includes(c)) stack.push(c);
-  else if(stack.pop()!==map[c]){console.log('false');process.exit();}
-}
-console.log(stack.length===0?'true':'false');`,
+
+// Write your solution here
+// Use a stack to check if brackets are valid
+// console.log("true" or "false");`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    string s; cin>>s;
-    stack<char> st;
-    for(char c:s){
-        if(c=='('||c=='{'||c=='[') st.push(c);
-        else{
-            if(st.empty()){cout<<"false";return 0;}
-            char t=st.top();st.pop();
-            if((c==')'&&t!='(')||(c=='}'&&t!='{')||(c==']'&&t!='[')){cout<<"false";return 0;}
-        }
-    }
-    cout<<(st.empty()?"true":"false");
+    string s; cin >> s;
+
+    // Write your solution here
+    // Use a stack to check if brackets are valid
+    // cout << "true" or "false";
 }`,
     },
   },
@@ -658,42 +657,33 @@ int main(){
       71: `import sys
 input = sys.stdin.readline
 q = int(input())
-stack = []
-min_stack = []
+
+# Write your solution here
+# Use two stacks: one for values, one for tracking minimums
+# For each operation process push/pop/top/getMin
 for _ in range(q):
     op = input().split()
-    if op[0] == 'push':
-        v = int(op[1])
-        stack.append(v)
-        min_stack.append(min(v, min_stack[-1] if min_stack else v))
-    elif op[0] == 'pop':
-        stack.pop(); min_stack.pop()
-    elif op[0] == 'top':
-        print(stack[-1])
-    elif op[0] == 'getMin':
-        print(min_stack[-1])`,
+    # handle op[0] == 'push', 'pop', 'top', 'getMin'
+    pass`,
       63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
 const q = Number(lines[0]);
-const stack=[], minStack=[], out=[];
-for(let i=1;i<=q;i++){
-  const parts=lines[i].split(' ');
-  if(parts[0]==='push'){const v=Number(parts[1]);stack.push(v);minStack.push(Math.min(v,minStack.length?minStack[minStack.length-1]:v));}
-  else if(parts[0]==='pop'){stack.pop();minStack.pop();}
-  else if(parts[0]==='top') out.push(stack[stack.length-1]);
-  else out.push(minStack[minStack.length-1]);
-}
-console.log(out.join('\\n'));`,
+
+// Write your solution here
+// Use two stacks: one for values, one for tracking minimums
+for(let i = 1; i <= q; i++){
+  const parts = lines[i].split(' ');
+  // handle parts[0] === 'push', 'pop', 'top', 'getMin'
+}`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int q;cin>>q;cin.ignore();
-    stack<long long> st,mn;
+    int q; cin >> q; cin.ignore();
+
+    // Write your solution here
+    // Use two stacks: one for values, one for tracking minimums
     while(q--){
-        string op;cin>>op;
-        if(op=="push"){long long v;cin>>v;st.push(v);mn.push(mn.empty()?v:min(v,mn.top()));}
-        else if(op=="pop"){st.pop();mn.pop();}
-        else if(op=="top")cout<<st.top()<<"\\n";
-        else cout<<mn.top()<<"\\n";
+        string op; cin >> op;
+        // handle push, pop, top, getMin
         cin.ignore();
     }
 }`,
@@ -709,8 +699,8 @@ int main(){
     constraints: '1 ≤ tokens.length ≤ 10⁴\ntokens[i] is an integer or one of +, -, *, /\nAnswer fits in 32-bit integer.',
     hint: 'Push numbers to stack. On operator, pop two, apply operator (second op first), push result.',
     examples: [
-      { input: '2 1 + 3 *', output: '9',   explanation: '((2+1)*3) = 9.' },
-      { input: '4 13 5 / +', output: '6',  explanation: '(4+(13/5)) = 4+2 = 6.' },
+      { input: '2 1 + 3 *', output: '9',  explanation: '((2+1)*3) = 9.' },
+      { input: '4 13 5 / +', output: '6', explanation: '(4+(13/5)) = 4+2 = 6.' },
     ],
     testCases: [
       { input: '2 1 + 3 *',       expectedOutput: '9',  hidden: false },
@@ -720,38 +710,26 @@ int main(){
     ],
     starterCode: {
       71: `tokens = input().split()
-stack = []
-for t in tokens:
-    if t in '+-*/':
-        b, a = stack.pop(), stack.pop()
-        if t=='+': stack.append(a+b)
-        elif t=='-': stack.append(a-b)
-        elif t=='*': stack.append(a*b)
-        else: stack.append(int(a/b))
-    else:
-        stack.append(int(t))
-print(stack[0])`,
-      63: `const tokens=require('fs').readFileSync('/dev/stdin','utf8').trim().split(' ');
-const st=[];
-for(const t of tokens){
-  if('+-*/'.includes(t)){const b=st.pop(),a=st.pop();
-    if(t==='+')st.push(a+b);else if(t==='-')st.push(a-b);
-    else if(t==='*')st.push(a*b);else st.push(Math.trunc(a/b));
-  } else st.push(Number(t));
-}
-console.log(st[0]);`,
+
+# Write your solution here
+# Use a stack: push numbers, on operator pop two and push result
+# print(stack[0])`,
+      63: `const tokens = require('fs').readFileSync('/dev/stdin','utf8').trim().split(' ');
+
+// Write your solution here
+// Use a stack: push numbers, on operator pop two and push result
+// console.log(stack[0]);`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    string t; stack<long long> st;
-    while(cin>>t){
-        if(t=="+"||t=="-"||t=="*"||t=="/"){
-            long long b=st.top();st.pop();long long a=st.top();st.pop();
-            if(t=="+")st.push(a+b);else if(t=="-")st.push(a-b);
-            else if(t=="*")st.push(a*b);else st.push((long long)(a/b));
-        } else st.push(stoll(t));
+    // Write your solution here
+    // Read tokens one by one
+    // Use a stack: push numbers, on operator pop two and push result
+    string t;
+    while(cin >> t){
+        // handle number or operator
     }
-    cout<<st.top();
+    // cout << result;
 }`,
     },
   },
@@ -769,41 +747,37 @@ int main(){
       { input: '4\n1 2 3 4', output: '2 3 4 -1', explanation: 'Last element has no greater.' },
     ],
     testCases: [
-      { input: '3\n1 2 1',    expectedOutput: '2 -1 2',       hidden: false },
-      { input: '4\n1 2 3 4',  expectedOutput: '2 3 4 -1',     hidden: false },
-      { input: '1\n5',        expectedOutput: '-1',           hidden: true  },
-      { input: '5\n5 4 3 2 1',expectedOutput: '-1 5 5 5 5',  hidden: true  },
+      { input: '3\n1 2 1',     expectedOutput: '2 -1 2',      hidden: false },
+      { input: '4\n1 2 3 4',   expectedOutput: '2 3 4 -1',    hidden: false },
+      { input: '1\n5',         expectedOutput: '-1',          hidden: true  },
+      { input: '5\n5 4 3 2 1', expectedOutput: '-1 5 5 5 5',  hidden: true  },
     ],
     starterCode: {
       71: `n = int(input())
 nums = list(map(int, input().split()))
 res = [-1] * n
-stack = []
-for i in range(2 * n):
-    while stack and nums[stack[-1]] < nums[i % n]:
-        res[stack.pop()] = nums[i % n]
-    if i < n:
-        stack.append(i)
-print(*res)`,
-      63: `const lines=require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
-const n=Number(lines[0]);
-const nums=lines[1].split(' ').map(Number);
-const res=new Array(n).fill(-1),st=[];
-for(let i=0;i<2*n;i++){
-  while(st.length&&nums[st[st.length-1]]<nums[i%n]) res[st.pop()]=nums[i%n];
-  if(i<n) st.push(i);
-}
-console.log(res.join(' '));`,
+
+# Write your solution here
+# Use a monotonic stack, iterate 2*n times for circular array
+# print(*res)`,
+      63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
+const n = Number(lines[0]);
+const nums = lines[1].split(' ').map(Number);
+const res = new Array(n).fill(-1);
+
+// Write your solution here
+// Use a monotonic stack, iterate 2*n times for circular array
+// console.log(res.join(' '));`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n;cin>>n;vector<int>a(n);for(auto&x:a)cin>>x;
-    vector<int>res(n,-1);stack<int>st;
-    for(int i=0;i<2*n;i++){
-        while(!st.empty()&&a[st.top()]<a[i%n]){res[st.top()]=a[i%n];st.pop();}
-        if(i<n)st.push(i);
-    }
-    for(int i=0;i<n;i++)cout<<res[i]<<" \n"[i==n-1];
+    int n; cin >> n;
+    vector<int> a(n); for(auto &x: a) cin >> x;
+    vector<int> res(n, -1);
+
+    // Write your solution here
+    // Use a monotonic stack, iterate 2*n times for circular array
+    // for(int i=0;i<n;i++) cout << res[i] << " \n"[i==n-1];
 }`,
     },
   },
@@ -829,34 +803,32 @@ int main(){
     ],
     starterCode: {
       71: `q = int(input())
-from collections import deque
-queue = deque()
+
+# Write your solution here
+# Simulate a queue using two stacks (in_stack and out_stack)
 for _ in range(q):
     op = input().split()
-    if op[0] == 'push': queue.append(int(op[1]))
-    elif op[0] == 'pop': print(queue.popleft())
-    elif op[0] == 'peek': print(queue[0])
-    elif op[0] == 'empty': print('true' if not queue else 'false')`,
-      63: `const lines=require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
-const q=Number(lines[0]);const queue=[];const out=[];
-for(let i=1;i<=q;i++){
-  const[op,v]=lines[i].split(' ');
-  if(op==='push') queue.push(Number(v));
-  else if(op==='pop') console.log(queue.shift());
-  else if(op==='peek') console.log(queue[0]);
-  else console.log(queue.length===0?'true':'false');
+    # handle op[0] == 'push', 'pop', 'peek', 'empty'
+    pass`,
+      63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
+const q = Number(lines[0]);
+
+// Write your solution here
+// Simulate a queue using two stacks (inStack and outStack)
+for(let i = 1; i <= q; i++){
+  const [op, v] = lines[i].split(' ');
+  // handle 'push', 'pop', 'peek', 'empty'
 }`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int q;cin>>q;cin.ignore();
-    deque<int> dq;
+    int q; cin >> q; cin.ignore();
+
+    // Write your solution here
+    // Simulate a queue using two stacks
     while(q--){
-        string op;cin>>op;
-        if(op=="push"){int v;cin>>v;dq.push_back(v);}
-        else if(op=="pop")cout<<dq.front()<<"\\n",dq.pop_front();
-        else if(op=="peek")cout<<dq.front()<<"\\n";
-        else cout<<(dq.empty()?"true":"false")<<"\\n";
+        string op; cin >> op;
+        // handle push, pop, peek, empty
         cin.ignore();
     }
 }`,
@@ -880,31 +852,33 @@ int main(){
       { input: '3\n100\n200\n300',      expectedOutput: '1\n2\n3',    hidden: true  },
     ],
     starterCode: {
-      71: `from collections import deque
-n = int(input())
-q = deque()
+      71: `n = int(input())
+
+# Write your solution here
+# Use a queue to track recent pings within [t-3000, t]
 for _ in range(n):
     t = int(input())
-    q.append(t)
-    while q[0] < t - 3000:
-        q.popleft()
-    print(len(q))`,
-      63: `const lines=require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
-const n=Number(lines[0]);const q=[];
-for(let i=1;i<=n;i++){
-  const t=Number(lines[i]);q.push(t);
-  while(q[0]<t-3000)q.shift();
-  console.log(q.length);
+    # add t to queue, remove elements < t-3000, print queue size
+    pass`,
+      63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
+const n = Number(lines[0]);
+
+// Write your solution here
+// Use a queue to track recent pings within [t-3000, t]
+for(let i = 1; i <= n; i++){
+  const t = Number(lines[i]);
+  // add t to queue, remove elements < t-3000, print queue size
 }`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n;cin>>n;
-    deque<int> q;
+    int n; cin >> n;
+
+    // Write your solution here
+    // Use a deque to track recent pings within [t-3000, t]
     while(n--){
-        int t;cin>>t;q.push_back(t);
-        while(q.front()<t-3000)q.pop_front();
-        cout<<q.size()<<"\\n";
+        int t; cin >> t;
+        // add t to deque, remove elements < t-3000, print size
     }
 }`,
     },
@@ -929,43 +903,32 @@ int main(){
       { input: '5 2\n5 1 4 2 3',          expectedOutput: '5 4 4 3',    hidden: true  },
     ],
     starterCode: {
-      71: `from collections import deque
-n, k = map(int, input().split())
+      71: `n, k = map(int, input().split())
 nums = list(map(int, input().split()))
-dq = deque()
 res = []
-for i in range(n):
-    while dq and dq[0] < i - k + 1:
-        dq.popleft()
-    while dq and nums[dq[-1]] < nums[i]:
-        dq.pop()
-    dq.append(i)
-    if i >= k - 1:
-        res.append(nums[dq[0]])
-print(*res)`,
-      63: `const lines=require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
-const[n,k]=lines[0].split(' ').map(Number);
-const nums=lines[1].split(' ').map(Number);
-const dq=[],res=[];
-for(let i=0;i<n;i++){
-  while(dq.length&&dq[0]<i-k+1)dq.shift();
-  while(dq.length&&nums[dq[dq.length-1]]<nums[i])dq.pop();
-  dq.push(i);
-  if(i>=k-1)res.push(nums[dq[0]]);
-}
-console.log(res.join(' '));`,
+
+# Write your solution here
+# Use a monotonic deque storing indices
+# Remove indices outside window, maintain decreasing order
+# print(*res)`,
+      63: `const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\\n');
+const [n, k] = lines[0].split(' ').map(Number);
+const nums = lines[1].split(' ').map(Number);
+const res = [];
+
+// Write your solution here
+// Use a monotonic deque storing indices
+// Remove indices outside window, maintain decreasing order
+// console.log(res.join(' '));`,
       54: `#include<bits/stdc++.h>
 using namespace std;
 int main(){
-    int n,k;cin>>n>>k;
-    vector<int>a(n);for(auto&x:a)cin>>x;
-    deque<int>dq;
-    for(int i=0;i<n;i++){
-        if(!dq.empty()&&dq.front()<i-k+1)dq.pop_front();
-        while(!dq.empty()&&a[dq.back()]<a[i])dq.pop_back();
-        dq.push_back(i);
-        if(i>=k-1)cout<<a[dq.front()]<<" \n"[i==n-1];
-    }
+    int n, k; cin >> n >> k;
+    vector<int> a(n); for(auto &x: a) cin >> x;
+
+    // Write your solution here
+    // Use a monotonic deque storing indices
+    // Remove indices outside window, maintain decreasing order
 }`,
     },
   },
