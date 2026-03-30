@@ -3,13 +3,22 @@ import { useApp } from '../context/AppContext'
 import { db } from '../firebase'
 import { collection, onSnapshot } from 'firebase/firestore'
 
-const MEDALS = ['🥇', '🥈', '🥉']
+const MEDAL_COLOR = ['#f59e0b', '#94a3b8', '#cd7c3f']
+const MEDAL_BG    = ['#fffbeb', '#f8fafc', '#fff7ed']
+const MEDAL_BORDER= ['#fcd34d', '#cbd5e1', '#fdba74']
+
+const POINTS_GUIDE = [
+  { icon: '✅', label: 'Daily Task',      pts: '+5' },
+  { icon: '🎯', label: 'All 3 Tasks',     pts: '+15' },
+  { icon: '💻', label: 'Coding Problem',  pts: '+10' },
+  { icon: '📚', label: 'Roadmap Topic',   pts: '+8'  },
+]
 
 export default function Leaderboard() {
   const { user, points, streak } = useApp()
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('points')
+  const [tab, setTab]         = useState('points')
 
   useEffect(() => {
     const unsub = onSnapshot(
@@ -17,181 +26,184 @@ export default function Leaderboard() {
       snap => {
         const data = snap.docs.map(d => {
           const u = d.data()
-          return {
-            uid: d.id,
-            name: u.name || '',
-            college: u.college || '',
-            points: u.points || 0,
-            streak: u.streak || 0,
-          }
+          return { uid: d.id, name: u.name || '', college: u.college || '', points: u.points || 0, streak: u.streak || 0 }
         })
         setEntries(data)
         setLoading(false)
       },
-      err => {
-        console.error('Leaderboard read failed:', err)
-        setLoading(false)
-      }
+      err => { console.error('Leaderboard read failed:', err); setLoading(false) }
     )
     return unsub
   }, [])
 
-  // Sort based on active tab
   const sorted = [...entries].sort((a, b) => {
-    if (tab === 'points') {
-      if (b.points !== a.points) return b.points - a.points
-      return b.streak - a.streak
-    }
-    // streak tab
-    if (b.streak !== a.streak) return b.streak - a.streak
-    return b.points - a.points
+    if (tab === 'points') return b.points !== a.points ? b.points - a.points : b.streak - a.streak
+    return b.streak !== a.streak ? b.streak - a.streak : b.points - a.points
   }).map((e, i) => ({ ...e, rank: i + 1 }))
 
   const myEntry = sorted.find(e => e.uid === user?.uid)
+  const top3    = sorted.slice(0, 3)
+  const rest    = sorted.slice(3)
 
-  const rankColor = (r) => r === 1 ? '#f59e0b' : r === 2 ? '#94a3b8' : r === 3 ? '#cd7c3f' : 'var(--text-muted)'
+  // Podium order: 2nd, 1st, 3rd
+  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean)
+  const podiumHeight = ['72px', '96px', '56px']
+  const podiumHeightFor = (e) => {
+    if (!e) return '56px'
+    if (e.rank === 1) return '96px'
+    if (e.rank === 2) return '72px'
+    return '56px'
+  }
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Leaderboard</h1>
-        <p className="page-subtitle">Live rankings across all students</p>
-      </div>
-
-      {/* My ranking card */}
-      {myEntry && (
-        <div className="card" style={{ marginBottom: 20, background: 'var(--primary-light)', border: '1.5px solid var(--primary)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 4 }}>
-                Your Ranking
-              </div>
-              <div style={{ fontSize: 26, fontWeight: 800 }}>
-                {MEDALS[myEntry.rank - 1] || `#${myEntry.rank}`}
-                {myEntry.rank > 3 && <span style={{ fontSize: 22, marginLeft: 4 }}>Rank #{myEntry.rank}</span>}
-              </div>
-              {myEntry.college && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{myEntry.college}</div>}
+      {/* ── Hero Banner ── */}
+      <div className="lb-hero">
+        <div className="lb-hero-left">
+          <div className="lb-hero-eyebrow">🏆 Live Rankings</div>
+          <div className="lb-hero-title">Leaderboard</div>
+          <div className="lb-hero-sub">Rankings across all students · updates in real time</div>
+          {myEntry && (
+            <div className="lb-hero-myrank">
+              <span className="lb-hero-myrank-label">Your rank</span>
+              <span className="lb-hero-myrank-val">
+                {myEntry.rank <= 3 ? ['🥇','🥈','🥉'][myEntry.rank - 1] : `#${myEntry.rank}`}
+              </span>
             </div>
-            <div style={{ display: 'flex', gap: 24 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--primary)' }}>{points}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .4 }}>Points</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#f59e0b' }}>🔥 {streak.count}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .4 }}>Day Streak</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#10b981' }}>{sorted.length}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .4 }}>Students</div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Points guide */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, textAlign: 'center' }}>
+        <div className="lb-hero-stats">
           {[
-            { label: 'Daily Task', pts: '+5 pts' },
-            { label: 'All 3 Tasks', pts: '+15 pts' },
-            { label: 'Coding Problem', pts: '+10 pts' },
-            { label: 'Roadmap Topic', pts: '+8 pts' },
-          ].map(item => (
-            <div key={item.label} style={{ padding: '10px 8px', background: 'var(--bg)', borderRadius: 8 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>{item.pts}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{item.label}</div>
+            { val: points,       lbl: 'Your Points', icon: '⚡' },
+            { val: `🔥 ${streak.count}`, lbl: 'Streak',  icon: '' },
+            { val: myEntry ? `#${myEntry.rank}` : '—', lbl: 'Rank', icon: '🎯' },
+            { val: sorted.length, lbl: 'Students', icon: '👥' },
+          ].map(s => (
+            <div key={s.lbl} className="lb-hero-stat">
+              <div className="lb-hero-stat-val">{s.val}</div>
+              <div className="lb-hero-stat-lbl">{s.lbl}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Tab switcher */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {[
-          { key: 'points', label: '🏆 By Points' },
-          { key: 'streak', label: '🔥 By Streak' },
-        ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            padding: '7px 20px', borderRadius: 20, border: '2px solid',
-            borderColor: tab === t.key ? 'var(--primary)' : 'var(--border)',
-            background: tab === t.key ? 'var(--primary-light)' : 'transparent',
-            color: tab === t.key ? 'var(--primary)' : 'var(--text)',
-            fontWeight: 700, fontSize: 13, cursor: 'pointer',
-          }}>
+      {/* ── Points guide ── */}
+      <div className="lb-guide">
+        {POINTS_GUIDE.map(g => (
+          <div key={g.label} className="lb-guide-item">
+            <span className="lb-guide-icon">{g.icon}</span>
+            <span className="lb-guide-pts">{g.pts} pts</span>
+            <span className="lb-guide-lbl">{g.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Tab switcher ── */}
+      <div className="lb-tabs">
+        {[{ key: 'points', label: '🏆 By Points' }, { key: 'streak', label: '🔥 By Streak' }].map(t => (
+          <button
+            key={t.key}
+            className={`lb-tab${tab === t.key ? ' active' : ''}`}
+            onClick={() => setTab(t.key)}
+          >
             {t.label}
           </button>
         ))}
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center' }}>
+        <span className="lb-count">
           {loading ? 'Loading…' : `${sorted.length} student${sorted.length !== 1 ? 's' : ''}`}
         </span>
       </div>
 
-      {/* Table */}
       {loading ? (
-        <div className="card" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+        <div className="lb-empty">
+          <div className="lb-empty-icon">⏳</div>
           Loading rankings…
         </div>
       ) : sorted.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+        <div className="lb-empty">
+          <div className="lb-empty-icon">🏁</div>
           No students yet. Be the first to earn points!
         </div>
       ) : (
         <>
-          {/* Column headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: '52px 1fr 110px 110px', gap: 8, padding: '6px 16px', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: .5 }}>
-            <span>Rank</span><span>Student</span>
-            <span style={{ textAlign: 'right' }}>Points</span>
-            <span style={{ textAlign: 'right' }}>Streak</span>
-          </div>
-
-          <div className="leaderboard-list">
-            {sorted.map(entry => {
-              const isMe = entry.uid === user?.uid
-              return (
-                <div
-                  key={entry.uid}
-                  className={`leaderboard-row${isMe ? ' me' : ''}${entry.rank === 1 ? ' top-1' : ''}`}
-                  style={isMe ? { border: '1.5px solid var(--primary)', background: 'var(--primary-light)' } : {}}
-                >
-                  {/* Rank */}
-                  <div style={{ width: 36, textAlign: 'center', flexShrink: 0 }}>
-                    {entry.rank <= 3 ? (
-                      <span style={{ fontSize: 22 }}>{MEDALS[entry.rank - 1]}</span>
-                    ) : (
-                      <span style={{ fontSize: 15, fontWeight: 700, color: rankColor(entry.rank) }}>#{entry.rank}</span>
-                    )}
-                  </div>
-
-                  {/* Name + college */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: isMe ? 700 : 600, fontSize: 15, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.name || 'Student'}</span>
-                      {isMe && (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--primary)', background: '#fff', padding: '1px 7px', borderRadius: 10, border: '1px solid var(--primary)', whiteSpace: 'nowrap' }}>You</span>
-                      )}
+          {/* ── Top 3 Podium ── */}
+          {top3.length > 0 && (
+            <div className="lb-podium-wrap">
+              {podiumOrder.map((entry, pi) => {
+                const isMe = entry.uid === user?.uid
+                const mc   = MEDAL_COLOR[entry.rank - 1]
+                const mb   = MEDAL_BG[entry.rank - 1]
+                const mbo  = MEDAL_BORDER[entry.rank - 1]
+                return (
+                  <div key={entry.uid} className={`lb-podium-card${isMe ? ' me' : ''}`}
+                    style={{ borderColor: isMe ? 'var(--primary)' : mbo, background: isMe ? 'var(--primary-light)' : mb }}
+                  >
+                    {isMe && <div className="lb-podium-you-tag">You</div>}
+                    <div className="lb-podium-avatar" style={{ background: mc + '22', borderColor: mc }}>
+                      <span className="lb-podium-initials" style={{ color: mc }}>
+                        {entry.name ? entry.name.charAt(0).toUpperCase() : '?'}
+                      </span>
                     </div>
-                    {entry.college && (
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.college}</div>
-                    )}
+                    <div className="lb-podium-medal">
+                      {['🥇','🥈','🥉'][entry.rank - 1]}
+                    </div>
+                    <div className="lb-podium-name">{entry.name || 'Student'}</div>
+                    {entry.college && <div className="lb-podium-college">{entry.college}</div>}
+                    <div className="lb-podium-pts" style={{ color: mc }}>{tab === 'points' ? entry.points : `🔥 ${entry.streak}`}</div>
+                    <div className="lb-podium-pts-lbl">{tab === 'points' ? 'points' : 'day streak'}</div>
+                    <div className="lb-podium-base" style={{ height: podiumHeightFor(entry), background: mc + '22', borderTop: `3px solid ${mc}` }}>
+                      <span style={{ color: mc, fontWeight: 900, fontSize: 18 }}>#{entry.rank}</span>
+                    </div>
                   </div>
+                )
+              })}
+            </div>
+          )}
 
-                  {/* Points */}
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: tab === 'points' ? 'var(--primary)' : 'var(--text)' }}>{entry.points ?? 0}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>pts</div>
-                  </div>
+          {/* ── Rankings Table ── */}
+          {rest.length > 0 && (
+            <div className="lb-table">
+              <div className="lb-table-head">
+                <span className="lb-th lb-th-rank">Rank</span>
+                <span className="lb-th lb-th-name">Student</span>
+                <span className="lb-th lb-th-pts">Points</span>
+                <span className="lb-th lb-th-streak">Streak</span>
+              </div>
 
-                  {/* Streak */}
-                  <div style={{ textAlign: 'right', minWidth: 80, flexShrink: 0 }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: tab === 'streak' ? '#f59e0b' : 'var(--text)' }}>🔥 {entry.streak ?? 0}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>days</div>
+              {rest.map(entry => {
+                const isMe = entry.uid === user?.uid
+                return (
+                  <div key={entry.uid} className={`lb-row${isMe ? ' lb-row-me' : ''}`}>
+                    <span className="lb-td lb-td-rank">
+                      <span className="lb-rank-num" style={{ color: isMe ? 'var(--primary)' : 'var(--text-muted)' }}>
+                        #{entry.rank}
+                      </span>
+                    </span>
+                    <span className="lb-td lb-td-name">
+                      <div className="lb-row-avatar" style={{ background: isMe ? 'var(--primary)' : '#e2e8f0', color: isMe ? '#fff' : 'var(--text-secondary)' }}>
+                        {entry.name ? entry.name.charAt(0).toUpperCase() : '?'}
+                      </div>
+                      <div className="lb-name-wrap">
+                        <div className="lb-name">
+                          {entry.name || 'Student'}
+                          {isMe && <span className="lb-you-tag">You</span>}
+                        </div>
+                        {entry.college && <div className="lb-college">{entry.college}</div>}
+                      </div>
+                    </span>
+                    <span className="lb-td lb-td-pts">
+                      <div className="lb-pts-val" style={{ color: tab === 'points' ? 'var(--primary)' : 'var(--text)' }}>{entry.points}</div>
+                      <div className="lb-pts-sub">pts</div>
+                    </span>
+                    <span className="lb-td lb-td-streak">
+                      <div className="lb-streak-val" style={{ color: tab === 'streak' ? '#f59e0b' : 'var(--text)' }}>🔥 {entry.streak}</div>
+                      <div className="lb-pts-sub">days</div>
+                    </span>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
