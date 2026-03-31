@@ -2,10 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 
-const YEARS    = ['1st Year', '2nd Year', '3rd Year', '4th Year']
-const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other']
-const GOALS    = ['Product Company (FAANG/Unicorn)', 'Service Company (TCS/Infosys/Wipro)', 'Startup', 'Higher Studies']
-
 function GoogleIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 48 48">
@@ -26,35 +22,21 @@ function GithubIcon() {
 }
 
 export default function Register() {
-  const { loginWithGoogle, loginWithGithub, updateProfile } = useApp()
+  const { loginWithGoogle, loginWithGithub } = useApp()
   const navigate = useNavigate()
-
-  const [step, setStep]               = useState('social') // 'social' | 'profile'
   const [socialLoading, setSocialLoading] = useState('')
-  const [socialError, setSocialError] = useState('')
+  const [error, setError] = useState('')
 
-  const [form, setForm] = useState({ name: '', college: '', branch: '', yearOfStudy: '', careerGoal: '' })
-  const [errors, setErrors]   = useState({})
-  const [saving, setSaving]   = useState(false)
-
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-
-  // ── Step 1: social auth ──────────────────────────────────────────────────
   const handleSocial = async (provider, label) => {
-    setSocialError('')
+    setError('')
     setSocialLoading(label)
     try {
       const fn = provider === 'google' ? loginWithGoogle : loginWithGithub
-      const { isNewUser, displayName } = await fn()
-      if (!isNewUser) {
-        navigate('/dashboard')
-      } else {
-        setForm(f => ({ ...f, name: displayName || '' }))
-        setStep('profile')
-      }
+      const { isNewUser } = await fn()
+      navigate(isNewUser ? '/profile-setup' : '/dashboard')
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
-        setSocialError(err.code === 'auth/account-exists-with-different-credential'
+        setError(err.code === 'auth/account-exists-with-different-credential'
           ? 'An account already exists with a different sign-in method.'
           : `${label} sign-up failed. Please try again.`)
       }
@@ -63,146 +45,39 @@ export default function Register() {
     }
   }
 
-  // ── Step 2: profile form ──────────────────────────────────────────────────
-  const validate = () => {
-    const e = {}
-    if (!form.name.trim())    e.name       = 'Name is required'
-    if (!form.college.trim()) e.college    = 'College name required'
-    if (!form.branch)         e.branch     = 'Select your branch'
-    if (!form.yearOfStudy)    e.yearOfStudy = 'Select year'
-    if (!form.careerGoal)     e.careerGoal = 'Select dream job / goal'
-    return e
-  }
-
-  const handleProfile = async (e) => {
-    e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    setSaving(true)
-    try {
-      await updateProfile(form)
-      navigate('/assessment')
-    } catch {
-      setErrors({ submit: 'Failed to save details. Please try again.' })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  // ── Render: Step 1 ───────────────────────────────────────────────────────
-  if (step === 'social') {
-    return (
-      <div className="auth-page">
-        <div className="auth-card">
-          <div className="auth-logo">
-            <h1>NextPath</h1>
-            <p>Start your career preparation journey</p>
-          </div>
-
-          <h2 className="auth-title">Create your account</h2>
-          <p className="auth-subtitle">Sign up to get started</p>
-
-          {socialError && <div className="alert alert-error">{socialError}</div>}
-
-          <div className="auth-social">
-            <button
-              type="button"
-              className="auth-social-btn"
-              onClick={() => handleSocial('google', 'Google')}
-              disabled={!!socialLoading}
-            >
-              <GoogleIcon />
-              {socialLoading === 'Google' ? 'Signing up…' : 'Continue with Google'}
-            </button>
-            <button
-              type="button"
-              className="auth-social-btn auth-social-btn--github"
-              onClick={() => handleSocial('github', 'GitHub')}
-              disabled={!!socialLoading}
-            >
-              <GithubIcon />
-              {socialLoading === 'GitHub' ? 'Signing up…' : 'Continue with GitHub'}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Render: Step 2 ───────────────────────────────────────────────────────
   return (
     <div className="auth-page">
-      <div className="auth-card" style={{ maxWidth: 520 }}>
+      <div className="auth-card">
         <div className="auth-logo">
           <h1>NextPath</h1>
+          <p>Start your career preparation journey</p>
         </div>
 
-        <div className="auth-step-header">
-          <div className="auth-step-icon">🎓</div>
-          <h2 className="auth-title" style={{ marginBottom: 4 }}>Complete your profile</h2>
-          <p className="auth-subtitle">Tell us about yourself so we can personalise your path</p>
-        </div>
+        <h2 className="auth-title">Create your account</h2>
+        <p className="auth-subtitle">Sign up to get started</p>
 
-        {errors.submit && <div className="alert alert-error">{errors.submit}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
 
-        <form onSubmit={handleProfile}>
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              placeholder="Rahul Sharma"
-              value={form.name}
-              onChange={e => set('name', e.target.value)}
-            />
-            {errors.name && <div className="form-error">{errors.name}</div>}
-          </div>
-
-          <div className="form-group">
-            <label>College / University</label>
-            <input
-              placeholder="VIT Vellore"
-              value={form.college}
-              onChange={e => set('college', e.target.value)}
-            />
-            {errors.college && <div className="form-error">{errors.college}</div>}
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Branch</label>
-              <select value={form.branch} onChange={e => set('branch', e.target.value)}>
-                <option value="">Select branch</option>
-                {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-              {errors.branch && <div className="form-error">{errors.branch}</div>}
-            </div>
-            <div className="form-group">
-              <label>Year of Study</label>
-              <select value={form.yearOfStudy} onChange={e => set('yearOfStudy', e.target.value)}>
-                <option value="">Select year</option>
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              {errors.yearOfStudy && <div className="form-error">{errors.yearOfStudy}</div>}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Dream Job / Career Goal</label>
-            <select value={form.careerGoal} onChange={e => set('careerGoal', e.target.value)}>
-              <option value="">Select your goal</option>
-              {GOALS.map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
-            {errors.careerGoal && <div className="form-error">{errors.careerGoal}</div>}
-          </div>
-
+        <div className="auth-social">
           <button
-            type="submit"
-            className="btn btn-primary btn-full btn-lg"
-            style={{ marginTop: 8 }}
-            disabled={saving}
+            type="button"
+            className="auth-social-btn"
+            onClick={() => handleSocial('google', 'Google')}
+            disabled={!!socialLoading}
           >
-            {saving ? 'Saving…' : 'Save & Take Assessment →'}
+            <GoogleIcon />
+            {socialLoading === 'Google' ? 'Signing up…' : 'Continue with Google'}
           </button>
-        </form>
+          <button
+            type="button"
+            className="auth-social-btn auth-social-btn--github"
+            onClick={() => handleSocial('github', 'GitHub')}
+            disabled={!!socialLoading}
+          >
+            <GithubIcon />
+            {socialLoading === 'GitHub' ? 'Signing up…' : 'Continue with GitHub'}
+          </button>
+        </div>
       </div>
     </div>
   )

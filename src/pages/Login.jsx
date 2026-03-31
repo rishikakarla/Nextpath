@@ -55,7 +55,7 @@ export default function Login() {
     try {
       const fn = provider === 'google' ? loginWithGoogle : loginWithGithub
       const { isNewUser } = await fn()
-      navigate(isNewUser ? '/assessment' : '/dashboard')
+      navigate(isNewUser ? '/profile-setup' : '/dashboard')
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
         setError(err.code === 'auth/account-exists-with-different-credential'

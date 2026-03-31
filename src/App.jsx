@@ -15,6 +15,7 @@ import Admin from './pages/Admin'
 import IDE from './pages/IDE'
 import AptitudeTraining from './pages/AptitudeTraining'
 import TopicPage from './pages/TopicPage'
+import ProfileSetup from './pages/ProfileSetup'
 
 function Require({ children }) {
   const { user, authLoading } = useApp()
@@ -29,6 +30,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Register />} />
+      <Route path="/profile-setup" element={<Require><ProfileSetup /></Require>} />
       <Route path="/assessment" element={<Require><Assessment /></Require>} />
       <Route path="/" element={<Require><Layout /></Require>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
