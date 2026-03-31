@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { COMPANIES } from '../data/companyData'
 import { useContent } from '../context/ContentContext'
 import ProblemEditor from '../components/ProblemEditor'
 
@@ -37,7 +36,7 @@ function adaptForEditor(q) {
 }
 
 export default function CompanyLearning() {
-  const { companyProblems } = useContent()
+  const { companyProblems, companies: COMPANIES } = useContent()
 
   const [view,     setView]     = useState('home')    // 'home' | 'practice'
   const [company,  setCompany]  = useState(null)

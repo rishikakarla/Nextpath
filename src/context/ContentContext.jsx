@@ -4,6 +4,7 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { ASSESSMENT_QUESTIONS, ROADMAP_PHASES, DAILY_TASKS } from '../data/appData'
 import { CODING_PROBLEMS } from '../data/codingProblems'
 import { APTITUDE_TOPICS } from '../data/aptitudeData'
+import { COMPANIES } from '../data/companyData'
 
 const ContentContext = createContext(null)
 
@@ -27,6 +28,7 @@ export function ContentProvider({ children }) {
   const [aptitudeTopics, setAptitudeTopics] = useState(APTITUDE_TOPICS)
   const [dailyQuote, setDailyQuote] = useState({ text: '', author: '' })
   const [companyProblems, setCompanyProblems] = useState({})
+  const [companies, setCompanies] = useState(COMPANIES)
 
   useEffect(() => {
     const entries = [
@@ -74,6 +76,11 @@ export function ContentProvider({ children }) {
         seed: {},
         setter: d => setCompanyProblems(d || {}),
       },
+      {
+        key: 'companies',
+        seed: { items: COMPANIES },
+        setter: d => setCompanies(d.items || COMPANIES),
+      },
     ]
 
     // Use onSnapshot so all students instantly see admin changes
@@ -102,7 +109,7 @@ export function ContentProvider({ children }) {
   }
 
   return (
-    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, updateContent }}>
+    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, companies, updateContent }}>
       {children}
     </ContentContext.Provider>
   )

@@ -1533,12 +1533,147 @@ function QuoteTab({ quote, onUpdate }) {
 }
 
 // ── Main Admin Layout ─────────────────────────────────────────────────────────
+// ── Companies ────────────────────────────────────────────────────────────────
+const COMPANY_TYPES = ['Product', 'Service', 'Startup']
+const BLANK_COMPANY = {
+  id: '', name: '', fullName: '', icon: '🏢', type: 'Service',
+  difficulty: 'Easy', package: '', color: '#6366f1',
+  rounds: [], tip: '',
+}
+
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r},${g},${b},${a})`
+}
+
+function CompaniesTab({ companies = [], onUpdate }) {
+  const [editing, setEditing] = useState(null)   // null | 'new' | company.id
+  const [form,    setForm]    = useState(BLANK_COMPANY)
+  const [roundsText, setRoundsText] = useState('')
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const startNew = () => {
+    setForm(BLANK_COMPANY)
+    setRoundsText('')
+    setEditing('new')
+  }
+
+  const startEdit = (c) => {
+    setForm({ ...c })
+    setRoundsText((c.rounds || []).join('\n'))
+    setEditing(c.id)
+  }
+
+  const save = () => {
+    if (!form.name.trim() || !form.fullName.trim()) return
+    const id     = form.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    const rounds = roundsText.split('\n').map(r => r.trim()).filter(Boolean)
+    const glow   = hexToRgba(form.color, 0.3)
+    const entry  = { ...form, id: editing === 'new' ? id : form.id, rounds, glow }
+    if (editing === 'new') {
+      onUpdate([...companies, entry])
+    } else {
+      onUpdate(companies.map(c => c.id === editing ? entry : c))
+    }
+    setEditing(null)
+  }
+
+  const remove = (id) => {
+    if (!window.confirm('Delete this company?')) return
+    onUpdate(companies.filter(c => c.id !== id))
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h2 style={{ margin: 0, fontSize: 20 }}>🏢 Companies <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>({companies.length})</span></h2>
+        <Btn onClick={startNew}>+ Add Company</Btn>
+      </div>
+
+      {editing !== null && (
+        <ActiveCard>
+          <h3 style={{ margin: '0 0 16px' }}>{editing === 'new' ? 'New Company' : `Edit: ${form.name}`}</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
+            <Field label="Short Name (e.g. TCS)">
+              <input style={s.inp} value={form.name} onChange={e => set('name', e.target.value)} placeholder="TCS" />
+            </Field>
+            <Field label="Full Name">
+              <input style={s.inp} value={form.fullName} onChange={e => set('fullName', e.target.value)} placeholder="Tata Consultancy Services" />
+            </Field>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
+            <Field label="Icon (emoji)">
+              <input style={s.inp} value={form.icon} onChange={e => set('icon', e.target.value)} placeholder="🏢" />
+            </Field>
+            <Field label="Type">
+              <select style={s.inp} value={form.type} onChange={e => set('type', e.target.value)}>
+                {COMPANY_TYPES.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </Field>
+            <Field label="Difficulty">
+              <select style={s.inp} value={form.difficulty} onChange={e => set('difficulty', e.target.value)}>
+                {DIFFS.map(d => <option key={d}>{d}</option>)}
+              </select>
+            </Field>
+            <Field label="Brand Color">
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input type="color" value={form.color} onChange={e => set('color', e.target.value)}
+                  style={{ width: 40, height: 36, padding: 2, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer' }} />
+                <input style={{ ...s.inp, fontFamily: 'monospace' }} value={form.color} onChange={e => set('color', e.target.value)} placeholder="#6366f1" />
+              </div>
+            </Field>
+          </div>
+          <Field label="Package (e.g. 3.5 – 7 LPA)">
+            <input style={s.inp} value={form.package} onChange={e => set('package', e.target.value)} placeholder="3.5 – 7 LPA" />
+          </Field>
+          <Field label="Interview Rounds (one per line)">
+            <textarea style={{ ...s.inp, minHeight: 90, resize: 'vertical' }} value={roundsText}
+              onChange={e => setRoundsText(e.target.value)}
+              placeholder={"NQT – Numerical\nNQT – Coding\nHR Interview"} />
+          </Field>
+          <Field label="Tip for students">
+            <textarea style={{ ...s.inp, minHeight: 60, resize: 'vertical' }} value={form.tip}
+              onChange={e => set('tip', e.target.value)} placeholder="Focus on..." />
+          </Field>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <Btn variant="success" onClick={save}>✓ Save Company</Btn>
+            <Btn variant="ghost" onClick={() => setEditing(null)}>Cancel</Btn>
+          </div>
+        </ActiveCard>
+      )}
+
+      {companies.length === 0
+        ? <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 40 }}>No companies yet. Add one above.</div>
+        : companies.map(c => (
+          <div key={c.id} style={{ ...s.card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: hexToRgba(c.color, 0.15), border: `2px solid ${c.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+              {c.icon}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{c.name} <span style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: 13 }}>{c.fullName}</span></div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                {c.type} · {c.difficulty} · {c.package} · {(c.rounds || []).length} rounds
+              </div>
+            </div>
+            <div style={{ width: 14, height: 14, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+            <Btn sm variant="ghost" onClick={() => startEdit(c)}>Edit</Btn>
+            <Btn sm variant="danger" onClick={() => remove(c.id)}>Delete</Btn>
+          </div>
+        ))
+      }
+    </div>
+  )
+}
+
 // ── Company Questions ─────────────────────────────────────────────────────────
 const BLANK_MCQ  = { q: '', opts: ['', '', '', ''], ans: 0, exp: '' }
 const COMP_CATS  = ['coding', 'aptitude', 'english']
 
-function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
-  const [selCompany, setSelCompany] = useState(COMPANIES[0]?.id || '')
+function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate }) {
+  const [selCompany, setSelCompany] = useState(companies[0]?.id || '')
   const [subTab,     setSubTab]     = useState('coding')
   const [editing,    setEditing]    = useState(null)   // null | 'new' | index
   const [form,       setForm]       = useState(BLANK_PROB)
@@ -1548,7 +1683,7 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
   const [jsonError,   setJsonError]   = useState('')
   const [jsonSuccess, setJsonSuccess] = useState('')
 
-  const company   = COMPANIES.find(c => c.id === selCompany)
+  const company   = companies.find(c => c.id === selCompany)
   const compData  = companyProblems[selCompany] || { coding: [], aptitude: [], english: [] }
   const questions = compData[subTab] || []
 
@@ -1651,7 +1786,7 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
         <label style={{ ...s.lbl, margin: 0 }}>Company</label>
         <select value={selCompany} onChange={e => { setSelCompany(e.target.value); setEditing(null); setJsonMode(false) }}
           style={{ ...s.inp, width: 220 }}>
-          {COMPANIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+          {companies.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
         </select>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
           {COMP_CATS.map(cat => (
@@ -1785,12 +1920,13 @@ const TABS = [
   { key: 'daily',      label: '📅 Daily Tasks' },
   { key: 'aptitude',   label: '🧮 Aptitude Training' },
   { key: 'quote',      label: '💬 Daily Quote' },
-  { key: 'company',    label: '🏢 Company Questions' },
+  { key: 'companies',  label: '🏢 Manage Companies' },
+  { key: 'company',    label: '📋 Company Questions' },
 ]
 
 export default function Admin() {
   const { user, logout } = useApp()
-  const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, updateContent } = useContent()
+  const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, companies, updateContent } = useContent()
   const navigate = useNavigate()
   const [tab, setTab] = useState('coding')
 
@@ -1836,7 +1972,8 @@ export default function Admin() {
           {tab === 'daily'      && <DailyTasksTab     tasks={dailyTasks}                onUpdate={d => updateContent('dailyTasks', d)} />}
           {tab === 'aptitude'   && <AptitudeTab       topics={aptitudeTopics}           onUpdate={d => updateContent('aptitudeTopics', d)} />}
           {tab === 'quote'      && <QuoteTab          quote={dailyQuote}                onUpdate={d => updateContent('dailyQuote', d)} />}
-          {tab === 'company'    && <CompanyQuestionsTab companyProblems={companyProblems} onUpdate={d => updateContent('companyProblems', d)} />}
+          {tab === 'companies'  && <CompaniesTab        companies={companies}             onUpdate={d => updateContent('companies', { items: d })} />}
+          {tab === 'company'    && <CompanyQuestionsTab companies={companies} companyProblems={companyProblems} onUpdate={d => updateContent('companyProblems', d)} />}
         </main>
       </div>
     </div>
