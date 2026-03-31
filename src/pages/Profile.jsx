@@ -6,27 +6,20 @@ const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'M
 const GOALS    = ['Product Company (FAANG/Unicorn)', 'Service Company (TCS/Infosys/Wipro)', 'Startup', 'Higher Studies']
 const SKILL_SUGGESTIONS = ['Python', 'Java', 'C++', 'JavaScript', 'React', 'Node.js', 'SQL', 'DSA', 'Machine Learning', 'Git', 'HTML/CSS', 'TypeScript', 'MongoDB', 'AWS', 'Docker']
 
-const RANK_TIERS = [
-  { name: 'Rookie',   min: 0,    icon: '🎮', color: '#64748b', bg: 'rgba(100,116,139,.15)', glow: 'rgba(100,116,139,.25)' },
-  { name: 'Bronze',   min: 100,  icon: '🥉', color: '#cd7f32', bg: 'rgba(205,127,50,.12)',  glow: 'rgba(205,127,50,.3)'  },
-  { name: 'Silver',   min: 300,  icon: '🥈', color: '#94a3b8', bg: 'rgba(148,163,184,.12)', glow: 'rgba(148,163,184,.28)'},
-  { name: 'Gold',     min: 600,  icon: '🏆', color: '#f59e0b', bg: 'rgba(245,158,11,.12)',  glow: 'rgba(245,158,11,.35)' },
-  { name: 'Platinum', min: 1000, icon: '💜', color: '#a78bfa', bg: 'rgba(167,139,250,.12)', glow: 'rgba(167,139,250,.35)'},
-  { name: 'Diamond',  min: 2000, icon: '💎', color: '#06b6d4', bg: 'rgba(6,182,212,.12)',   glow: 'rgba(6,182,212,.35)'  },
-]
+// Assessment levels (from assessment result)
+const LEVEL_STYLES = {
+  Rookie:   { icon: '🎮', color: '#64748b', bg: 'rgba(100,116,139,.15)', glow: 'rgba(100,116,139,.25)' },
+  Explorer: { icon: '🧭', color: '#3b82f6', bg: 'rgba(59,130,246,.12)',  glow: 'rgba(59,130,246,.3)'  },
+  Coder:    { icon: '💻', color: '#8b5cf6', bg: 'rgba(139,92,246,.12)',  glow: 'rgba(139,92,246,.35)' },
+  Master:   { icon: '👑', color: '#f59e0b', bg: 'rgba(245,158,11,.12)',  glow: 'rgba(245,158,11,.4)'  },
+}
+const LEVEL_ORDER = ['Rookie', 'Explorer', 'Coder', 'Master']
 
 const RARITY = {
   common:    { color: '#94a3b8', bg: 'rgba(148,163,184,.08)', border: 'rgba(148,163,184,.2)',  label: 'C' },
   rare:      { color: '#3b82f6', bg: 'rgba(59,130,246,.08)',  border: 'rgba(59,130,246,.25)',  label: 'R' },
   epic:      { color: '#8b5cf6', bg: 'rgba(139,92,246,.08)',  border: 'rgba(139,92,246,.25)',  label: 'E' },
   legendary: { color: '#f59e0b', bg: 'rgba(245,158,11,.08)',  border: 'rgba(245,158,11,.28)',  label: 'L' },
-}
-
-function getRank(pts) {
-  for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
-    if (pts >= RANK_TIERS[i].min) return RANK_TIERS[i]
-  }
-  return RANK_TIERS[0]
 }
 
 function Card({ title, icon, children, action, noPad }) {
@@ -49,7 +42,7 @@ function EditBtn({ onClick }) {
 }
 
 export default function Profile() {
-  const { user, points, streak, progress, solvedProblems, quizAttempts, updateProfile } = useApp()
+  const { user, points, streak, progress, solvedProblems, quizAttempts, assessmentResult, updateProfile } = useApp()
 
   const [editSection, setEditSection] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -64,11 +57,13 @@ export default function Profile() {
 
   const isComplete = !!(user?.name && user?.college && user?.branch && user?.yearOfStudy && user?.careerGoal)
 
-  const level    = Math.max(1, Math.floor(points / 50) + 1)
-  const xpInLvl  = points % 50
-  const xpPct    = Math.round((xpInLvl / 50) * 100)
-  const rank     = getRank(points)
-  const nextRank = RANK_TIERS.find(r => r.min > points) || null
+  const xpPerLevel = 50
+  const xpInLvl    = points % xpPerLevel
+  const xpPct      = Math.round((xpInLvl / xpPerLevel) * 100)
+
+  const assessLevel = assessmentResult?.level || null
+  const levelStyle  = LEVEL_STYLES[assessLevel] || LEVEL_STYLES['Rookie']
+  const nextLevel   = assessLevel ? LEVEL_ORDER[LEVEL_ORDER.indexOf(assessLevel) + 1] || null : null
 
   const ALL_ACHIEVEMENTS = [
     { icon: '💻', title: 'First Blood',    desc: 'Solve 1st problem',     rarity: 'common',    unlocked: solvedProblems.length >= 1  },
@@ -110,7 +105,7 @@ export default function Profile() {
     <div className="gpf-page">
 
       {/* ── COMPACT HERO ─────────────────────────────────────────────────── */}
-      <div className="gpf-hero" style={{ '--rc': rank.color, '--rg': rank.glow }}>
+      <div className="gpf-hero" style={{ '--rc': levelStyle.color, '--rg': levelStyle.glow }}>
         {/* Avatar */}
         <div className="gpf-av-wrap">
           {user?.photoURL
@@ -124,12 +119,14 @@ export default function Profile() {
         <div className="gpf-hero-mid">
           <div className="gpf-hero-top-row">
             <span className="gpf-h-name">{user?.name || 'Your Name'}</span>
-            <span className="gpf-rank-tag" style={{ color: rank.color, background: rank.bg, borderColor: rank.color }}>
-              {rank.icon} {rank.name}
-            </span>
-            <span className="gpf-lv-tag" style={{ color: rank.color, background: rank.bg, borderColor: rank.color }}>
-              Lv.{level}
-            </span>
+            {assessLevel
+              ? <span className="gpf-rank-tag" style={{ color: levelStyle.color, background: levelStyle.bg, borderColor: levelStyle.color }}>
+                  {levelStyle.icon} {assessLevel}
+                </span>
+              : <span className="gpf-rank-tag" style={{ color: '#64748b', background: 'rgba(100,116,139,.15)', borderColor: '#64748b' }}>
+                  🎮 Take Assessment
+                </span>
+            }
           </div>
           <div className="gpf-h-sub">
             {[user?.college, user?.branch, user?.yearOfStudy].filter(Boolean).join(' · ') || 'Complete your profile'}
@@ -138,20 +135,20 @@ export default function Profile() {
           {/* XP bar */}
           <div className="gpf-xp-row">
             <div className="gpf-xp-track">
-              <div className="gpf-xp-fill" style={{ width: `${xpPct}%`, background: rank.color }} />
+              <div className="gpf-xp-fill" style={{ width: `${xpPct}%`, background: levelStyle.color }} />
             </div>
             <span className="gpf-xp-txt">{xpInLvl}/50 XP</span>
-            {nextRank && <span className="gpf-xp-next">→ {nextRank.icon}{nextRank.name} at {nextRank.min}</span>}
+            {nextLevel && <span className="gpf-xp-next">→ {LEVEL_STYLES[nextLevel].icon} {nextLevel}</span>}
           </div>
         </div>
 
         {/* Stat strip */}
         <div className="gpf-hero-stats">
           {[
-            { v: points,                lbl: 'XP',      c: rank.color   },
-            { v: `${streak.count}🔥`,   lbl: 'Streak',  c: '#f59e0b'    },
-            { v: solvedProblems.length, lbl: 'Solved',  c: '#10b981'    },
-            { v: `${progress.roadmap||0}%`, lbl: 'Roadmap', c: '#8b5cf6' },
+            { v: points,                lbl: 'XP',      c: levelStyle.color },
+            { v: `${streak.count}🔥`,   lbl: 'Streak',  c: '#f59e0b'        },
+            { v: solvedProblems.length, lbl: 'Solved',  c: '#10b981'        },
+            { v: `${progress.roadmap||0}%`, lbl: 'Roadmap', c: '#8b5cf6'    },
             { v: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, lbl: 'Badges', c: '#a78bfa' },
           ].map(s => (
             <div key={s.lbl} className="gpf-hstat">
