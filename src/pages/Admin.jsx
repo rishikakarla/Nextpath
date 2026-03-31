@@ -1689,6 +1689,16 @@ function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate })
   const [testNameForm,  setTestNameForm]  = useState('')
   const [qEditing,      setQEditing]      = useState(null)   // null | 'new' | qIndex
   const [mcqForm,       setMcqForm]       = useState(BLANK_MCQ)
+  // JSON for tests
+  const [testJsonMode,    setTestJsonMode]    = useState(false)
+  const [testJsonText,    setTestJsonText]    = useState('')
+  const [testJsonError,   setTestJsonError]   = useState('')
+  const [testJsonSuccess, setTestJsonSuccess] = useState('')
+  // JSON for questions inside a test
+  const [qJsonMode,    setQJsonMode]    = useState(false)
+  const [qJsonText,    setQJsonText]    = useState('')
+  const [qJsonError,   setQJsonError]   = useState('')
+  const [qJsonSuccess, setQJsonSuccess] = useState('')
 
   const company  = companies.find(c => c.id === selCompany)
   const compData = companyProblems[selCompany] || { coding: [], aptitude: [], english: [] }
@@ -1792,14 +1802,89 @@ function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate })
     saveTests(tests.map((t, i) => i === activeTestIdx ? test : t))
   }
 
+  // ── JSON: upload full tests ───────────────────────────────────────────────
+  const MCQ_TEST_TEMPLATE = `[
+  {
+    "name": "Aptitude Test 1",
+    "questions": [
+      {
+        "q": "If 15 workers complete a job in 8 days, how many workers finish it in 6 days?",
+        "opts": ["18", "20", "22", "24"],
+        "ans": 1,
+        "exp": "15×8 = W×6 → W = 20"
+      }
+    ]
+  }
+]`
+
+  const MCQ_Q_TEMPLATE = `[
+  {
+    "q": "Choose the correct synonym for Eloquent:",
+    "opts": ["Silent", "Expressive", "Confused", "Rigid"],
+    "ans": 1,
+    "exp": "Eloquent means expressive or fluent."
+  }
+]`
+
+  const validateMcq = (item, idx) => {
+    const errs = []
+    if (!item.q?.trim())              errs.push(`Q${idx + 1}: missing "q"`)
+    if (!Array.isArray(item.opts) || item.opts.length < 2) errs.push(`Q${idx + 1}: "opts" must be an array of ≥2`)
+    if (typeof item.ans !== 'number') errs.push(`Q${idx + 1}: "ans" must be a number (0-based index)`)
+    return errs
+  }
+
+  const handleTestJsonUpload = () => {
+    setTestJsonError(''); setTestJsonSuccess('')
+    let parsed
+    try { parsed = JSON.parse(testJsonText.trim()) }
+    catch (e) { setTestJsonError('Invalid JSON: ' + e.message); return }
+    const items  = Array.isArray(parsed) ? parsed : [parsed]
+    const errors = []
+    items.forEach((item, i) => {
+      if (!item.name?.trim()) errors.push(`Item ${i + 1}: missing "name"`)
+      if (!Array.isArray(item.questions)) errors.push(`Item ${i + 1}: "questions" must be an array`)
+      else item.questions.forEach((q, qi) => validateMcq(q, qi).forEach(e => errors.push(`Item ${i + 1} › ${e}`)))
+    })
+    if (errors.length) { setTestJsonError(errors.join('\n')); return }
+    const newTests = items.map(item => ({
+      name: item.name.trim(),
+      questions: item.questions.map(q => ({ ...BLANK_MCQ, ...q, opts: q.opts.map(o => String(o)) })),
+    }))
+    saveTests([...getRawTests(), ...newTests])
+    setTestJsonSuccess(`✅ ${newTests.length} test${newTests.length > 1 ? 's' : ''} added!`)
+    setTestJsonText('')
+    setTimeout(() => { setTestJsonMode(false); setTestJsonSuccess('') }, 1800)
+  }
+
+  // ── JSON: upload questions inside a test ──────────────────────────────────
+  const handleQJsonUpload = () => {
+    setQJsonError(''); setQJsonSuccess('')
+    let parsed
+    try { parsed = JSON.parse(qJsonText.trim()) }
+    catch (e) { setQJsonError('Invalid JSON: ' + e.message); return }
+    const items  = Array.isArray(parsed) ? parsed : [parsed]
+    const errors = items.flatMap((q, i) => validateMcq(q, i))
+    if (errors.length) { setQJsonError(errors.join('\n')); return }
+    const newQs  = items.map(q => ({ ...BLANK_MCQ, ...q, opts: q.opts.map(o => String(o)) }))
+    const tests  = getRawTests()
+    const test   = { ...tests[activeTestIdx], questions: [...(tests[activeTestIdx]?.questions || []), ...newQs] }
+    saveTests(tests.map((t, i) => i === activeTestIdx ? test : t))
+    setQJsonSuccess(`✅ ${newQs.length} question${newQs.length > 1 ? 's' : ''} added!`)
+    setQJsonText('')
+    setTimeout(() => { setQJsonMode(false); setQJsonSuccess('') }, 1800)
+  }
+
   // ── Shared switch helpers ─────────────────────────────────────────────────
   const switchCompany = (id) => {
     setSelCompany(id); setEditing(null); setJsonMode(false)
     setActiveTestIdx(null); setTestEditing(null); setQEditing(null)
+    setTestJsonMode(false); setQJsonMode(false)
   }
   const switchTab = (cat) => {
     setSubTab(cat); setEditing(null); setJsonMode(false)
     setActiveTestIdx(null); setTestEditing(null); setQEditing(null)
+    setTestJsonMode(false); setQJsonMode(false)
   }
 
   const tests = subTab !== 'coding' ? getRawTests() : []
@@ -1900,9 +1985,36 @@ function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate })
       {/* ══ APTITUDE / ENGLISH — TEST LIST ══ */}
       {subTab !== 'coding' && activeTestIdx === null && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-            <Btn onClick={() => { setTestEditing('new'); setTestNameForm('') }}>+ Add Test</Btn>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 12 }}>
+            <Btn variant="ghost" onClick={() => { setTestJsonMode(m => !m); setTestJsonError(''); setTestJsonSuccess(''); setTestEditing(null) }}>
+              {testJsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
+            </Btn>
+            <Btn onClick={() => { setTestEditing('new'); setTestNameForm(''); setTestJsonMode(false) }}>+ Add Test</Btn>
           </div>
+
+          {/* JSON — full test upload */}
+          {testJsonMode && (
+            <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📋 Upload Full Test(s) via JSON</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    Each item: <code style={{ background: 'var(--bg)', padding: '1px 5px', borderRadius: 3 }}>{`{ "name": "...", "questions": [...] }`}</code> — paste array for multiple tests.
+                  </div>
+                </div>
+                <Btn sm variant="ghost" onClick={() => setTestJsonText(MCQ_TEST_TEMPLATE)}>Load Template</Btn>
+              </div>
+              <textarea value={testJsonText} onChange={e => { setTestJsonText(e.target.value); setTestJsonError(''); setTestJsonSuccess('') }}
+                placeholder={'Paste JSON here…\nClick "Load Template" to see the expected format.'}
+                style={{ ...s.inp, minHeight: 220, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }} />
+              {testJsonError   && <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>{testJsonError}</div>}
+              {testJsonSuccess && <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>{testJsonSuccess}</div>}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <Btn variant="success" onClick={handleTestJsonUpload}>⬆ Upload Test(s)</Btn>
+                <Btn variant="ghost" onClick={() => { setTestJsonMode(false); setTestJsonText(''); setTestJsonError(''); setTestJsonSuccess('') }}>Cancel</Btn>
+              </div>
+            </div>
+          )}
 
           {testEditing === 'new' && (
             <ActiveCard>
@@ -1949,11 +2061,38 @@ function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate })
       {/* ══ APTITUDE / ENGLISH — QUESTIONS INSIDE TEST ══ */}
       {subTab !== 'coding' && activeTestIdx !== null && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <Btn variant="ghost" onClick={() => { setActiveTestIdx(null); setQEditing(null) }}>← Back to Tests</Btn>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            <Btn variant="ghost" onClick={() => { setActiveTestIdx(null); setQEditing(null); setQJsonMode(false) }}>← Back to Tests</Btn>
             <span style={{ flex: 1 }} />
-            <Btn onClick={() => { setMcqForm(BLANK_MCQ); setQEditing('new') }}>+ Add Question</Btn>
+            <Btn variant="ghost" onClick={() => { setQJsonMode(m => !m); setQJsonError(''); setQJsonSuccess(''); setQEditing(null) }}>
+              {qJsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
+            </Btn>
+            <Btn onClick={() => { setMcqForm(BLANK_MCQ); setQEditing('new'); setQJsonMode(false) }}>+ Add Question</Btn>
           </div>
+
+          {/* JSON — questions upload */}
+          {qJsonMode && (
+            <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📋 Upload Questions via JSON</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    Each item: <code style={{ background: 'var(--bg)', padding: '1px 5px', borderRadius: 3 }}>{`{ "q": "...", "opts": [...], "ans": 0, "exp": "..." }`}</code>
+                  </div>
+                </div>
+                <Btn sm variant="ghost" onClick={() => setQJsonText(MCQ_Q_TEMPLATE)}>Load Template</Btn>
+              </div>
+              <textarea value={qJsonText} onChange={e => { setQJsonText(e.target.value); setQJsonError(''); setQJsonSuccess('') }}
+                placeholder={'Paste JSON here…\nClick "Load Template" to see the expected format.'}
+                style={{ ...s.inp, minHeight: 200, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }} />
+              {qJsonError   && <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>{qJsonError}</div>}
+              {qJsonSuccess && <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>{qJsonSuccess}</div>}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <Btn variant="success" onClick={handleQJsonUpload}>⬆ Upload Question(s)</Btn>
+                <Btn variant="ghost" onClick={() => { setQJsonMode(false); setQJsonText(''); setQJsonError(''); setQJsonSuccess('') }}>Cancel</Btn>
+              </div>
+            </div>
+          )}
 
           {qEditing !== null && (
             <ActiveCard>
