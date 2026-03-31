@@ -40,7 +40,7 @@ export function AppProvider({ children }) {
         if (docSnap.exists()) {
           const data = docSnap.data()
           const today = todayStr()
-          setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...data.profile })
+          setUser({ uid: firebaseUser.uid, email: firebaseUser.email, photoURL: firebaseUser.photoURL || data.profile?.photoURL || '', ...data.profile })
           setStreak(data.streak || DEFAULT_STREAK)
           setProgress(data.progress || DEFAULT_PROGRESS)
           setSolvedProblems(data.solvedProblems || [])
@@ -160,7 +160,10 @@ export function AppProvider({ children }) {
       const profile = {
         name: firebaseUser.displayName || '',
         email: firebaseUser.email || '',
+        photoURL: firebaseUser.photoURL || '',
         college: '', branch: '', yearOfStudy: '', careerGoal: '',
+        linkedin: '', phone: '',
+        profileComplete: false,
         createdAt: new Date().toISOString(),
       }
       const defaultDaily = DEFAULT_DAILY()
@@ -188,13 +191,19 @@ export function AppProvider({ children }) {
 
   const updateProfile = async (profileData) => {
     if (!auth.currentUser) return
-    const updated = { ...profileData, updatedAt: new Date().toISOString() }
+    const isNowComplete = !!(profileData.name && profileData.college && profileData.branch && profileData.yearOfStudy && profileData.careerGoal)
+    const wasComplete = user?.profileComplete
+    const updated = { ...profileData, profileComplete: isNowComplete, updatedAt: new Date().toISOString() }
     await setDoc(doc(db, 'users', auth.currentUser.uid), { profile: updated }, { merge: true })
     setDoc(doc(db, 'leaderboard', auth.currentUser.uid), {
       name: profileData.name || '',
       college: profileData.college || '',
     }, { merge: true }).catch(console.error)
     setUser(u => ({ ...u, ...updated }))
+    // Award 50 points the first time profile is fully completed
+    if (isNowComplete && !wasComplete) {
+      setPoints(p => p + 50)
+    }
   }
 
   const logout = async () => {

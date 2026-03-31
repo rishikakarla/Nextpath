@@ -11,6 +11,7 @@ const NAV = [
   { to: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
   { to: '/progress', icon: '📊', label: 'My Progress' },
   { to: '/mentor', icon: '👨‍🏫', label: 'Mentor Feedback' },
+  { to: '/profile', icon: '👤', label: 'My Profile' },
 ]
 
 const ADMIN_EMAIL = 'kakarlarishi5124@gmail.com'
