@@ -283,43 +283,94 @@ export default function CompanyLearning() {
         {/* ── APTITUDE / ENGLISH — TEST LIST ── */}
         {tab !== 'coding' && activeTest === null && (
           <div className="cbl-tests-wrap">
-            {tests.length === 0
-              ? <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 60 }}>No tests available yet.</div>
-              : (
+            {tests.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>{tab === 'aptitude' ? '🧮' : '📖'}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>No tests yet</div>
+                <div style={{ fontSize: 13 }}>Tests for {company.name} will appear here once admin adds them.</div>
+              </div>
+            ) : (
+              <>
+                {/* Summary row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, padding: '14px 18px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                  <div style={{ fontSize: 28 }}>{tab === 'aptitude' ? '🧮' : '📖'}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>
+                      {tab === 'aptitude' ? 'Aptitude' : 'English'} Practice — {company.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                      {tests.length} test{tests.length !== 1 ? 's' : ''} · {tests.reduce((s, t) => s + (t.questions?.length || 0), 0)} total questions
+                    </div>
+                  </div>
+                  {(() => {
+                    const total   = tests.reduce((s, t) => s + (t.questions?.length || 0), 0)
+                    const correct = tests.reduce((s, _, ti) => s + getTestScore(company.id, tab, ti).correct, 0)
+                    const answered = Object.keys(answers).filter(k => k.startsWith(`${company.id}_${tab}_`)).length
+                    if (answered === 0) return null
+                    const pct = Math.round((correct / total) * 100)
+                    return (
+                      <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: company.color }}>{pct}%</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{correct}/{total} correct</div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
                 <div className="cbl-test-grid">
                   {tests.map((test, ti) => {
-                    const ts  = getTestScore(company.id, tab, ti)
-                    const pct = ts.total > 0 ? Math.round((ts.correct / ts.total) * 100) : null
-                    const attempted = ts.total > 0 && Object.keys(answers).some(k => k.startsWith(`${company.id}_${tab}_${ti}_`))
+                    const ts       = getTestScore(company.id, tab, ti)
+                    const pct      = ts.total > 0 ? Math.round((ts.correct / ts.total) * 100) : null
+                    const attempted = Object.keys(answers).some(k => k.startsWith(`${company.id}_${tab}_${ti}_`))
+                    const statusColor = pct === null ? null : pct >= 60 ? '#10b981' : '#ef4444'
                     return (
                       <div key={ti} className="cbl-test-card" style={{ '--cc': company.color }}>
                         <div className="cbl-test-card-top">
                           <div className="cbl-test-num" style={{ background: company.color }}>{ti + 1}</div>
                           <div className="cbl-test-info">
                             <div className="cbl-test-name">{test.name || `Test ${ti + 1}`}</div>
-                            <div className="cbl-test-meta">{test.questions?.length || 0} questions</div>
+                            <div className="cbl-test-meta">{test.questions?.length || 0} question{(test.questions?.length || 0) !== 1 ? 's' : ''}</div>
                           </div>
                           {pct !== null && (
-                            <div className="cbl-test-badge" style={{ background: pct >= 60 ? '#10b98120' : '#ef444420', color: pct >= 60 ? '#10b981' : '#ef4444', border: `1px solid ${pct >= 60 ? '#10b981' : '#ef4444'}` }}>
+                            <div className="cbl-test-badge" style={{ background: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}` }}>
                               {pct}%
                             </div>
                           )}
                         </div>
+
+                        {/* Question dots preview */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {(test.questions || []).slice(0, 20).map((_, qi) => {
+                            const k = `${company.id}_${tab}_${ti}_${qi}`
+                            const a = answers[k]
+                            return (
+                              <div key={qi} style={{
+                                width: 8, height: 8, borderRadius: '50%',
+                                background: a ? (a.correct ? '#10b981' : '#ef4444') : 'var(--border)',
+                                transition: 'background .2s',
+                              }} />
+                            )
+                          })}
+                          {(test.questions?.length || 0) > 20 && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>+{test.questions.length - 20}</span>}
+                        </div>
+
                         {pct !== null && (
                           <div className="cbl-test-prog">
-                            <div className="cbl-test-prog-fill" style={{ width: `${pct}%`, background: company.color }} />
+                            <div className="cbl-test-prog-fill" style={{ width: `${pct}%`, background: statusColor }} />
                           </div>
                         )}
-                        <button className="cbl-test-start-btn" style={{ background: attempted ? 'var(--bg)' : company.color, color: attempted ? company.color : '#fff', border: `2px solid ${company.color}` }}
+
+                        <button className="cbl-test-start-btn"
+                          style={{ background: attempted ? 'transparent' : company.color, color: attempted ? company.color : '#fff', border: `2px solid ${company.color}` }}
                           onClick={() => setActiveTest({ testIdx: ti })}>
-                          {attempted ? '↻ Retry Test' : '▶ Start Test'}
+                          {attempted ? '↻ Reattempt' : '▶ Start Test'}
                         </button>
                       </div>
                     )
                   })}
                 </div>
-              )
-            }
+              </>
+            )}
           </div>
         )}
 
