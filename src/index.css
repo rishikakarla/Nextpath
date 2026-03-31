@@ -4379,6 +4379,89 @@ nav { flex: 1; padding: 12px 0; }
 }
 .cbl-exp-icon { font-size: 14px; flex-shrink: 0; }
 
+/* ── IDE Modal ──────────────────────────────────────────────────── */
+.cbl-ide-modal {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column;
+  background: #0f172a;
+}
+
+.cbl-ide-topbar {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  padding: 10px 16px;
+  background: #1e293b; border-bottom: 1px solid #334155;
+  min-height: 48px; flex-wrap: wrap;
+}
+.cbl-ide-back {
+  background: transparent; border: 1px solid #334155; border-radius: 6px;
+  padding: 5px 12px; color: #94a3b8; font-size: 13px; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.cbl-ide-back:hover { background: #334155; color: #e2e8f0; }
+
+.cbl-ide-title {
+  font-weight: 700; font-size: 14px; color: #e2e8f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 260px;
+}
+.cbl-ide-diff {
+  font-size: 11px; font-weight: 700; padding: 2px 8px;
+  border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+}
+.cbl-ide-company {
+  font-size: 12px; color: #64748b; flex-shrink: 0;
+}
+
+/* Mobile tab toggle — hidden on desktop */
+.cbl-ide-mob-tabs {
+  display: none; margin-left: auto;
+  background: #0f172a; border-radius: 8px; padding: 3px; gap: 2px;
+  border: 1px solid #334155;
+}
+.cbl-ide-mob-tab {
+  padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; color: #64748b; background: transparent;
+  transition: background .15s, color .15s;
+}
+.cbl-ide-mob-tab.active { background: #334155; color: #e2e8f0; }
+
+.cbl-ide-body {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+/* Make pe-root fill the body */
+.cbl-ide-body .pe-root { flex: 1; min-height: 0; }
+
+/* ── Mobile: tab-based show/hide ──────────────────────────── */
+@media (max-width: 768px) {
+  .cbl-ide-mob-tabs { display: flex; }
+  .cbl-ide-title { max-width: 130px; }
+  .cbl-ide-company { display: none; }
+
+  /* Override stacked layout — use tab visibility instead */
+  .cbl-ide-body .pe-body {
+    flex-direction: row !important;
+    overflow: hidden !important;
+  }
+  .cbl-ide-body .pe-left {
+    position: absolute; inset: 0;
+    width: 100% !important; height: 100% !important;
+    border: none !important;
+    transition: opacity .2s, transform .2s;
+  }
+  .cbl-ide-body .pe-right {
+    position: absolute; inset: 0;
+    width: 100% !important; height: 100% !important;
+    transition: opacity .2s, transform .2s;
+  }
+  .cbl-ide-body .pe-body { position: relative; }
+}
+
+/* JS-driven tab state via data attribute */
+.cbl-ide-body[data-mob="problem"] .pe-right { opacity: 0; pointer-events: none; transform: translateX(20px); }
+.cbl-ide-body[data-mob="editor"]  .pe-left  { opacity: 0; pointer-events: none; transform: translateX(-20px); }
+
 /* ── Test card grid ─────────────────────────────────────────────── */
 .cbl-tests-wrap { padding: 4px 0; }
 

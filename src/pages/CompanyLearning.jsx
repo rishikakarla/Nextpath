@@ -44,6 +44,7 @@ export default function CompanyLearning() {
   const [expanded,     setExpanded]     = useState(null)     // coding problem index
   const [modal,        setModal]        = useState(null)     // ProblemEditor problem
   const [activeTest,   setActiveTest]   = useState(null)     // { testIdx } | null
+  const [modalMobTab,  setModalMobTab]  = useState('problem') // mobile: 'problem' | 'editor'
 
   const filtered = useMemo(() => (COMPANIES || []).filter(c => {
     const matchType   = filter === 'All' || c.type === filter
@@ -96,18 +97,23 @@ export default function CompanyLearning() {
 
   /* ── PROBLEM EDITOR MODAL ── */
   if (modal) return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
-        <button onClick={() => setModal(null)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: 'var(--text)', fontSize: 13 }}>
-          ← Back
-        </button>
-        <span style={{ fontWeight: 700, fontSize: 15 }}>{modal.title}</span>
-        <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 4, background: `${DIFF_COLOR[modal.difficulty]}20`, color: DIFF_COLOR[modal.difficulty], fontWeight: 600 }}>
+    <div className="cbl-ide-modal">
+      {/* Topbar */}
+      <div className="cbl-ide-topbar">
+        <button className="cbl-ide-back" onClick={() => setModal(null)}>← Back</button>
+        <span className="cbl-ide-title">{modal.title}</span>
+        <span className="cbl-ide-diff" style={{ background: `${DIFF_COLOR[modal.difficulty]}22`, color: DIFF_COLOR[modal.difficulty] }}>
           {modal.difficulty}
         </span>
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 4 }}>🏢 {company?.name}</span>
+        <span className="cbl-ide-company">🏢 {company?.name}</span>
+        {/* Mobile tab toggle */}
+        <div className="cbl-ide-mob-tabs">
+          <button className={`cbl-ide-mob-tab${modalMobTab === 'problem' ? ' active' : ''}`} onClick={() => setModalMobTab('problem')}>Problem</button>
+          <button className={`cbl-ide-mob-tab${modalMobTab === 'editor' ? ' active' : ''}`} onClick={() => setModalMobTab('editor')}>Editor</button>
+        </div>
       </div>
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      {/* Body — full height minus topbar */}
+      <div className="cbl-ide-body" data-mob={modalMobTab}>
         <ProblemEditor problem={modal} onSolve={() => {}} isSolved={false} />
       </div>
     </div>
@@ -270,7 +276,7 @@ export default function CompanyLearning() {
                     )}
                     <button className="cbl-solve-btn"
                       style={{ background: company.color, border: 'none', cursor: 'pointer', color: '#fff' }}
-                      onClick={e => { e.stopPropagation(); setModal(adaptForEditor(p)) }}>
+                      onClick={e => { e.stopPropagation(); setModal(adaptForEditor(p)); setModalMobTab('problem') }}>
                       🖥️ Solve in IDE →
                     </button>
                   </div>
