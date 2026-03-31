@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { COMPANIES } from '../data/companyData'
+import { useContent } from '../context/ContentContext'
+import ProblemEditor from '../components/ProblemEditor'
 
 const FILTERS = ['All', 'Product', 'Service', 'Startup']
 const TABS = [
@@ -9,7 +11,29 @@ const TABS = [
 ]
 const DIFF_COLOR = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' }
 
+// Adapt a company coding question to the ProblemEditor's expected format
+function adaptForEditor(q) {
+  return {
+    id:           q.title,
+    title:        q.title,
+    difficulty:   q.difficulty || 'Medium',
+    category:     (q.tags || [])[0] || 'General',
+    description:  q.desc || q.description || '',
+    inputFormat:  '',
+    outputFormat: '',
+    constraints:  '',
+    hint:         '',
+    examples:     q.example
+      ? [{ input: '', output: '', explanation: q.example }]
+      : [{ input: '', output: '', explanation: '' }],
+    testCases:    [{ input: '', expectedOutput: '', hidden: false }],
+    starterCode:  q.starterCode || { 71: '', 63: '', 54: '' },
+  }
+}
+
 export default function CompanyLearning() {
+  const { companyProblems } = useContent()
+
   const [view,     setView]     = useState('home')    // 'home' | 'practice'
   const [company,  setCompany]  = useState(null)
   const [tab,      setTab]      = useState('coding')
@@ -17,6 +41,7 @@ export default function CompanyLearning() {
   const [filter,   setFilter]   = useState('All')
   const [answers,  setAnswers]  = useState({})        // key → { chosen, correct }
   const [expanded, setExpanded] = useState(null)      // coding problem index
+  const [modal,    setModal]    = useState(null)      // ProblemEditor problem object
 
   const filtered = useMemo(() => COMPANIES.filter(c => {
     const matchType   = filter === 'All' || c.type === filter
@@ -25,6 +50,15 @@ export default function CompanyLearning() {
     return matchType && matchSearch
   }), [filter, search])
 
+  // Merge Firestore questions with static company data
+  const getMergedQuestions = (c, section) => {
+    const fsData = companyProblems?.[c.id]
+    if (fsData && fsData[section] && fsData[section].length > 0) {
+      return fsData[section]
+    }
+    return c[section] || []
+  }
+
   const openCompany = (c) => {
     setCompany(c)
     setView('practice')
@@ -32,15 +66,17 @@ export default function CompanyLearning() {
     setExpanded(null)
   }
 
-  const goHome = () => { setView('home'); setCompany(null) }
+  const goHome = () => { setView('home'); setCompany(null); setModal(null) }
 
   const pickAnswer = (key, chosen, correct) => {
-    if (answers[key]) return          // already answered
+    if (answers[key]) return
     setAnswers(prev => ({ ...prev, [key]: { chosen, correct } }))
   }
 
   const getScore = (cId, section) => {
-    const qs = company?.[section] || []
+    const c  = COMPANIES.find(x => x.id === cId)
+    if (!c) return { correct: 0, total: 0 }
+    const qs = getMergedQuestions(c, section)
     let correct = 0
     qs.forEach((_, i) => {
       const k = `${cId}_${section}_${i}`
@@ -48,6 +84,25 @@ export default function CompanyLearning() {
     })
     return { correct, total: qs.length }
   }
+
+  /* ── PROBLEM EDITOR MODAL ── */
+  if (modal) return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
+        <button onClick={() => setModal(null)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: 'var(--text)', fontSize: 13 }}>
+          ← Back
+        </button>
+        <span style={{ fontWeight: 700, fontSize: 15 }}>{modal.title}</span>
+        <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 4, background: `${DIFF_COLOR[modal.difficulty]}20`, color: DIFF_COLOR[modal.difficulty], fontWeight: 600 }}>
+          {modal.difficulty}
+        </span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 4 }}>🏢 {company?.name}</span>
+      </div>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <ProblemEditor problem={modal} onSolve={() => {}} isSolved={false} />
+      </div>
+    </div>
+  )
 
   /* ── HOME ── */
   if (view === 'home') return (
@@ -60,9 +115,9 @@ export default function CompanyLearning() {
           <h1 className="cbl-hero-title">Prepare for Your Dream Company</h1>
           <p className="cbl-hero-sub">Practice Coding, Aptitude &amp; English — tailored for each company's interview pattern</p>
           <div className="cbl-hero-pills">
-            <span className="cbl-hero-pill">💻 {COMPANIES.reduce((s, c) => s + c.coding.length, 0)} Coding Problems</span>
-            <span className="cbl-hero-pill">🧮 {COMPANIES.reduce((s, c) => s + c.aptitude.length, 0)} Aptitude MCQs</span>
-            <span className="cbl-hero-pill">📖 {COMPANIES.reduce((s, c) => s + c.english.length, 0)} English MCQs</span>
+            <span className="cbl-hero-pill">💻 {COMPANIES.reduce((s, c) => s + getMergedQuestions(c, 'coding').length, 0)} Coding Problems</span>
+            <span className="cbl-hero-pill">🧮 {COMPANIES.reduce((s, c) => s + getMergedQuestions(c, 'aptitude').length, 0)} Aptitude MCQs</span>
+            <span className="cbl-hero-pill">📖 {COMPANIES.reduce((s, c) => s + getMergedQuestions(c, 'english').length, 0)} English MCQs</span>
           </div>
         </div>
         <div className="cbl-hero-icons">
@@ -121,13 +176,13 @@ export default function CompanyLearning() {
 
                   <div className="cbl-card-counts">
                     <div className="cbl-count-chip cbl-count-chip--code">
-                      <span>💻</span><span>{c.coding.length} Coding</span>
+                      <span>💻</span><span>{getMergedQuestions(c, 'coding').length} Coding</span>
                     </div>
                     <div className="cbl-count-chip cbl-count-chip--apt">
-                      <span>🧮</span><span>{c.aptitude.length} Aptitude</span>
+                      <span>🧮</span><span>{getMergedQuestions(c, 'aptitude').length} Aptitude</span>
                     </div>
                     <div className="cbl-count-chip cbl-count-chip--eng">
-                      <span>📖</span><span>{c.english.length} English</span>
+                      <span>📖</span><span>{getMergedQuestions(c, 'english').length} English</span>
                     </div>
                   </div>
 
@@ -149,7 +204,7 @@ export default function CompanyLearning() {
   )
 
   /* ── PRACTICE VIEW ── */
-  const questions = company[tab]
+  const questions = getMergedQuestions(company, tab)
   const score = (tab !== 'coding') ? getScore(company.id, tab) : null
 
   return (
@@ -188,14 +243,15 @@ export default function CompanyLearning() {
       {/* Tab bar */}
       <div className="cbl-tab-bar">
         {TABS.map(t => {
-          const s = tab !== 'coding' ? getScore(company.id, t.id) : null
+          const mergedQs = getMergedQuestions(company, t.id)
+          const s = t.id !== 'coding' ? getScore(company.id, t.id) : null
           return (
             <button key={t.id} className={`cbl-tab${tab === t.id ? ' cbl-tab--on' : ''}`}
               style={tab === t.id ? { '--cc': company.color } : {}}
               onClick={() => { setTab(t.id); setExpanded(null) }}>
               <span>{t.icon}</span>
               <span>{t.label}</span>
-              <span className="cbl-tab-count">{company[t.id].length}</span>
+              <span className="cbl-tab-count">{mergedQs.length}</span>
               {t.id !== 'coding' && s && s.total > 0 && (
                 <span className="cbl-tab-score">{s.correct}/{s.total}</span>
               )}
@@ -219,21 +275,27 @@ export default function CompanyLearning() {
                     <span className="cbl-prob-title">{p.title}</span>
                   </div>
                   <div className="cbl-prob-right">
-                    {p.tags.map(t => <span key={t} className="cbl-prob-tag">{t}</span>)}
+                    {(p.tags || []).map(t => <span key={t} className="cbl-prob-tag">{t}</span>)}
                     <span className="cbl-diff-sm" style={{ color: DIFF_COLOR[p.difficulty] }}>● {p.difficulty}</span>
                     <span className="cbl-prob-chevron">{expanded === i ? '▲' : '▼'}</span>
                   </div>
                 </div>
                 {expanded === i && (
                   <div className="cbl-prob-body" onClick={e => e.stopPropagation()}>
-                    <p className="cbl-prob-desc">{p.desc}</p>
-                    <div className="cbl-prob-example">
-                      <div className="cbl-ex-label">Example</div>
-                      <pre className="cbl-ex-code">{p.example}</pre>
-                    </div>
-                    <a href="/ide" className="cbl-solve-btn" style={{ background: company.color }}>
+                    <p className="cbl-prob-desc">{p.desc || p.description}</p>
+                    {p.example && (
+                      <div className="cbl-prob-example">
+                        <div className="cbl-ex-label">Example</div>
+                        <pre className="cbl-ex-code">{p.example}</pre>
+                      </div>
+                    )}
+                    <button
+                      className="cbl-solve-btn"
+                      style={{ background: company.color, border: 'none', cursor: 'pointer', color: '#fff' }}
+                      onClick={e => { e.stopPropagation(); setModal(adaptForEditor(p)) }}
+                    >
                       🖥️ Solve in IDE →
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>
