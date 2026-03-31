@@ -17,6 +17,7 @@ import AptitudeTraining from './pages/AptitudeTraining'
 import TopicPage from './pages/TopicPage'
 import ProfileSetup from './pages/ProfileSetup'
 import Profile from './pages/Profile'
+import CompanyLearning from './pages/CompanyLearning'
 
 function Require({ children }) {
   const { user, authLoading } = useApp()
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="mentor" element={<MentorFeedback />} />
         <Route path="ide" element={<IDE />} />
         <Route path="aptitude-training" element={<AptitudeTraining />} />
+        <Route path="company-learning" element={<CompanyLearning />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="/admin" element={<Admin />} />

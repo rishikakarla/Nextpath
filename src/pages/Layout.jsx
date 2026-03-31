@@ -6,6 +6,7 @@ const NAV = [
   { to: '/roadmap', icon: '🗺️', label: 'Learning Roadmap' },
   { to: '/practice/daily', icon: '📅', label: 'Daily Practice' },
   { to: '/aptitude-training', icon: '🧮', label: 'Aptitude Training' },
+  { to: '/company-learning', icon: '🏢', label: 'Company Learning' },
   { to: '/practice/coding', icon: '💻', label: 'Coding Practice' },
   { to: '/ide', icon: '🖥️', label: 'Code IDE' },
   { to: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
