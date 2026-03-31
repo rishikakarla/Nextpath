@@ -7,19 +7,19 @@ const GOALS    = ['Product Company (FAANG/Unicorn)', 'Service Company (TCS/Infos
 const SKILL_SUGGESTIONS = ['Python', 'Java', 'C++', 'JavaScript', 'React', 'Node.js', 'SQL', 'DSA', 'Machine Learning', 'Git', 'HTML/CSS', 'TypeScript', 'MongoDB', 'AWS', 'Docker']
 
 const RANK_TIERS = [
-  { name: 'Rookie',   min: 0,    icon: '🎮', color: '#64748b', bg: 'rgba(100,116,139,.15)', glow: 'rgba(100,116,139,.3)', next: 100  },
-  { name: 'Bronze',   min: 100,  icon: '🥉', color: '#cd7f32', bg: 'rgba(205,127,50,.12)',  glow: 'rgba(205,127,50,.35)', next: 300  },
-  { name: 'Silver',   min: 300,  icon: '🥈', color: '#94a3b8', bg: 'rgba(148,163,184,.12)', glow: 'rgba(148,163,184,.3)', next: 600  },
-  { name: 'Gold',     min: 600,  icon: '🏆', color: '#f59e0b', bg: 'rgba(245,158,11,.12)',  glow: 'rgba(245,158,11,.4)',  next: 1000 },
-  { name: 'Platinum', min: 1000, icon: '💜', color: '#a78bfa', bg: 'rgba(167,139,250,.12)', glow: 'rgba(167,139,250,.4)', next: 2000 },
-  { name: 'Diamond',  min: 2000, icon: '💎', color: '#06b6d4', bg: 'rgba(6,182,212,.12)',   glow: 'rgba(6,182,212,.4)',   next: null },
+  { name: 'Rookie',   min: 0,    icon: '🎮', color: '#64748b', bg: 'rgba(100,116,139,.15)', glow: 'rgba(100,116,139,.25)' },
+  { name: 'Bronze',   min: 100,  icon: '🥉', color: '#cd7f32', bg: 'rgba(205,127,50,.12)',  glow: 'rgba(205,127,50,.3)'  },
+  { name: 'Silver',   min: 300,  icon: '🥈', color: '#94a3b8', bg: 'rgba(148,163,184,.12)', glow: 'rgba(148,163,184,.28)'},
+  { name: 'Gold',     min: 600,  icon: '🏆', color: '#f59e0b', bg: 'rgba(245,158,11,.12)',  glow: 'rgba(245,158,11,.35)' },
+  { name: 'Platinum', min: 1000, icon: '💜', color: '#a78bfa', bg: 'rgba(167,139,250,.12)', glow: 'rgba(167,139,250,.35)'},
+  { name: 'Diamond',  min: 2000, icon: '💎', color: '#06b6d4', bg: 'rgba(6,182,212,.12)',   glow: 'rgba(6,182,212,.35)'  },
 ]
 
 const RARITY = {
-  common:    { color: '#94a3b8', bg: 'rgba(148,163,184,.08)',  border: 'rgba(148,163,184,.2)',  label: 'Common'    },
-  rare:      { color: '#3b82f6', bg: 'rgba(59,130,246,.08)',   border: 'rgba(59,130,246,.25)',  label: 'Rare'      },
-  epic:      { color: '#8b5cf6', bg: 'rgba(139,92,246,.08)',   border: 'rgba(139,92,246,.25)',  label: 'Epic'      },
-  legendary: { color: '#f59e0b', bg: 'rgba(245,158,11,.08)',   border: 'rgba(245,158,11,.3)',   label: 'Legendary' },
+  common:    { color: '#94a3b8', bg: 'rgba(148,163,184,.08)', border: 'rgba(148,163,184,.2)',  label: 'C' },
+  rare:      { color: '#3b82f6', bg: 'rgba(59,130,246,.08)',  border: 'rgba(59,130,246,.25)',  label: 'R' },
+  epic:      { color: '#8b5cf6', bg: 'rgba(139,92,246,.08)',  border: 'rgba(139,92,246,.25)',  label: 'E' },
+  legendary: { color: '#f59e0b', bg: 'rgba(245,158,11,.08)',  border: 'rgba(245,158,11,.28)',  label: 'L' },
 }
 
 function getRank(pts) {
@@ -29,7 +29,7 @@ function getRank(pts) {
   return RANK_TIERS[0]
 }
 
-function Card({ title, icon, children, action }) {
+function Card({ title, icon, children, action, noPad }) {
   return (
     <div className="gpf-card">
       <div className="gpf-card-hdr">
@@ -39,7 +39,7 @@ function Card({ title, icon, children, action }) {
         </div>
         {action}
       </div>
-      <div className="gpf-card-body">{children}</div>
+      <div className={noPad ? '' : 'gpf-card-body'}>{children}</div>
     </div>
   )
 }
@@ -64,47 +64,43 @@ export default function Profile() {
 
   const isComplete = !!(user?.name && user?.college && user?.branch && user?.yearOfStudy && user?.careerGoal)
 
-  // ── XP / Level / Rank ──────────────────────────────────────────────────────
-  const level     = Math.max(1, Math.floor(points / 50) + 1)
-  const xpInLevel = points % 50
-  const xpPct     = Math.round((xpInLevel / 50) * 100)
-  const rank      = getRank(points)
-  const nextRank  = RANK_TIERS.find(r => r.min > points) || null
+  const level    = Math.max(1, Math.floor(points / 50) + 1)
+  const xpInLvl  = points % 50
+  const xpPct    = Math.round((xpInLvl / 50) * 100)
+  const rank     = getRank(points)
+  const nextRank = RANK_TIERS.find(r => r.min > points) || null
 
-  // ── All achievements (locked + unlocked) ───────────────────────────────────
   const ALL_ACHIEVEMENTS = [
-    { icon: '💻', title: 'First Blood',    desc: 'Solve your first problem',       rarity: 'common',    unlocked: solvedProblems.length >= 1 },
-    { icon: '🔥', title: 'Problem Slayer', desc: 'Solve 5 problems',               rarity: 'common',    unlocked: solvedProblems.length >= 5 },
-    { icon: '⚔️', title: 'Code Warrior',  desc: 'Solve 10 problems',              rarity: 'rare',      unlocked: solvedProblems.length >= 10 },
-    { icon: '🏆', title: 'Code Champion',  desc: 'Solve 25 problems',              rarity: 'epic',      unlocked: solvedProblems.length >= 25 },
-    { icon: '⚡', title: 'On a Roll',      desc: '3-day practice streak',          rarity: 'common',    unlocked: streak.count >= 3 },
-    { icon: '🌟', title: 'Streak Master',  desc: '7-day streak',                   rarity: 'rare',      unlocked: streak.count >= 7 },
-    { icon: '👑', title: 'Unstoppable',    desc: '30-day streak',                  rarity: 'legendary', unlocked: streak.count >= 30 },
-    { icon: '🎯', title: 'XP Starter',     desc: 'Earn 50 XP',                     rarity: 'common',    unlocked: points >= 50 },
-    { icon: '💎', title: 'Century Club',   desc: 'Earn 100 XP',                    rarity: 'rare',      unlocked: points >= 100 },
-    { icon: '🚀', title: 'XP Hunter',      desc: 'Earn 500 XP',                    rarity: 'epic',      unlocked: points >= 500 },
-    { icon: '⭐', title: 'Elite Player',   desc: 'Earn 1000 XP',                   rarity: 'legendary', unlocked: points >= 1000 },
-    { icon: '🧮', title: 'Quiz Taker',     desc: 'Attempt an aptitude quiz',       rarity: 'common',    unlocked: Object.values(quizAttempts).some(a => a?.length > 0) },
-    { icon: '✅', title: 'Profile Pro',    desc: 'Complete your profile (+50 XP)', rarity: 'rare',      unlocked: isComplete },
-    { icon: '🗺️', title: 'Pathfinder',    desc: '50% roadmap complete',           rarity: 'epic',      unlocked: progress.roadmap >= 50 },
-    { icon: '🌍', title: 'Road Master',    desc: '100% roadmap complete',          rarity: 'legendary', unlocked: progress.roadmap >= 100 },
+    { icon: '💻', title: 'First Blood',    desc: 'Solve 1st problem',     rarity: 'common',    unlocked: solvedProblems.length >= 1  },
+    { icon: '🔥', title: 'Problem Slayer', desc: 'Solve 5 problems',      rarity: 'common',    unlocked: solvedProblems.length >= 5  },
+    { icon: '⚔️', title: 'Code Warrior',  desc: 'Solve 10 problems',     rarity: 'rare',      unlocked: solvedProblems.length >= 10 },
+    { icon: '🏆', title: 'Code Champ',     desc: 'Solve 25 problems',     rarity: 'epic',      unlocked: solvedProblems.length >= 25 },
+    { icon: '⚡', title: 'On a Roll',      desc: '3-day streak',          rarity: 'common',    unlocked: streak.count >= 3  },
+    { icon: '🌟', title: 'Streak Master',  desc: '7-day streak',          rarity: 'rare',      unlocked: streak.count >= 7  },
+    { icon: '👑', title: 'Unstoppable',    desc: '30-day streak',         rarity: 'legendary', unlocked: streak.count >= 30 },
+    { icon: '🎯', title: 'XP Starter',     desc: 'Earn 50 XP',            rarity: 'common',    unlocked: points >= 50   },
+    { icon: '💎', title: 'Century Club',   desc: 'Earn 100 XP',           rarity: 'rare',      unlocked: points >= 100  },
+    { icon: '🚀', title: 'XP Hunter',      desc: 'Earn 500 XP',           rarity: 'epic',      unlocked: points >= 500  },
+    { icon: '⭐', title: 'Elite Player',   desc: 'Earn 1000 XP',          rarity: 'legendary', unlocked: points >= 1000 },
+    { icon: '🧮', title: 'Quiz Taker',     desc: 'Attempt a quiz',        rarity: 'common',    unlocked: Object.values(quizAttempts).some(a => a?.length > 0) },
+    { icon: '✅', title: 'Profile Pro',    desc: 'Complete profile',      rarity: 'rare',      unlocked: isComplete },
+    { icon: '🗺️', title: 'Pathfinder',    desc: '50% roadmap',           rarity: 'epic',      unlocked: progress.roadmap >= 50  },
+    { icon: '🌍', title: 'Road Master',    desc: '100% roadmap',          rarity: 'legendary', unlocked: progress.roadmap >= 100 },
   ]
   const unlockedCount = ALL_ACHIEVEMENTS.filter(a => a.unlocked).length
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
   const save = async (data) => {
     setSaving(true)
     try {
       await updateProfile({ ...data, photoURL: user?.photoURL || '' })
       setEditSection(null)
       setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
+      setTimeout(() => setSaved(false), 2500)
     } finally { setSaving(false) }
   }
 
   const addSkill    = (s) => { const t = s.trim(); if (t && !skillsForm.includes(t)) setSkillsForm(p => [...p, t]); setSkillInput('') }
   const removeSkill = (s) => setSkillsForm(p => p.filter(x => x !== s))
-
   const blankProject  = () => ({ id: Date.now(), title: '', desc: '', tech: '', link: '' })
   const addProject    = () => setProjectsForm(p => [...p, blankProject()])
   const setProject    = (id, k, v) => setProjectsForm(p => p.map(x => x.id === id ? { ...x, [k]: v } : x))
@@ -113,76 +109,68 @@ export default function Profile() {
   return (
     <div className="gpf-page">
 
-      {/* ══ PLAYER CARD HERO ══════════════════════════════════════════════════ */}
-      <div className="gpf-hero" style={{ '--rank-color': rank.color, '--rank-glow': rank.glow }}>
+      {/* ── COMPACT HERO ─────────────────────────────────────────────────── */}
+      <div className="gpf-hero" style={{ '--rc': rank.color, '--rg': rank.glow }}>
+        {/* Avatar */}
+        <div className="gpf-av-wrap">
+          {user?.photoURL
+            ? <img src={user.photoURL} alt="av" className="gpf-av-img" referrerPolicy="no-referrer" />
+            : <div className="gpf-av-fb">{user?.name?.charAt(0)?.toUpperCase() || '?'}</div>
+          }
+          {isComplete && <div className="gpf-av-check">✓</div>}
+        </div>
 
-        {/* Left: avatar + identity */}
-        <div className="gpf-hero-left">
-          <div className="gpf-avatar-wrap">
-            {user?.photoURL
-              ? <img src={user.photoURL} alt="avatar" className="gpf-avatar-img" referrerPolicy="no-referrer" />
-              : <div className="gpf-avatar-fallback">{user?.name?.charAt(0)?.toUpperCase() || '?'}</div>
-            }
-            <div className="gpf-rank-pip" style={{ background: rank.bg, color: rank.color, borderColor: rank.color }}>
+        {/* Identity */}
+        <div className="gpf-hero-mid">
+          <div className="gpf-hero-top-row">
+            <span className="gpf-h-name">{user?.name || 'Your Name'}</span>
+            <span className="gpf-rank-tag" style={{ color: rank.color, background: rank.bg, borderColor: rank.color }}>
               {rank.icon} {rank.name}
-            </div>
+            </span>
+            <span className="gpf-lv-tag" style={{ color: rank.color, background: rank.bg, borderColor: rank.color }}>
+              Lv.{level}
+            </span>
           </div>
-
-          <div className="gpf-hero-info">
-            <div className="gpf-player-name">{user?.name || 'Your Name'}</div>
-            <div className="gpf-player-sub">
-              {[user?.college, user?.branch, user?.yearOfStudy].filter(Boolean).join(' · ') || 'Complete your profile to get started'}
+          <div className="gpf-h-sub">
+            {[user?.college, user?.branch, user?.yearOfStudy].filter(Boolean).join(' · ') || 'Complete your profile'}
+            {user?.careerGoal && <span className="gpf-h-goal"> · 🎯 {user.careerGoal}</span>}
+          </div>
+          {/* XP bar */}
+          <div className="gpf-xp-row">
+            <div className="gpf-xp-track">
+              <div className="gpf-xp-fill" style={{ width: `${xpPct}%`, background: rank.color }} />
             </div>
-
-            {/* XP bar */}
-            <div className="gpf-xp-row">
-              <span className="gpf-level-badge" style={{ color: rank.color, borderColor: rank.color, background: rank.bg }}>
-                Lv.{level}
-              </span>
-              <div className="gpf-xp-track">
-                <div className="gpf-xp-fill" style={{ width: `${xpPct}%`, background: rank.color, boxShadow: `0 0 8px ${rank.color}` }} />
-              </div>
-              <span className="gpf-xp-text">{xpInLevel}<span>/50 XP</span></span>
-            </div>
-
-            {/* Next rank teaser */}
-            <div className="gpf-rank-row">
-              {nextRank
-                ? <span className="gpf-next-rank-hint">🎯 {nextRank.min - points} XP to reach {nextRank.icon} {nextRank.name}</span>
-                : <span className="gpf-max-rank">👑 MAX RANK ACHIEVED</span>
-              }
-              {user?.careerGoal && <span className="gpf-career-chip">🎯 {user.careerGoal}</span>}
-            </div>
+            <span className="gpf-xp-txt">{xpInLvl}/50 XP</span>
+            {nextRank && <span className="gpf-xp-next">→ {nextRank.icon}{nextRank.name} at {nextRank.min}</span>}
           </div>
         </div>
 
-        {/* Right: stat counters */}
+        {/* Stat strip */}
         <div className="gpf-hero-stats">
           {[
-            { icon: '⚡', val: points,                lbl: 'Total XP',  color: rank.color   },
-            { icon: '📊', val: `Lv.${level}`,         lbl: 'Level',     color: '#818cf8'    },
-            { icon: '🔥', val: streak.count,           lbl: 'Streak',    color: '#f59e0b'    },
-            { icon: '💻', val: solvedProblems.length,  lbl: 'Solved',    color: '#10b981'    },
-            { icon: '🏅', val: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, lbl: 'Badges', color: '#a78bfa' },
+            { v: points,                lbl: 'XP',      c: rank.color   },
+            { v: `${streak.count}🔥`,   lbl: 'Streak',  c: '#f59e0b'    },
+            { v: solvedProblems.length, lbl: 'Solved',  c: '#10b981'    },
+            { v: `${progress.roadmap||0}%`, lbl: 'Roadmap', c: '#8b5cf6' },
+            { v: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, lbl: 'Badges', c: '#a78bfa' },
           ].map(s => (
-            <div key={s.lbl} className="gpf-stat-box">
-              <div className="gpf-stat-icon">{s.icon}</div>
-              <div className="gpf-stat-val" style={{ color: s.color }}>{s.val}</div>
-              <div className="gpf-stat-lbl">{s.lbl}</div>
+            <div key={s.lbl} className="gpf-hstat">
+              <div className="gpf-hstat-v" style={{ color: s.c }}>{s.v}</div>
+              <div className="gpf-hstat-l">{s.lbl}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {saved && <div className="gpf-toast">✅ Profile saved! XP synced.</div>}
+      {saved && <div className="gpf-toast">✅ Saved!</div>}
 
-      {/* ══ MAIN GRID ══════════════════════════════════════════════════════════ */}
+      {/* ── MAIN GRID ────────────────────────────────────────────────────── */}
       <div className="gpf-grid">
 
-        {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
+        {/* LEFT */}
         <div className="gpf-col">
 
-          {/* Character Info */}
+          {/* About / Character Info */}
           <Card title="Character Info" icon="👤" action={editSection !== 'about' && <EditBtn onClick={() => setEditSection('about')} />}>
             {editSection === 'about' ? (
               <form onSubmit={e => { e.preventDefault(); save({ ...user, ...aboutForm, skills: skillsForm, projects: projectsForm, ...careerForm, ...socialForm }) }} className="gpf-form">
@@ -194,19 +182,19 @@ export default function Profile() {
                   <div className="gpf-fg"><label>College *</label><input value={aboutForm.college} onChange={e => setAboutForm(f => ({ ...f, college: e.target.value }))} placeholder="VIT Vellore" required /></div>
                   <div className="gpf-fg"><label>Branch *</label>
                     <select value={aboutForm.branch} onChange={e => setAboutForm(f => ({ ...f, branch: e.target.value }))} required>
-                      <option value="">Select branch</option>
-                      {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                      <option value="">Select</option>
+                      {BRANCHES.map(b => <option key={b}>{b}</option>)}
                     </select>
                   </div>
                 </div>
-                <div className="gpf-fg"><label>Year *</label>
-                  <select value={aboutForm.yearOfStudy} onChange={e => setAboutForm(f => ({ ...f, yearOfStudy: e.target.value }))} required>
-                    <option value="">Select year</option>
-                    {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-                <div className="gpf-fg"><label>Bio <span className="gpf-opt">(optional)</span></label>
-                  <textarea value={aboutForm.bio} onChange={e => setAboutForm(f => ({ ...f, bio: e.target.value }))} placeholder="Tell us about yourself..." rows={3} />
+                <div className="gpf-form-row">
+                  <div className="gpf-fg"><label>Year *</label>
+                    <select value={aboutForm.yearOfStudy} onChange={e => setAboutForm(f => ({ ...f, yearOfStudy: e.target.value }))} required>
+                      <option value="">Select</option>
+                      {YEARS.map(y => <option key={y}>{y}</option>)}
+                    </select>
+                  </div>
+                  <div className="gpf-fg"><label>Bio</label><input value={aboutForm.bio} onChange={e => setAboutForm(f => ({ ...f, bio: e.target.value }))} placeholder="One-liner about you" /></div>
                 </div>
                 <div className="gpf-form-actions">
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditSection(null)}>Cancel</button>
@@ -214,18 +202,18 @@ export default function Profile() {
                 </div>
               </form>
             ) : (
-              <div className="gpf-info-grid">
+              <div className="gpf-info-2col">
                 {[
-                  { l: 'Name', v: user?.name }, { l: 'Email', v: user?.email },
-                  { l: 'Phone', v: user?.phone }, { l: 'College', v: user?.college },
-                  { l: 'Branch', v: user?.branch }, { l: 'Year', v: user?.yearOfStudy },
+                  { l: 'Name',    v: user?.name    }, { l: 'Email',  v: user?.email  },
+                  { l: 'College', v: user?.college }, { l: 'Branch', v: user?.branch },
+                  { l: 'Year',    v: user?.yearOfStudy }, { l: 'Phone', v: user?.phone },
                 ].map(f => (
-                  <div key={f.l} className="gpf-info-row">
-                    <span className="gpf-info-lbl">{f.l}</span>
-                    <span className={`gpf-info-val${!f.v ? ' gpf-empty' : ''}`}>{f.v || '—'}</span>
+                  <div key={f.l} className="gpf-info-cell">
+                    <div className="gpf-info-lbl">{f.l}</div>
+                    <div className={`gpf-info-val${!f.v ? ' gpf-empty' : ''}`}>{f.v || '—'}</div>
                   </div>
                 ))}
-                {user?.bio && <div className="gpf-bio-quote">"{user.bio}"</div>}
+                {user?.bio && <div className="gpf-bio-strip gpf-span2">"{user.bio}"</div>}
               </div>
             )}
           </Card>
@@ -237,7 +225,7 @@ export default function Profile() {
                 <div className="gpf-skill-input-row">
                   <input value={skillInput} onChange={e => setSkillInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill(skillInput) } }}
-                    placeholder="Type a skill and press Enter" className="gpf-skill-input" />
+                    placeholder="Type skill + Enter" className="gpf-skill-input" />
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => addSkill(skillInput)}>Add</button>
                 </div>
                 <div className="gpf-suggest-row">
@@ -265,7 +253,7 @@ export default function Profile() {
             )}
           </Card>
 
-          {/* Quest Log (Projects) */}
+          {/* Quest Log / Projects */}
           <Card title="Quest Log" icon="🚀" action={editSection !== 'projects' && <EditBtn onClick={() => setEditSection('projects')} />}>
             {editSection === 'projects' ? (
               <div className="gpf-form">
@@ -282,7 +270,7 @@ export default function Profile() {
                     <div className="gpf-fg"><label>Description</label>
                       <textarea value={p.desc} onChange={e => setProject(p.id, 'desc', e.target.value)} placeholder="What does it do?" rows={2} />
                     </div>
-                    <div className="gpf-fg"><label>Link (GitHub / Live)</label>
+                    <div className="gpf-fg"><label>Link</label>
                       <input value={p.link} onChange={e => setProject(p.id, 'link', e.target.value)} placeholder="github.com/..." />
                     </div>
                   </div>
@@ -298,7 +286,7 @@ export default function Profile() {
                 {(user?.projects || []).length > 0 ? user.projects.map(p => (
                   <div key={p.id} className="gpf-project-card">
                     <div className="gpf-project-top">
-                      <div className="gpf-project-title">{p.title}</div>
+                      <span className="gpf-project-title">{p.title}</span>
                       {p.link && <a href={p.link} target="_blank" rel="noreferrer" className="gpf-project-link">↗ View</a>}
                     </div>
                     {p.desc && <div className="gpf-project-desc">{p.desc}</div>}
@@ -311,22 +299,21 @@ export default function Profile() {
 
         </div>
 
-        {/* ── RIGHT COLUMN ──────────────────────────────────────────────────── */}
+        {/* RIGHT */}
         <div className="gpf-col">
 
           {/* Achievements */}
-          <Card title={`Achievements · ${unlockedCount} / ${ALL_ACHIEVEMENTS.length} Unlocked`} icon="🏆">
+          <Card title={`Achievements — ${unlockedCount}/${ALL_ACHIEVEMENTS.length} unlocked`} icon="🏆">
             <div className="gpf-badges-grid">
               {ALL_ACHIEVEMENTS.map((a, i) => {
                 const rc = RARITY[a.rarity]
                 return (
-                  <div key={i}
-                    className={`gpf-badge ${a.unlocked ? 'gpf-badge--unlocked' : 'gpf-badge--locked'}`}
+                  <div key={i} className={`gpf-badge${a.unlocked ? ' gpf-badge--on' : ' gpf-badge--off'}`}
                     style={a.unlocked ? { background: rc.bg, borderColor: rc.border } : {}}>
                     <div className="gpf-badge-icon">{a.unlocked ? a.icon : '🔒'}</div>
-                    <div className="gpf-badge-title" style={a.unlocked ? { color: rc.color } : {}}>{a.title}</div>
-                    <div className="gpf-badge-desc">{a.desc}</div>
-                    {a.unlocked && <div className="gpf-badge-rarity" style={{ color: rc.color }}>{rc.label}</div>}
+                    <div className="gpf-badge-name" style={a.unlocked ? { color: rc.color } : {}}>{a.title}</div>
+                    <div className="gpf-badge-hint">{a.desc}</div>
+                    {a.unlocked && <div className="gpf-badge-dot" style={{ background: rc.color }} />}
                   </div>
                 )
               })}
@@ -335,40 +322,40 @@ export default function Profile() {
 
           {/* Player Stats */}
           <Card title="Player Stats" icon="📊">
-            <div className="gpf-stats-grid">
+            <div className="gpf-stats-strip">
               {[
-                { icon: '⚡', val: points,                  lbl: 'Total XP',       color: '#818cf8' },
-                { icon: '🔥', val: streak.count,            lbl: 'Day Streak',     color: '#f59e0b' },
-                { icon: '💻', val: solvedProblems.length,   lbl: 'Problems Solved',color: '#10b981' },
-                { icon: '🗺️', val: `${progress.roadmap||0}%`, lbl: 'Roadmap',     color: '#8b5cf6' },
-                { icon: '🧮', val: Object.values(quizAttempts).filter(a => a?.some(x => x.score >= 60)).length, lbl: 'Quizzes Passed', color: '#06b6d4' },
-                { icon: '🏅', val: unlockedCount,           lbl: 'Badges Earned',  color: '#f59e0b' },
+                { icon: '⚡', val: points,                lbl: 'Total XP',   color: '#818cf8' },
+                { icon: '🔥', val: streak.count,          lbl: 'Streak',     color: '#f59e0b' },
+                { icon: '💻', val: solvedProblems.length, lbl: 'Solved',     color: '#10b981' },
+                { icon: '🗺️', val: `${progress.roadmap||0}%`, lbl: 'Roadmap', color: '#8b5cf6' },
+                { icon: '🧮', val: Object.values(quizAttempts).filter(a => a?.some(x => x.score >= 60)).length, lbl: 'Quizzes', color: '#06b6d4' },
+                { icon: '🏅', val: unlockedCount,         lbl: 'Badges',     color: '#f59e0b' },
               ].map(s => (
-                <div key={s.lbl} className="gpf-stat-card">
-                  <div className="gpf-stat-card-icon">{s.icon}</div>
-                  <div className="gpf-stat-card-val" style={{ color: s.color }}>{s.val}</div>
-                  <div className="gpf-stat-card-lbl">{s.lbl}</div>
+                <div key={s.lbl} className="gpf-sstat">
+                  <div className="gpf-sstat-icon">{s.icon}</div>
+                  <div className="gpf-sstat-val" style={{ color: s.color }}>{s.val}</div>
+                  <div className="gpf-sstat-lbl">{s.lbl}</div>
                 </div>
               ))}
             </div>
           </Card>
 
-          {/* Mission Objective (Career) */}
+          {/* Mission Objective */}
           <Card title="Mission Objective" icon="🎯" action={editSection !== 'career' && <EditBtn onClick={() => setEditSection('career')} />}>
             {editSection === 'career' ? (
               <form onSubmit={e => { e.preventDefault(); save({ ...user, ...careerForm }) }} className="gpf-form">
                 <div className="gpf-fg"><label>Career Goal *</label>
                   <select value={careerForm.careerGoal} onChange={e => setCareerForm(f => ({ ...f, careerGoal: e.target.value }))} required>
                     <option value="">Select goal</option>
-                    {GOALS.map(g => <option key={g} value={g}>{g}</option>)}
+                    {GOALS.map(g => <option key={g}>{g}</option>)}
                   </select>
                 </div>
-                <div className="gpf-fg"><label>Dream Company <span className="gpf-opt">(optional)</span></label>
-                  <input value={careerForm.dreamCompany} onChange={e => setCareerForm(f => ({ ...f, dreamCompany: e.target.value }))} placeholder="Google, Microsoft, Zepto…" />
+                <div className="gpf-fg"><label>Dream Company</label>
+                  <input value={careerForm.dreamCompany} onChange={e => setCareerForm(f => ({ ...f, dreamCompany: e.target.value }))} placeholder="Google, Microsoft…" />
                 </div>
                 <div className="gpf-fg gpf-checkbox-row">
                   <input type="checkbox" id="intern" checked={careerForm.openToInternship} onChange={e => setCareerForm(f => ({ ...f, openToInternship: e.target.checked }))} />
-                  <label htmlFor="intern">Open to Internship Opportunities</label>
+                  <label htmlFor="intern">Open to Internship</label>
                 </div>
                 <div className="gpf-form-actions">
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditSection(null)}>Cancel</button>
@@ -376,15 +363,14 @@ export default function Profile() {
                 </div>
               </form>
             ) : (
-              <div className="gpf-career-view">
-                <div className="gpf-career-row"><span className="gpf-career-lbl">Goal</span><span className={`gpf-career-val${!user?.careerGoal ? ' gpf-empty' : ''}`}>{user?.careerGoal || '—'}</span></div>
-                {user?.dreamCompany && <div className="gpf-career-row"><span className="gpf-career-lbl">Dream Co.</span><span className="gpf-career-val">⭐ {user.dreamCompany}</span></div>}
-                <div className="gpf-career-row">
-                  <span className="gpf-career-lbl">Internship</span>
-                  <span className="gpf-career-val">
-                    {user?.openToInternship !== false
-                      ? <span className="gpf-open-chip">✅ Open</span>
-                      : <span className="gpf-closed-chip">Not looking</span>}
+              <div className="gpf-career-rows">
+                <div className="gpf-cr"><span className="gpf-cl">Goal</span><span className={`gpf-cv${!user?.careerGoal ? ' gpf-empty' : ''}`}>{user?.careerGoal || '—'}</span></div>
+                {user?.dreamCompany && <div className="gpf-cr"><span className="gpf-cl">Dream Co.</span><span className="gpf-cv">⭐ {user.dreamCompany}</span></div>}
+                <div className="gpf-cr">
+                  <span className="gpf-cl">Internship</span>
+                  <span className="gpf-cv">{user?.openToInternship !== false
+                    ? <span className="gpf-open-chip">✅ Open</span>
+                    : <span className="gpf-closed-chip">Not looking</span>}
                   </span>
                 </div>
               </div>
@@ -395,31 +381,42 @@ export default function Profile() {
           <Card title="Social Links" icon="🔗" action={editSection !== 'social' && <EditBtn onClick={() => setEditSection('social')} />}>
             {editSection === 'social' ? (
               <form onSubmit={e => { e.preventDefault(); save({ ...user, ...socialForm }) }} className="gpf-form">
-                {[
-                  { k: 'linkedin', label: 'LinkedIn',  placeholder: 'linkedin.com/in/yourname' },
-                  { k: 'github',   label: 'GitHub',    placeholder: 'github.com/yourname' },
-                  { k: 'twitter',  label: 'Twitter',   placeholder: 'twitter.com/yourname' },
-                  { k: 'website',  label: 'Portfolio', placeholder: 'yoursite.com' },
-                ].map(f => (
-                  <div key={f.k} className="gpf-fg">
-                    <label>{f.label}</label>
-                    <input value={socialForm[f.k]} onChange={e => setSocialForm(s => ({ ...s, [f.k]: e.target.value }))} placeholder={f.placeholder} />
-                  </div>
-                ))}
+                <div className="gpf-form-row">
+                  {[
+                    { k: 'linkedin', label: 'LinkedIn',  placeholder: 'linkedin.com/in/...' },
+                    { k: 'github',   label: 'GitHub',    placeholder: 'github.com/...'      },
+                  ].map(f => (
+                    <div key={f.k} className="gpf-fg">
+                      <label>{f.label}</label>
+                      <input value={socialForm[f.k]} onChange={e => setSocialForm(s => ({ ...s, [f.k]: e.target.value }))} placeholder={f.placeholder} />
+                    </div>
+                  ))}
+                </div>
+                <div className="gpf-form-row">
+                  {[
+                    { k: 'twitter', label: 'Twitter',   placeholder: 'twitter.com/...' },
+                    { k: 'website', label: 'Portfolio', placeholder: 'yoursite.com'   },
+                  ].map(f => (
+                    <div key={f.k} className="gpf-fg">
+                      <label>{f.label}</label>
+                      <input value={socialForm[f.k]} onChange={e => setSocialForm(s => ({ ...s, [f.k]: e.target.value }))} placeholder={f.placeholder} />
+                    </div>
+                  ))}
+                </div>
                 <div className="gpf-form-actions">
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditSection(null)}>Cancel</button>
                   <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
                 </div>
               </form>
             ) : (
-              <div className="gpf-social-list">
+              <div className="gpf-social-grid">
                 {[
                   { k: 'linkedin', icon: '💼', label: 'LinkedIn' },
-                  { k: 'github',   icon: '🐙', label: 'GitHub' },
-                  { k: 'twitter',  icon: '🐦', label: 'Twitter' },
-                  { k: 'website',  icon: '🌐', label: 'Website' },
+                  { k: 'github',   icon: '🐙', label: 'GitHub'   },
+                  { k: 'twitter',  icon: '🐦', label: 'Twitter'  },
+                  { k: 'website',  icon: '🌐', label: 'Website'  },
                 ].map(s => (
-                  <div key={s.k} className="gpf-social-row">
+                  <div key={s.k} className="gpf-social-item">
                     <span className="gpf-social-icon">{s.icon}</span>
                     {user?.[s.k]
                       ? <a href={user[s.k].startsWith('http') ? user[s.k] : `https://${user[s.k]}`} target="_blank" rel="noreferrer" className="gpf-social-link">{user[s.k]}</a>
