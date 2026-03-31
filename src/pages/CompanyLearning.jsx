@@ -13,6 +13,11 @@ const DIFF_COLOR = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' }
 
 // Adapt a company coding question to the ProblemEditor's expected format
 function adaptForEditor(q) {
+  // If admin created via full form, it already has all fields
+  if (q.testCases && q.description !== undefined) {
+    return { id: q.id || q.title, ...q }
+  }
+  // Static companyData.js simple format
   return {
     id:           q.title,
     title:        q.title,

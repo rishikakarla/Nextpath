@@ -1534,33 +1534,39 @@ function QuoteTab({ quote, onUpdate }) {
 
 // ── Main Admin Layout ─────────────────────────────────────────────────────────
 // ── Company Questions ─────────────────────────────────────────────────────────
-const BLANK_CODING_Q = { title: '', difficulty: 'Easy', tags: '', desc: '', example: '' }
-const BLANK_MCQ      = { q: '', opts: ['', '', '', ''], ans: 0, exp: '' }
-const COMP_CATS      = ['coding', 'aptitude', 'english']
+const BLANK_MCQ  = { q: '', opts: ['', '', '', ''], ans: 0, exp: '' }
+const COMP_CATS  = ['coding', 'aptitude', 'english']
 
 function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
   const [selCompany, setSelCompany] = useState(COMPANIES[0]?.id || '')
   const [subTab,     setSubTab]     = useState('coding')
-  const [editing,    setEditing]    = useState(null)  // null | 'new' | index
-  const [form,       setForm]       = useState(BLANK_CODING_Q)
+  const [editing,    setEditing]    = useState(null)   // null | 'new' | index
+  const [form,       setForm]       = useState(BLANK_PROB)
   const [mcqForm,    setMcqForm]    = useState(BLANK_MCQ)
 
   const company   = COMPANIES.find(c => c.id === selCompany)
   const compData  = companyProblems[selCompany] || { coding: [], aptitude: [], english: [] }
   const questions = compData[subTab] || []
 
-  const setField    = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const set         = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const setMcqField = (k, v) => setMcqForm(f => ({ ...f, [k]: v }))
   const setOpt      = (i, v) => setMcqForm(f => { const opts = [...f.opts]; opts[i] = v; return { ...f, opts } })
 
-  const save = () => {
+  const deepCloneProb = (p) => ({
+    ...p,
+    examples:    (p.examples  || []).map(e => ({ ...e })),
+    testCases:   (p.testCases || []).map(t => ({ ...t })),
+    starterCode: { ...(p.starterCode || {}) },
+  })
+
+  const commitSave = () => {
     const updated = { ...companyProblems }
     const cd      = { ...compData }
     const qs      = [...(cd[subTab] || [])]
 
     if (subTab === 'coding') {
-      if (!form.title.trim() || !form.desc.trim()) return
-      const entry = { ...form, tags: form.tags.split(',').map(t => t.trim()).filter(Boolean) }
+      if (!form.title.trim() || !form.description.trim()) return
+      const entry = deepCloneProb(form)
       if (editing === 'new') qs.push(entry)
       else qs[editing] = entry
     } else {
@@ -1586,17 +1592,13 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
   }
 
   const startEdit = (i) => {
-    if (subTab === 'coding') {
-      const q = questions[i]
-      setForm({ ...q, tags: (q.tags || []).join(', ') })
-    } else {
-      setMcqForm({ ...questions[i] })
-    }
+    if (subTab === 'coding') setForm(deepCloneProb({ ...BLANK_PROB, ...questions[i] }))
+    else setMcqForm({ ...BLANK_MCQ, ...questions[i] })
     setEditing(i)
   }
 
   const startNew = () => {
-    if (subTab === 'coding') setForm(BLANK_CODING_Q)
+    if (subTab === 'coding') setForm(BLANK_PROB)
     else setMcqForm(BLANK_MCQ)
     setEditing('new')
   }
@@ -1607,14 +1609,13 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
         <h2 style={{ margin: 0, fontSize: 20 }}>🏢 Company Questions</h2>
       </div>
 
-      {/* Company selector */}
+      {/* Company selector + sub-tabs */}
       <div style={{ ...s.card, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <label style={{ ...s.lbl, margin: 0 }}>Company</label>
         <select value={selCompany} onChange={e => { setSelCompany(e.target.value); setEditing(null) }}
           style={{ ...s.inp, width: 220 }}>
           {COMPANIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
         </select>
-        {/* Sub-tabs */}
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
           {COMP_CATS.map(cat => (
             <button key={cat} onClick={() => { setSubTab(cat); setEditing(null) }} style={{
@@ -1637,30 +1638,13 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
       {/* Form */}
       {editing !== null && (
         <ActiveCard>
-          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>
+          <h3 style={{ margin: '0 0 16px' }}>
             {editing === 'new' ? 'New' : 'Edit'} {subTab.charAt(0).toUpperCase() + subTab.slice(1)} Question
-          </div>
+            {company && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-secondary)', marginLeft: 8 }}>— {company.name}</span>}
+          </h3>
 
           {subTab === 'coding' ? (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Field label="Title"><input style={s.inp} value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Problem title" /></Field>
-                <Field label="Difficulty">
-                  <select style={s.inp} value={form.difficulty} onChange={e => setField('difficulty', e.target.value)}>
-                    {DIFFS.map(d => <option key={d}>{d}</option>)}
-                  </select>
-                </Field>
-              </div>
-              <Field label="Tags (comma separated)">
-                <input style={s.inp} value={form.tags} onChange={e => setField('tags', e.target.value)} placeholder="e.g. Arrays, Hashing" />
-              </Field>
-              <Field label="Description">
-                <textarea style={{ ...s.inp, minHeight: 80, resize: 'vertical' }} value={form.desc} onChange={e => setField('desc', e.target.value)} />
-              </Field>
-              <Field label="Example">
-                <textarea style={{ ...s.inp, minHeight: 60, resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} value={form.example} onChange={e => setField('example', e.target.value)} placeholder="Input: ...\nOutput: ..." />
-              </Field>
-            </>
+            <ProblemForm form={form} set={set} setForm={setForm} onSave={commitSave} onCancel={() => setEditing(null)} />
           ) : (
             <>
               <Field label="Question">
@@ -1682,13 +1666,12 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
               <Field label="Explanation">
                 <textarea style={{ ...s.inp, minHeight: 60, resize: 'vertical' }} value={mcqForm.exp} onChange={e => setMcqField('exp', e.target.value)} />
               </Field>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+                <Btn variant="ghost" onClick={() => setEditing(null)}>Cancel</Btn>
+                <Btn variant="success" onClick={commitSave}>✓ Save Question</Btn>
+              </div>
             </>
           )}
-
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <Btn variant="ghost" onClick={() => setEditing(null)}>Cancel</Btn>
-            <Btn variant="success" onClick={save}>Save</Btn>
-          </div>
         </ActiveCard>
       )}
 
@@ -1696,16 +1679,22 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
       {questions.length === 0
         ? <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 40 }}>No {subTab} questions for {company?.name} yet.</div>
         : questions.map((q, i) => (
-          <div key={i} style={{ ...s.card, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <div key={i} style={{ ...s.card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ flex: 1 }}>
               {subTab === 'coding'
-                ? <><div style={{ fontWeight: 600, marginBottom: 2 }}>{q.title}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{q.difficulty} · {(q.tags || []).join(', ')}</div></>
-                : <><div style={{ fontWeight: 600, marginBottom: 2 }}>Q{i + 1}. {q.q}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Correct: {q.opts?.[q.ans]}</div></>
+                ? <>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{q.title}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                      {q.difficulty} · {(q.examples?.length || 0)} example{(q.examples?.length || 0) !== 1 ? 's' : ''} · {(q.testCases?.length || 0)} test case{(q.testCases?.length || 0) !== 1 ? 's' : ''}
+                    </div>
+                  </>
+                : <>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>Q{i + 1}. {q.q}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>Correct: {q.opts?.[q.ans]}</div>
+                  </>
               }
             </div>
-            <Btn sm onClick={() => startEdit(i)}>Edit</Btn>
+            <Btn sm variant="ghost" onClick={() => startEdit(i)}>Edit</Btn>
             <Btn sm variant="danger" onClick={() => remove(i)}>Delete</Btn>
           </div>
         ))
