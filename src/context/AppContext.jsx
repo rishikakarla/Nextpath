@@ -178,13 +178,24 @@ export function AppProvider({ children }) {
       setSolvedProblems([]); setDailyTasks(defaultDaily); setPoints(0)
       setAssessmentResult(null)
       setTimeout(() => { dataLoaded.current = true }, 0)
-      return { isNewUser: true }
+      return { isNewUser: true, displayName: firebaseUser.displayName || '' }
     }
-    return { isNewUser: false }
+    return { isNewUser: false, displayName: firebaseUser.displayName || '' }
   }
 
   const loginWithGoogle = () => loginWithSocial(googleProvider)
   const loginWithGithub = () => loginWithSocial(githubProvider)
+
+  const updateProfile = async (profileData) => {
+    if (!auth.currentUser) return
+    const updated = { ...profileData, updatedAt: new Date().toISOString() }
+    await setDoc(doc(db, 'users', auth.currentUser.uid), { profile: updated }, { merge: true })
+    setDoc(doc(db, 'leaderboard', auth.currentUser.uid), {
+      name: profileData.name || '',
+      college: profileData.college || '',
+    }, { merge: true }).catch(console.error)
+    setUser(u => ({ ...u, ...updated }))
+  }
 
   const logout = async () => {
     dataLoaded.current = false
@@ -313,7 +324,7 @@ export function AppProvider({ children }) {
       quizAttempts, saveQuizAttempt,
       taskHistory,
       codingSubmissions, saveSubmission,
-      register, login, loginWithGoogle, loginWithGithub, logout, saveAssessment,
+      register, login, loginWithGoogle, loginWithGithub, updateProfile, logout, saveAssessment,
       completeTask, solveProblem, toggleTopic, levelUp, getLeaderboard, setPoints,
     }}>
       {children}
