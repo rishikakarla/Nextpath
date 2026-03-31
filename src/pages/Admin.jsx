@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
-import { COMPANIES } from '../data/companyData'
 
 const ADMIN_EMAIL = 'kakarlarishi5124@gmail.com'
 const PROB_CATS = ['Arrays', 'Strings', 'Recursion', 'Linked Lists', 'Stacks', 'Queues']
@@ -1673,19 +1672,26 @@ const BLANK_MCQ  = { q: '', opts: ['', '', '', ''], ans: 0, exp: '' }
 const COMP_CATS  = ['coding', 'aptitude', 'english']
 
 function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate }) {
-  const [selCompany, setSelCompany] = useState(companies[0]?.id || '')
-  const [subTab,     setSubTab]     = useState('coding')
-  const [editing,    setEditing]    = useState(null)   // null | 'new' | index
-  const [form,       setForm]       = useState(BLANK_PROB)
-  const [mcqForm,    setMcqForm]    = useState(BLANK_MCQ)
+  const [selCompany,   setSelCompany]   = useState(companies[0]?.id || '')
+  const [subTab,       setSubTab]       = useState('coding')
+
+  // Coding state
+  const [editing,     setEditing]     = useState(null)
+  const [form,        setForm]        = useState(BLANK_PROB)
   const [jsonMode,    setJsonMode]    = useState(false)
   const [jsonText,    setJsonText]    = useState('')
   const [jsonError,   setJsonError]   = useState('')
   const [jsonSuccess, setJsonSuccess] = useState('')
 
-  const company   = companies.find(c => c.id === selCompany)
-  const compData  = companyProblems[selCompany] || { coding: [], aptitude: [], english: [] }
-  const questions = compData[subTab] || []
+  // Test management state (aptitude/english)
+  const [activeTestIdx, setActiveTestIdx] = useState(null)   // null = test list, number = inside test
+  const [testEditing,   setTestEditing]   = useState(null)   // null | 'new' | testIndex
+  const [testNameForm,  setTestNameForm]  = useState('')
+  const [qEditing,      setQEditing]      = useState(null)   // null | 'new' | qIndex
+  const [mcqForm,       setMcqForm]       = useState(BLANK_MCQ)
+
+  const company  = companies.find(c => c.id === selCompany)
+  const compData = companyProblems[selCompany] || { coding: [], aptitude: [], english: [] }
 
   const set         = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const setMcqField = (k, v) => setMcqForm(f => ({ ...f, [k]: v }))
@@ -1698,165 +1704,260 @@ function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate })
     starterCode: { ...(p.starterCode || {}) },
   })
 
-  const commitSave = () => {
-    const updated = { ...companyProblems }
-    const cd      = { ...compData }
-    const qs      = [...(cd[subTab] || [])]
+  // ── Coding helpers ────────────────────────────────────────────────────────
+  const codingQs = compData.coding || []
 
-    if (subTab === 'coding') {
-      if (!form.title.trim() || !form.description.trim()) return
-      const entry = deepCloneProb(form)
-      if (editing === 'new') qs.push(entry)
-      else qs[editing] = entry
-    } else {
-      if (!mcqForm.q.trim()) return
-      const entry = { ...mcqForm, opts: mcqForm.opts.map(o => o.trim()) }
-      if (editing === 'new') qs.push(entry)
-      else qs[editing] = entry
-    }
-
-    cd[subTab] = qs
-    updated[selCompany] = cd
-    onUpdate(updated)
+  const saveCoding = () => {
+    if (!form.title.trim() || !form.description.trim()) return
+    const qs = [...codingQs]
+    if (editing === 'new') qs.push(deepCloneProb(form))
+    else qs[editing] = deepCloneProb(form)
+    onUpdate({ ...companyProblems, [selCompany]: { ...compData, coding: qs } })
     setEditing(null)
   }
 
-  const remove = (i) => {
-    if (!window.confirm('Delete this question?')) return
-    const updated = { ...companyProblems }
-    const cd      = { ...compData }
-    cd[subTab]    = [...(cd[subTab] || [])].filter((_, idx) => idx !== i)
-    updated[selCompany] = cd
-    onUpdate(updated)
-  }
-
-  const startEdit = (i) => {
-    if (subTab === 'coding') setForm(deepCloneProb({ ...BLANK_PROB, ...questions[i] }))
-    else setMcqForm({ ...BLANK_MCQ, ...questions[i] })
-    setEditing(i)
-  }
-
-  const startNew = () => {
-    if (subTab === 'coding') setForm(BLANK_PROB)
-    else setMcqForm(BLANK_MCQ)
-    setEditing('new')
-    setJsonMode(false)
+  const removeCoding = (i) => {
+    if (!window.confirm('Delete this problem?')) return
+    onUpdate({ ...companyProblems, [selCompany]: { ...compData, coding: codingQs.filter((_, idx) => idx !== i) } })
   }
 
   const handleJsonUpload = () => {
-    setJsonError('')
-    setJsonSuccess('')
+    setJsonError(''); setJsonSuccess('')
     let parsed
     try { parsed = JSON.parse(jsonText.trim()) }
     catch (e) { setJsonError('Invalid JSON: ' + e.message); return }
-
-    const items  = Array.isArray(parsed) ? parsed : [parsed]
+    const items = Array.isArray(parsed) ? parsed : [parsed]
     const errors = []
     items.forEach((item, idx) => {
       if (!item.title?.trim())       errors.push(`Item ${idx + 1}: missing "title"`)
       if (!item.description?.trim()) errors.push(`Item ${idx + 1}: missing "description"`)
     })
     if (errors.length) { setJsonError(errors.join('\n')); return }
-
     const newQs = items.map(item => ({
       ...BLANK_PROB, ...item,
       examples:    item.examples  || [{ input: '', output: '', explanation: '' }],
       testCases:   item.testCases || [{ input: '', expectedOutput: '', hidden: false }],
       starterCode: { 71: '', 63: '', 54: '', ...(item.starterCode || {}) },
     }))
-
-    const updated = { ...companyProblems }
-    const cd = { ...compData }
-    cd.coding = [...(cd.coding || []), ...newQs]
-    updated[selCompany] = cd
-    onUpdate(updated)
+    onUpdate({ ...companyProblems, [selCompany]: { ...compData, coding: [...codingQs, ...newQs] } })
     setJsonSuccess(`✅ ${newQs.length} problem${newQs.length > 1 ? 's' : ''} added!`)
     setJsonText('')
     setTimeout(() => { setJsonMode(false); setJsonSuccess('') }, 1800)
   }
 
+  // ── Test helpers (aptitude / english) ────────────────────────────────────
+  const getRawTests = () => {
+    const data = compData[subTab] || []
+    if (data.length === 0) return []
+    if (data[0]?.questions) return data
+    return [{ name: `${subTab === 'aptitude' ? 'Aptitude' : 'English'} Test 1`, questions: data }]
+  }
+
+  const saveTests = (tests) =>
+    onUpdate({ ...companyProblems, [selCompany]: { ...compData, [subTab]: tests } })
+
+  const addTest = () => {
+    if (!testNameForm.trim()) return
+    saveTests([...getRawTests(), { name: testNameForm.trim(), questions: [] }])
+    setTestEditing(null); setTestNameForm('')
+  }
+
+  const renameTest = (ti) => {
+    if (!testNameForm.trim()) return
+    saveTests(getRawTests().map((t, i) => i === ti ? { ...t, name: testNameForm.trim() } : t))
+    setTestEditing(null)
+  }
+
+  const deleteTest = (ti) => {
+    if (!window.confirm('Delete this test and all its questions?')) return
+    saveTests(getRawTests().filter((_, i) => i !== ti))
+    if (activeTestIdx === ti) setActiveTestIdx(null)
+  }
+
+  const saveQuestion = () => {
+    if (!mcqForm.q.trim()) return
+    const tests = getRawTests()
+    const test  = { ...tests[activeTestIdx], questions: [...(tests[activeTestIdx]?.questions || [])] }
+    const entry = { ...mcqForm, opts: mcqForm.opts.map(o => o.trim()) }
+    if (qEditing === 'new') test.questions.push(entry)
+    else test.questions[qEditing] = entry
+    saveTests(tests.map((t, i) => i === activeTestIdx ? test : t))
+    setQEditing(null)
+  }
+
+  const deleteQuestion = (qi) => {
+    if (!window.confirm('Delete this question?')) return
+    const tests = getRawTests()
+    const test  = { ...tests[activeTestIdx], questions: tests[activeTestIdx].questions.filter((_, i) => i !== qi) }
+    saveTests(tests.map((t, i) => i === activeTestIdx ? test : t))
+  }
+
+  // ── Shared switch helpers ─────────────────────────────────────────────────
+  const switchCompany = (id) => {
+    setSelCompany(id); setEditing(null); setJsonMode(false)
+    setActiveTestIdx(null); setTestEditing(null); setQEditing(null)
+  }
+  const switchTab = (cat) => {
+    setSubTab(cat); setEditing(null); setJsonMode(false)
+    setActiveTestIdx(null); setTestEditing(null); setQEditing(null)
+  }
+
+  const tests = subTab !== 'coding' ? getRawTests() : []
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>🏢 Company Questions</h2>
+        <h2 style={{ margin: 0, fontSize: 20 }}>
+          📋 Company Questions
+          {activeTestIdx !== null && (
+            <span style={{ fontWeight: 400, fontSize: 14, color: 'var(--text-secondary)', marginLeft: 8 }}>
+              › {tests[activeTestIdx]?.name}
+            </span>
+          )}
+        </h2>
       </div>
 
-      {/* Company selector + sub-tabs */}
+      {/* Company + sub-tab selector */}
       <div style={{ ...s.card, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <label style={{ ...s.lbl, margin: 0 }}>Company</label>
-        <select value={selCompany} onChange={e => { setSelCompany(e.target.value); setEditing(null); setJsonMode(false) }}
-          style={{ ...s.inp, width: 220 }}>
+        <select value={selCompany} onChange={e => switchCompany(e.target.value)} style={{ ...s.inp, width: 220 }}>
           {companies.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
         </select>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-          {COMP_CATS.map(cat => (
-            <button key={cat} onClick={() => { setSubTab(cat); setEditing(null); setJsonMode(false) }} style={{
-              padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
-              background: subTab === cat ? 'var(--primary)' : 'var(--bg)',
-              color: subTab === cat ? '#fff' : 'var(--text)',
-            }}>
-              {cat === 'coding' ? '💻' : cat === 'aptitude' ? '🧮' : '📖'} {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              <span style={{ marginLeft: 6, opacity: .7, fontWeight: 400 }}>({(compData[cat] || []).length})</span>
-            </button>
-          ))}
+          {COMP_CATS.map(cat => {
+            const cnt = cat === 'coding'
+              ? (compData.coding || []).length
+              : getRawTests().reduce((s, t) => s + (t.questions?.length || 0), 0)
+            return (
+              <button key={cat} onClick={() => switchTab(cat)} style={{
+                padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                background: subTab === cat ? 'var(--primary)' : 'var(--bg)',
+                color: subTab === cat ? '#fff' : 'var(--text)',
+              }}>
+                {cat === 'coding' ? '💻' : cat === 'aptitude' ? '🧮' : '📖'} {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                <span style={{ marginLeft: 6, opacity: .7, fontWeight: 400 }}>({cnt})</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Add / JSON buttons — JSON only for coding tab */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 12 }}>
-        {subTab === 'coding' && (
-          <Btn variant="ghost" onClick={() => { setJsonMode(m => !m); setJsonError(''); setJsonSuccess(''); setEditing(null) }}>
-            {jsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
-          </Btn>
-        )}
-        <Btn onClick={startNew}>+ Add Question</Btn>
-      </div>
+      {/* ══ CODING TAB ══ */}
+      {subTab === 'coding' && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 12 }}>
+            <Btn variant="ghost" onClick={() => { setJsonMode(m => !m); setJsonError(''); setJsonSuccess(''); setEditing(null) }}>
+              {jsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
+            </Btn>
+            <Btn onClick={() => { setForm(BLANK_PROB); setEditing('new'); setJsonMode(false) }}>+ Add Problem</Btn>
+          </div>
 
-      {/* JSON paste panel (coding only) */}
-      {jsonMode && subTab === 'coding' && (
-        <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📋 Paste JSON to Upload Problem(s)</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Paste a single object <code>{'{...}'}</code> or an array <code>{'[{...},{...}]'}</code> to add multiple at once.</div>
-            </div>
-            <Btn sm variant="ghost" onClick={() => setJsonText(JSON_TEMPLATE)}>Load Template</Btn>
-          </div>
-          <textarea
-            value={jsonText}
-            onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
-            placeholder={'Paste your JSON here…\n\nClick "Load Template" to see the expected format.'}
-            style={{ ...s.inp, minHeight: 260, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
-          />
-          {jsonError && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>
-              {jsonError}
+          {jsonMode && (
+            <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📋 Paste JSON to Upload Problem(s)</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Single object or array of objects.</div>
+                </div>
+                <Btn sm variant="ghost" onClick={() => setJsonText(JSON_TEMPLATE)}>Load Template</Btn>
+              </div>
+              <textarea value={jsonText} onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
+                placeholder="Paste JSON here…" style={{ ...s.inp, minHeight: 260, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }} />
+              {jsonError   && <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>{jsonError}</div>}
+              {jsonSuccess && <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>{jsonSuccess}</div>}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <Btn onClick={handleJsonUpload} variant="success">⬆ Upload Problem(s)</Btn>
+                <Btn variant="ghost" onClick={() => { setJsonMode(false); setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Cancel</Btn>
+              </div>
             </div>
           )}
-          {jsonSuccess && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>
-              {jsonSuccess}
-            </div>
+
+          {editing !== null && (
+            <ActiveCard>
+              <h3 style={{ margin: '0 0 16px' }}>{editing === 'new' ? 'New Problem' : 'Edit Problem'}{company && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-secondary)', marginLeft: 8 }}>— {company.name}</span>}</h3>
+              <ProblemForm form={form} set={set} setForm={setForm} onSave={saveCoding} onCancel={() => setEditing(null)} />
+            </ActiveCard>
           )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <Btn onClick={handleJsonUpload} variant="success">⬆ Upload Problem(s)</Btn>
-            <Btn variant="ghost" onClick={() => { setJsonMode(false); setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Cancel</Btn>
-          </div>
-        </div>
+
+          {codingQs.length === 0
+            ? <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 40 }}>No coding problems for {company?.name} yet.</div>
+            : codingQs.map((q, i) => (
+              <div key={i} style={{ ...s.card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{q.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                    {q.difficulty} · {(q.examples?.length || 0)} example{(q.examples?.length || 0) !== 1 ? 's' : ''} · {(q.testCases?.length || 0)} test case{(q.testCases?.length || 0) !== 1 ? 's' : ''}
+                  </div>
+                </div>
+                <Btn sm variant="ghost" onClick={() => { setForm(deepCloneProb({ ...BLANK_PROB, ...q })); setEditing(i) }}>Edit</Btn>
+                <Btn sm variant="danger" onClick={() => removeCoding(i)}>Delete</Btn>
+              </div>
+            ))
+          }
+        </>
       )}
 
-      {/* Form */}
-      {editing !== null && (
-        <ActiveCard>
-          <h3 style={{ margin: '0 0 16px' }}>
-            {editing === 'new' ? 'New' : 'Edit'} {subTab.charAt(0).toUpperCase() + subTab.slice(1)} Question
-            {company && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-secondary)', marginLeft: 8 }}>— {company.name}</span>}
-          </h3>
+      {/* ══ APTITUDE / ENGLISH — TEST LIST ══ */}
+      {subTab !== 'coding' && activeTestIdx === null && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+            <Btn onClick={() => { setTestEditing('new'); setTestNameForm('') }}>+ Add Test</Btn>
+          </div>
 
-          {subTab === 'coding' ? (
-            <ProblemForm form={form} set={set} setForm={setForm} onSave={commitSave} onCancel={() => setEditing(null)} />
-          ) : (
-            <>
+          {testEditing === 'new' && (
+            <ActiveCard>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>New Test</div>
+              <Field label="Test Name">
+                <input style={s.inp} value={testNameForm} onChange={e => setTestNameForm(e.target.value)} placeholder="e.g. Aptitude Test 1" />
+              </Field>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Btn variant="success" onClick={addTest}>✓ Create Test</Btn>
+                <Btn variant="ghost" onClick={() => setTestEditing(null)}>Cancel</Btn>
+              </div>
+            </ActiveCard>
+          )}
+
+          {tests.length === 0
+            ? <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 40 }}>No tests for {company?.name} yet.</div>
+            : tests.map((test, ti) => (
+              <div key={ti} style={{ ...s.card, padding: '14px 16px' }}>
+                {testEditing === ti
+                  ? (
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input style={{ ...s.inp, flex: 1 }} value={testNameForm} onChange={e => setTestNameForm(e.target.value)} />
+                      <Btn sm variant="success" onClick={() => renameTest(ti)}>Save</Btn>
+                      <Btn sm variant="ghost" onClick={() => setTestEditing(null)}>Cancel</Btn>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15 }}>{test.name || `Test ${ti + 1}`}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{test.questions?.length || 0} questions</div>
+                      </div>
+                      <Btn sm onClick={() => { setActiveTestIdx(ti); setQEditing(null) }}>Manage Questions →</Btn>
+                      <Btn sm variant="ghost" onClick={() => { setTestEditing(ti); setTestNameForm(test.name || '') }}>Rename</Btn>
+                      <Btn sm variant="danger" onClick={() => deleteTest(ti)}>Delete</Btn>
+                    </div>
+                  )
+                }
+              </div>
+            ))
+          }
+        </>
+      )}
+
+      {/* ══ APTITUDE / ENGLISH — QUESTIONS INSIDE TEST ══ */}
+      {subTab !== 'coding' && activeTestIdx !== null && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <Btn variant="ghost" onClick={() => { setActiveTestIdx(null); setQEditing(null) }}>← Back to Tests</Btn>
+            <span style={{ flex: 1 }} />
+            <Btn onClick={() => { setMcqForm(BLANK_MCQ); setQEditing('new') }}>+ Add Question</Btn>
+          </div>
+
+          {qEditing !== null && (
+            <ActiveCard>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>{qEditing === 'new' ? 'New Question' : 'Edit Question'}</div>
               <Field label="Question">
                 <textarea style={{ ...s.inp, minHeight: 70, resize: 'vertical' }} value={mcqForm.q} onChange={e => setMcqField('q', e.target.value)} />
               </Field>
@@ -1877,38 +1978,27 @@ function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate })
                 <textarea style={{ ...s.inp, minHeight: 60, resize: 'vertical' }} value={mcqForm.exp} onChange={e => setMcqField('exp', e.target.value)} />
               </Field>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-                <Btn variant="ghost" onClick={() => setEditing(null)}>Cancel</Btn>
-                <Btn variant="success" onClick={commitSave}>✓ Save Question</Btn>
+                <Btn variant="ghost" onClick={() => setQEditing(null)}>Cancel</Btn>
+                <Btn variant="success" onClick={saveQuestion}>✓ Save Question</Btn>
               </div>
-            </>
+            </ActiveCard>
           )}
-        </ActiveCard>
-      )}
 
-      {/* Questions list */}
-      {questions.length === 0
-        ? <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 40 }}>No {subTab} questions for {company?.name} yet.</div>
-        : questions.map((q, i) => (
-          <div key={i} style={{ ...s.card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              {subTab === 'coding'
-                ? <>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{q.title}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                      {q.difficulty} · {(q.examples?.length || 0)} example{(q.examples?.length || 0) !== 1 ? 's' : ''} · {(q.testCases?.length || 0)} test case{(q.testCases?.length || 0) !== 1 ? 's' : ''}
-                    </div>
-                  </>
-                : <>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>Q{i + 1}. {q.q}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>Correct: {q.opts?.[q.ans]}</div>
-                  </>
-              }
-            </div>
-            <Btn sm variant="ghost" onClick={() => startEdit(i)}>Edit</Btn>
-            <Btn sm variant="danger" onClick={() => remove(i)}>Delete</Btn>
-          </div>
-        ))
-      }
+          {(tests[activeTestIdx]?.questions || []).length === 0
+            ? <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 40 }}>No questions in this test yet.</div>
+            : (tests[activeTestIdx]?.questions || []).map((q, qi) => (
+              <div key={qi} style={{ ...s.card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>Q{qi + 1}. {q.q}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>Correct: {q.opts?.[q.ans]}</div>
+                </div>
+                <Btn sm variant="ghost" onClick={() => { setMcqForm({ ...BLANK_MCQ, ...q }); setQEditing(qi) }}>Edit</Btn>
+                <Btn sm variant="danger" onClick={() => deleteQuestion(qi)}>Delete</Btn>
+              </div>
+            ))
+          }
+        </>
+      )}
     </div>
   )
 }
