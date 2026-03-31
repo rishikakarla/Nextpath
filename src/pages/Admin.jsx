@@ -1543,6 +1543,10 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
   const [editing,    setEditing]    = useState(null)   // null | 'new' | index
   const [form,       setForm]       = useState(BLANK_PROB)
   const [mcqForm,    setMcqForm]    = useState(BLANK_MCQ)
+  const [jsonMode,    setJsonMode]    = useState(false)
+  const [jsonText,    setJsonText]    = useState('')
+  const [jsonError,   setJsonError]   = useState('')
+  const [jsonSuccess, setJsonSuccess] = useState('')
 
   const company   = COMPANIES.find(c => c.id === selCompany)
   const compData  = companyProblems[selCompany] || { coding: [], aptitude: [], english: [] }
@@ -1601,6 +1605,39 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
     if (subTab === 'coding') setForm(BLANK_PROB)
     else setMcqForm(BLANK_MCQ)
     setEditing('new')
+    setJsonMode(false)
+  }
+
+  const handleJsonUpload = () => {
+    setJsonError('')
+    setJsonSuccess('')
+    let parsed
+    try { parsed = JSON.parse(jsonText.trim()) }
+    catch (e) { setJsonError('Invalid JSON: ' + e.message); return }
+
+    const items  = Array.isArray(parsed) ? parsed : [parsed]
+    const errors = []
+    items.forEach((item, idx) => {
+      if (!item.title?.trim())       errors.push(`Item ${idx + 1}: missing "title"`)
+      if (!item.description?.trim()) errors.push(`Item ${idx + 1}: missing "description"`)
+    })
+    if (errors.length) { setJsonError(errors.join('\n')); return }
+
+    const newQs = items.map(item => ({
+      ...BLANK_PROB, ...item,
+      examples:    item.examples  || [{ input: '', output: '', explanation: '' }],
+      testCases:   item.testCases || [{ input: '', expectedOutput: '', hidden: false }],
+      starterCode: { 71: '', 63: '', 54: '', ...(item.starterCode || {}) },
+    }))
+
+    const updated = { ...companyProblems }
+    const cd = { ...compData }
+    cd.coding = [...(cd.coding || []), ...newQs]
+    updated[selCompany] = cd
+    onUpdate(updated)
+    setJsonSuccess(`✅ ${newQs.length} problem${newQs.length > 1 ? 's' : ''} added!`)
+    setJsonText('')
+    setTimeout(() => { setJsonMode(false); setJsonSuccess('') }, 1800)
   }
 
   return (
@@ -1612,13 +1649,13 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
       {/* Company selector + sub-tabs */}
       <div style={{ ...s.card, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <label style={{ ...s.lbl, margin: 0 }}>Company</label>
-        <select value={selCompany} onChange={e => { setSelCompany(e.target.value); setEditing(null) }}
+        <select value={selCompany} onChange={e => { setSelCompany(e.target.value); setEditing(null); setJsonMode(false) }}
           style={{ ...s.inp, width: 220 }}>
           {COMPANIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
         </select>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
           {COMP_CATS.map(cat => (
-            <button key={cat} onClick={() => { setSubTab(cat); setEditing(null) }} style={{
+            <button key={cat} onClick={() => { setSubTab(cat); setEditing(null); setJsonMode(false) }} style={{
               padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
               background: subTab === cat ? 'var(--primary)' : 'var(--bg)',
               color: subTab === cat ? '#fff' : 'var(--text)',
@@ -1630,10 +1667,48 @@ function CompanyQuestionsTab({ companyProblems = {}, onUpdate }) {
         </div>
       </div>
 
-      {/* Add button */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+      {/* Add / JSON buttons — JSON only for coding tab */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 12 }}>
+        {subTab === 'coding' && (
+          <Btn variant="ghost" onClick={() => { setJsonMode(m => !m); setJsonError(''); setJsonSuccess(''); setEditing(null) }}>
+            {jsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
+          </Btn>
+        )}
         <Btn onClick={startNew}>+ Add Question</Btn>
       </div>
+
+      {/* JSON paste panel (coding only) */}
+      {jsonMode && subTab === 'coding' && (
+        <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📋 Paste JSON to Upload Problem(s)</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Paste a single object <code>{'{...}'}</code> or an array <code>{'[{...},{...}]'}</code> to add multiple at once.</div>
+            </div>
+            <Btn sm variant="ghost" onClick={() => setJsonText(JSON_TEMPLATE)}>Load Template</Btn>
+          </div>
+          <textarea
+            value={jsonText}
+            onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
+            placeholder={'Paste your JSON here…\n\nClick "Load Template" to see the expected format.'}
+            style={{ ...s.inp, minHeight: 260, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
+          />
+          {jsonError && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>
+              {jsonError}
+            </div>
+          )}
+          {jsonSuccess && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>
+              {jsonSuccess}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <Btn onClick={handleJsonUpload} variant="success">⬆ Upload Problem(s)</Btn>
+            <Btn variant="ghost" onClick={() => { setJsonMode(false); setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Cancel</Btn>
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       {editing !== null && (
