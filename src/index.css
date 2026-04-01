@@ -1223,8 +1223,8 @@ nav { flex: 1; padding: 12px 0; }
 }
 .cp-row:last-of-type { border-bottom: none; }
 .cp-row:hover { background: var(--bg); }
-.cp-row.cp-row-solved { background: #f0fdf4; }
-.cp-row.cp-row-solved:hover { background: #dcfce7; }
+.cp-row.cp-row-solved { background: var(--success-light); }
+.cp-row.cp-row-solved:hover { background: var(--success-light); filter: brightness(1.06); }
 .cp-td { font-size: 13px; color: var(--text); display: flex; align-items: center; }
 
 /* Status dot */
@@ -1243,9 +1243,10 @@ nav { flex: 1; padding: 12px 0; }
 .cp-problem-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .cp-row:hover .cp-problem-name { color: var(--primary); }
 .cp-solved-tag {
-  font-size: 10px; font-weight: 700; color: #065f46;
-  background: #d1fae5; border: 1px solid #6ee7b7;
+  font-size: 10px; font-weight: 700; color: var(--success);
+  background: var(--success-light); border: 1px solid var(--success);
   padding: 1px 7px; border-radius: 99px; flex-shrink: 0;
+  opacity: .85;
 }
 .cp-cat-chip {
   font-size: 11px; font-weight: 600; color: var(--text-secondary);

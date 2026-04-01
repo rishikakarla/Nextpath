@@ -4,9 +4,9 @@ import { useContent } from '../context/ContentContext'
 import ProblemEditor from '../components/ProblemEditor'
 
 const DIFF_META = {
-  Easy:   { color: '#10b981', bg: '#d1fae5', label: 'Easy' },
-  Medium: { color: '#f59e0b', bg: '#fef3c7', label: 'Medium' },
-  Hard:   { color: '#ef4444', bg: '#fee2e2', label: 'Hard' },
+  Easy:   { color: '#10b981', bg: 'rgba(16,185,129,.15)', label: 'Easy' },
+  Medium: { color: '#f59e0b', bg: 'rgba(245,158,11,.15)', label: 'Medium' },
+  Hard:   { color: '#ef4444', bg: 'rgba(239,68,68,.15)',  label: 'Hard' },
 }
 
 export default function CodingPractice() {
