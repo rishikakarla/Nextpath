@@ -1,5 +1,16 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useState, useEffect } from 'react'
+
+function useTheme() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+  const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+  return [theme, toggle]
+}
 
 const NAV = [
   { to: '/dashboard', icon: '🏠', label: 'Dashboard' },
@@ -20,6 +31,7 @@ const ADMIN_EMAIL = 'kakarlarishi5124@gmail.com'
 export default function Layout() {
   const { user, streak, points, logout } = useApp()
   const navigate = useNavigate()
+  const [theme, toggleTheme] = useTheme()
 
   const handleLogout = () => { logout(); navigate('/login') }
 
@@ -66,6 +78,9 @@ export default function Layout() {
           <div className="sidebar-points">
             Points: <strong>{points}</strong>
           </div>
+          <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle theme">
+            {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          </button>
           <button className="btn btn-ghost btn-sm btn-full" onClick={handleLogout}
             style={{ color: 'rgba(255,255,255,.6)', borderColor: 'rgba(255,255,255,.2)' }}>
             Sign Out
