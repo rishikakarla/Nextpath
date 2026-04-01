@@ -4,8 +4,8 @@ import { db } from '../firebase'
 import { collection, onSnapshot } from 'firebase/firestore'
 
 const MEDAL_COLOR = ['#f59e0b', '#94a3b8', '#cd7c3f']
-const MEDAL_BG    = ['#fffbeb', '#f8fafc', '#fff7ed']
-const MEDAL_BORDER= ['#fcd34d', '#cbd5e1', '#fdba74']
+const MEDAL_BG    = ['rgba(245,158,11,.12)', 'rgba(148,163,184,.1)', 'rgba(205,124,63,.12)']
+const MEDAL_BORDER= ['#fcd34d', '#94a3b8', '#fdba74']
 
 const POINTS_GUIDE = [
   { icon: '✅', label: 'Daily Task',      pts: '+5' },
@@ -180,7 +180,7 @@ export default function Leaderboard() {
                       </span>
                     </span>
                     <span className="lb-td lb-td-name">
-                      <div className="lb-row-avatar" style={{ background: isMe ? 'var(--primary)' : '#e2e8f0', color: isMe ? '#fff' : 'var(--text-secondary)' }}>
+                      <div className="lb-row-avatar" style={{ background: isMe ? 'var(--primary)' : 'var(--border)', color: isMe ? '#fff' : 'var(--text)' }}>
                         {entry.name ? entry.name.charAt(0).toUpperCase() : '?'}
                       </div>
                       <div className="lb-name-wrap">

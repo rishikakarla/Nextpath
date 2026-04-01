@@ -2624,8 +2624,8 @@ nav { flex: 1; padding: 12px 0; }
 }
 .lb-row:last-child { border-bottom: none; }
 .lb-row:hover { background: var(--bg); }
-.lb-row.lb-row-me { background: var(--primary-light); border-color: #c7d2fe; }
-.lb-row.lb-row-me:hover { background: #e0e7ff; }
+.lb-row.lb-row-me { background: var(--primary-light); border-color: var(--primary); }
+.lb-row.lb-row-me:hover { background: var(--primary-light); filter: brightness(1.08); }
 .lb-td { display: flex; align-items: center; font-size: 13px; color: var(--text); }
 .lb-td-pts, .lb-td-streak { justify-content: flex-end; }
 .lb-rank-num { font-size: 13px; font-weight: 700; }
