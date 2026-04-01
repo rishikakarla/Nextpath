@@ -28,9 +28,9 @@
 
 /* ── Dark mode ───────────────────────────────────────────────────── */
 [data-theme="dark"] {
-  --primary:        #818cf8;
+  --primary:        #7c83f5;
   --primary-hover:  #6366f1;
-  --primary-light:  rgba(99,102,241,.15);
+  --primary-light:  rgba(99,102,241,.18);
   --secondary:      #a78bfa;
   --success:        #34d399;
   --success-light:  rgba(52,211,153,.15);
@@ -38,17 +38,17 @@
   --warning-light:  rgba(251,191,36,.15);
   --danger:         #f87171;
   --danger-light:   rgba(248,113,113,.15);
-  --bg:             #0f172a;
-  --sidebar-bg:     #0c1124;
-  --sidebar-hover:  #1e1b4b;
-  --sidebar-active: #312e81;
-  --card:           #1e293b;
-  --border:         #334155;
-  --text:           #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted:     #64748b;
-  --shadow:         0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
-  --shadow-md:      0 4px 6px -1px rgba(0,0,0,.5), 0 2px 4px -1px rgba(0,0,0,.3);
+  --bg:             #1e2235;
+  --sidebar-bg:     #1e1b4b;
+  --sidebar-hover:  #312e81;
+  --sidebar-active: #4338ca;
+  --card:           #272f47;
+  --border:         #3d4663;
+  --text:           #e8eaf6;
+  --text-secondary: #9fa8c0;
+  --text-muted:     #6b7499;
+  --shadow:         0 1px 3px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.2);
+  --shadow-md:      0 4px 6px -1px rgba(0,0,0,.35), 0 2px 4px -1px rgba(0,0,0,.2);
 }
 
 /* ── Light mode (explicit) ───────────────────────────────────────── */
