@@ -31,6 +31,67 @@ function VerdictChip({ verdict }) {
   return <span className="pe-chip pe-chip-fail">✗ Failed</span>
 }
 
+// ── Staged Hint System ────────────────────────────────────────────────────────
+const HINT_STAGES = [
+  { key: 'idea',       label: 'Hint 1', sub: 'Idea',       icon: '💡' },
+  { key: 'approach',   label: 'Hint 2', sub: 'Approach',   icon: '🗺️' },
+  { key: 'pseudocode', label: 'Hint 3', sub: 'Pseudocode', icon: '📝' },
+  { key: 'code',       label: 'Final',  sub: 'Solution',   icon: '🔓' },
+]
+
+function HintSystem({ problem, onHintUsed }) {
+  const [unlocked, setUnlocked] = useState(0)
+
+  // Support both new `hints` object and legacy `hint` string
+  const hints = problem.hints
+    || (problem.hint ? { idea: problem.hint } : null)
+  if (!hints) return null
+
+  const stages = HINT_STAGES.filter(s => hints[s.key]?.trim())
+  if (stages.length === 0) return null
+
+  const unlock = () => {
+    if (onHintUsed) onHintUsed()
+    setUnlocked(u => u + 1)
+  }
+
+  return (
+    <div className="pe-hints-section">
+      <div className="pe-section-label">Hints</div>
+      {stages.map((stage, i) => {
+        if (unlocked > i) {
+          return (
+            <div key={stage.key} className="pe-hint-stage pe-hint-stage-open">
+              <div className="pe-hint-stage-hdr">
+                <span className="pe-hint-stage-icon">{stage.icon}</span>
+                <span className="pe-hint-stage-label">{stage.label}</span>
+                <span className="pe-hint-stage-sub">— {stage.sub}</span>
+              </div>
+              <p className="pe-hint-stage-body">{hints[stage.key]}</p>
+            </div>
+          )
+        }
+        if (unlocked === i) {
+          return (
+            <button key={stage.key} className="pe-hint-unlock-btn" onClick={unlock}>
+              {stage.icon} Unlock {stage.label}
+              <span className="pe-hint-unlock-sub">→ {stage.sub}</span>
+              <span className="pe-hint-unlock-cost">-1 pt</span>
+            </button>
+          )
+        }
+        return (
+          <div key={stage.key} className="pe-hint-stage pe-hint-stage-locked">
+            <span>🔒</span>
+            <span className="pe-hint-stage-label">{stage.label}</span>
+            <span className="pe-hint-stage-sub">— {stage.sub}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Problem Panel ─────────────────────────────────────────────────────────────
 function ProblemPanel({ problem, onHintUsed }) {
   const [activeEx, setActiveEx] = useState(0)
@@ -109,13 +170,7 @@ function ProblemPanel({ problem, onHintUsed }) {
         )
       })()}
 
-      {/* Hint */}
-      {problem.hint && (
-        <details className="pe-hint" onToggle={e => { if (e.target.open && onHintUsed) onHintUsed() }}>
-          <summary>💡 Hint <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 600, marginLeft: 6 }}>(-1 pt)</span></summary>
-          <p>{problem.hint}</p>
-        </details>
-      )}
+      <HintSystem problem={problem} onHintUsed={onHintUsed} />
     </div>
   )
 }

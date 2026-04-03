@@ -140,9 +140,10 @@ export default function Leaderboard() {
                   >
                     {isMe && <div className="lb-podium-you-tag">You</div>}
                     <div className="lb-podium-avatar" style={{ background: mc + '22', borderColor: mc }}>
-                      <span className="lb-podium-initials" style={{ color: mc }}>
-                        {entry.name ? entry.name.charAt(0).toUpperCase() : '?'}
-                      </span>
+                      {entry.photoURL
+                        ? <img src={entry.photoURL} alt={entry.name} className="lb-podium-photo" referrerPolicy="no-referrer" />
+                        : <span className="lb-podium-initials" style={{ color: mc }}>{entry.name ? entry.name.charAt(0).toUpperCase() : '?'}</span>
+                      }
                     </div>
                     <div className="lb-podium-medal">
                       {['🥇','🥈','🥉'][entry.rank - 1]}
@@ -181,7 +182,10 @@ export default function Leaderboard() {
                     </span>
                     <span className="lb-td lb-td-name">
                       <div className="lb-row-avatar" style={{ background: isMe ? 'var(--primary)' : 'var(--border)', color: isMe ? '#fff' : 'var(--text)' }}>
-                        {entry.name ? entry.name.charAt(0).toUpperCase() : '?'}
+                        {entry.photoURL
+                          ? <img src={entry.photoURL} alt={entry.name} className="lb-row-photo" referrerPolicy="no-referrer" />
+                          : entry.name ? entry.name.charAt(0).toUpperCase() : '?'
+                        }
                       </div>
                       <div className="lb-name-wrap">
                         <div className="lb-name">

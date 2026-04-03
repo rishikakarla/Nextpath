@@ -44,7 +44,8 @@ function ActiveCard({ children }) {
 // ── Coding Problems ───────────────────────────────────────────────────────────
 const BLANK_PROB = {
   title: '', category: 'Arrays', difficulty: 'Easy',
-  description: '', inputFormat: '', outputFormat: '', constraints: '', hint: '',
+  description: '', inputFormat: '', outputFormat: '', constraints: '',
+  hints: { idea: '', approach: '', pseudocode: '', code: '' },
   examples:  [{ input: '', output: '', explanation: '' }],
   testCases: [{ input: '', expectedOutput: '', hidden: false }],
   starterCode: { 71: '', 63: '', 54: '' },
@@ -59,7 +60,12 @@ const JSON_TEMPLATE = `{
   "inputFormat": "First line: array elements separated by spaces\\nSecond line: target integer",
   "outputFormat": "Two space-separated indices",
   "constraints": "2 <= nums.length <= 10^4\\n-10^9 <= nums[i] <= 10^9",
-  "hint": "Use a hash map to store seen values.",
+  "hints": {
+    "idea": "Think about how you can avoid the nested loop using a data structure.",
+    "approach": "Use a hash map to store each number and its index as you iterate.",
+    "pseudocode": "for each num at index i:\\n  complement = target - num\\n  if complement in map: return [map[complement], i]\\n  map[num] = i",
+    "code": "def twoSum(nums, target):\\n    seen = {}\\n    for i, n in enumerate(nums):\\n        if target - n in seen:\\n            return [seen[target-n], i]\\n        seen[n] = i"
+  },
   "examples": [
     { "input": "2 7 11 15\\n9", "output": "0 1", "explanation": "nums[0] + nums[1] = 9" }
   ],
@@ -275,15 +281,33 @@ function ProblemForm({ form, set, setForm, onSave, onCancel }) {
         </Field>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <Field label="Constraints">
-          <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.constraints}
-            onChange={e => set('constraints', e.target.value)} placeholder="1 ≤ N ≤ 10⁵&#10;-10⁹ ≤ nums[i] ≤ 10⁹" />
-        </Field>
-        <Field label="Hint (optional)">
-          <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.hint}
-            onChange={e => set('hint', e.target.value)} placeholder="Tip to nudge students..." />
-        </Field>
+      <Field label="Constraints">
+        <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.constraints}
+          onChange={e => set('constraints', e.target.value)} placeholder="1 ≤ N ≤ 10⁵&#10;-10⁹ ≤ nums[i] ≤ 10⁹" />
+      </Field>
+
+      {/* ── Staged Hints ── */}
+      <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>
+          💡 Staged Hints <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}>(each costs -1 pt to unlock)</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {[
+            { key: 'idea',       label: 'Hint 1 — Idea',         placeholder: 'Give students the key insight...' },
+            { key: 'approach',   label: 'Hint 2 — Approach',     placeholder: 'Describe the algorithm approach...' },
+            { key: 'pseudocode', label: 'Hint 3 — Pseudocode',   placeholder: 'Outline the steps in pseudocode...' },
+            { key: 'code',       label: 'Final — Solution Code',  placeholder: 'Provide the full solution code...' },
+          ].map(h => (
+            <Field key={h.key} label={h.label}>
+              <textarea
+                style={{ ...s.inp, height: 70, resize: 'vertical', fontFamily: (h.key === 'code' || h.key === 'pseudocode') ? 'monospace' : 'inherit', fontSize: h.key === 'code' ? 12 : 'inherit' }}
+                value={form.hints?.[h.key] || ''}
+                onChange={e => set('hints', { ...(form.hints || {}), [h.key]: e.target.value })}
+                placeholder={h.placeholder}
+              />
+            </Field>
+          ))}
+        </div>
       </div>
 
       {/* ── Sample Examples ── */}
@@ -884,7 +908,8 @@ function TopicForm({ form, setForm, onSave, onCancel, addResource, removeResourc
 const BLANK_DAILY_CODING = {
   format: 'coding',
   title: '', category: 'Arrays', difficulty: 'Easy',
-  description: '', inputFormat: '', outputFormat: '', constraints: '', hint: '',
+  description: '', inputFormat: '', outputFormat: '', constraints: '',
+  hints: { idea: '', approach: '', pseudocode: '', code: '' },
   examples:    [{ input: '', output: '', explanation: '' }],
   testCases:   [{ input: '', expectedOutput: '', hidden: false }],
   starterCode: { 71: '', 63: '', 54: '' },
@@ -946,7 +971,12 @@ const DAILY_CODING_TEMPLATE = `{
   "inputFormat": "Space-separated integers",
   "outputFormat": "Space-separated integers in reverse",
   "constraints": "1 <= n <= 100",
-  "hint": "Try using two pointers.",
+  "hints": {
+    "idea": "Think about swapping elements from both ends.",
+    "approach": "Use two pointers — one at start, one at end — moving toward center.",
+    "pseudocode": "left = 0, right = n-1\\nwhile left < right:\\n  swap(arr[left], arr[right])\\n  left++, right--",
+    "code": "n = list(map(int, input().split()))\\nprint(*n[::-1])"
+  },
   "examples": [
     { "input": "1 2 3 4 5", "output": "5 4 3 2 1", "explanation": "Reversed order" }
   ],

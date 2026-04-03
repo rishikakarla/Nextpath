@@ -57,6 +57,7 @@ export function AppProvider({ children }) {
             uid: firebaseUser.uid,
             name: data.profile?.name || '',
             college: data.profile?.college || '',
+            photoURL: firebaseUser.photoURL || '',
             points: data.points || 0,
             streak: data.streak?.count || 0,
             updatedAt: new Date().toISOString(),
@@ -103,6 +104,7 @@ export function AppProvider({ children }) {
       uid: auth.currentUser.uid,
       name: user.name || '',
       college: user.college || '',
+      photoURL: auth.currentUser.photoURL || user.photoURL || '',
       points,
       streak: streak.count,
       updatedAt: new Date().toISOString(),
@@ -174,6 +176,7 @@ export function AppProvider({ children }) {
       })
       setDoc(doc(db, 'leaderboard', firebaseUser.uid), {
         uid: firebaseUser.uid, name: profile.name, college: '',
+        photoURL: firebaseUser.photoURL || '',
         points: 0, streak: 0, updatedAt: new Date().toISOString(),
       }, { merge: true }).catch(console.error)
       setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...profile })
