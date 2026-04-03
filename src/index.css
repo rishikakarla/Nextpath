@@ -1585,9 +1585,9 @@ nav { flex: 1; padding: 12px 0; }
 .pe-hint-stage-hdr { display: flex; align-items: center; gap: 8px; }
 .pe-hint-stage-icon { font-size: 15px; }
 .pe-hint-stage-label { font-weight: 700; color: #fbbf24; font-size: 13px; }
-.pe-hint-stage-sub { color: var(--text-muted); font-size: 12px; }
+.pe-hint-stage-sub { color: #94a3b8; font-size: 12px; }
 .pe-hint-stage-body {
-  margin: 6px 0 0; font-size: 13px; color: var(--text);
+  margin: 6px 0 0; font-size: 13px; color: #e2e8f0;
   line-height: 1.65; white-space: pre-wrap; width: 100%;
 }
 .pe-hint-unlock-btn {
