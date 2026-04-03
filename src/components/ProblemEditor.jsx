@@ -33,10 +33,10 @@ function VerdictChip({ verdict }) {
 
 // ── Staged Hint System ────────────────────────────────────────────────────────
 const HINT_STAGES = [
-  { key: 'idea',       label: 'Hint 1', sub: 'Idea',       icon: '💡' },
-  { key: 'approach',   label: 'Hint 2', sub: 'Approach',   icon: '🗺️' },
-  { key: 'pseudocode', label: 'Hint 3', sub: 'Pseudocode', icon: '📝' },
-  { key: 'code',       label: 'Final',  sub: 'Solution',   icon: '🔓' },
+  { key: 'idea',       label: 'Hint 1', sub: 'Idea',       icon: '💡', cost: 1 },
+  { key: 'approach',   label: 'Hint 2', sub: 'Approach',   icon: '🗺️', cost: 1 },
+  { key: 'pseudocode', label: 'Hint 3', sub: 'Pseudocode', icon: '📝', cost: 1 },
+  { key: 'code',       label: 'Final',  sub: 'Solution',   icon: '🔓', cost: 2 },
 ]
 
 function HintSystem({ problem, onHintUsed }) {
@@ -50,8 +50,8 @@ function HintSystem({ problem, onHintUsed }) {
   const stages = HINT_STAGES.filter(s => hints[s.key]?.trim())
   if (stages.length === 0) return null
 
-  const unlock = () => {
-    if (onHintUsed) onHintUsed()
+  const unlock = (cost) => {
+    if (onHintUsed) onHintUsed(cost)
     setUnlocked(u => u + 1)
   }
 
@@ -66,6 +66,7 @@ function HintSystem({ problem, onHintUsed }) {
                 <span className="pe-hint-stage-icon">{stage.icon}</span>
                 <span className="pe-hint-stage-label">{stage.label}</span>
                 <span className="pe-hint-stage-sub">— {stage.sub}</span>
+                <span className="pe-hint-stage-costed">-{stage.cost} pt{stage.cost > 1 ? 's' : ''} used</span>
               </div>
               <p className="pe-hint-stage-body">{hints[stage.key]}</p>
             </div>
@@ -73,10 +74,10 @@ function HintSystem({ problem, onHintUsed }) {
         }
         if (unlocked === i) {
           return (
-            <button key={stage.key} className="pe-hint-unlock-btn" onClick={unlock}>
+            <button key={stage.key} className="pe-hint-unlock-btn" onClick={() => unlock(stage.cost)}>
               {stage.icon} Unlock {stage.label}
               <span className="pe-hint-unlock-sub">→ {stage.sub}</span>
-              <span className="pe-hint-unlock-cost">-1 pt</span>
+              <span className="pe-hint-unlock-cost">-{stage.cost} pt{stage.cost > 1 ? 's' : ''}</span>
             </button>
           )
         }
@@ -85,6 +86,7 @@ function HintSystem({ problem, onHintUsed }) {
             <span>🔒</span>
             <span className="pe-hint-stage-label">{stage.label}</span>
             <span className="pe-hint-stage-sub">— {stage.sub}</span>
+            <span className="pe-hint-stage-locked-cost">-{stage.cost} pt{stage.cost > 1 ? 's' : ''}</span>
           </div>
         )
       })}

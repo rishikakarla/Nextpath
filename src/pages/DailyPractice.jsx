@@ -46,12 +46,9 @@ function CodingModal({ task, done, submission, onComplete, onClose }) {
   const { setPoints } = useApp()
   const [testScore, setTestScore] = useState(null)
   const solvedRef = useRef(false)
-  const hintUsedRef = useRef(false)
 
-  const handleHintUsed = () => {
-    if (hintUsedRef.current) return
-    hintUsedRef.current = true
-    setPoints(p => Math.max(0, p - 1))
+  const handleHintUsed = (cost = 1) => {
+    setPoints(p => Math.max(0, p - cost))
   }
 
   const handleSolve = ({ passed, total } = {}) => {

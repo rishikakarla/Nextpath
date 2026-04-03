@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useContent } from '../context/ContentContext'
+import { useApp } from '../context/AppContext'
 import ProblemEditor from '../components/ProblemEditor'
 
 const FILTERS = ['All', 'Product', 'Service', 'Startup']
@@ -34,6 +35,7 @@ function normaliseTests(data) {
 
 export default function CompanyLearning() {
   const { companyProblems, companies: COMPANIES } = useContent()
+  const { setPoints } = useApp()
 
   const [view,         setView]         = useState('home')   // 'home' | 'practice'
   const [company,      setCompany]      = useState(null)
@@ -113,7 +115,7 @@ export default function CompanyLearning() {
             <button className="pe-modal-close-btn" onClick={() => setModal(null)}>✕ Close</button>
           </div>
         </div>
-        <ProblemEditor problem={modal} onSolve={() => {}} isSolved={false} />
+        <ProblemEditor problem={modal} onSolve={() => {}} isSolved={false} onHintUsed={cost => setPoints(p => Math.max(0, p - cost))} />
       </div>
     </div>
   )
