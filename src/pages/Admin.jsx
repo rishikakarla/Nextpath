@@ -91,6 +91,7 @@ function CodingProblemsTab({ problems = [], onUpdate }) {
 
   const deepClone = (p) => ({
     ...p,
+    hints:       { ...(p.hints || {}) },
     examples:   (p.examples  || []).map(e => ({ ...e })),
     testCases:  (p.testCases || []).map(t => ({ ...t })),
     starterCode: { ...(p.starterCode || {}) },
@@ -1739,6 +1740,7 @@ function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate })
 
   const deepCloneProb = (p) => ({
     ...p,
+    hints:       { ...(p.hints || {}) },
     examples:    (p.examples  || []).map(e => ({ ...e })),
     testCases:   (p.testCases || []).map(t => ({ ...t })),
     starterCode: { ...(p.starterCode || {}) },
