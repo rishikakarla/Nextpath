@@ -990,6 +990,8 @@ const DAILY_CODING_TEMPLATE = `{
   "inputFormat": "Space-separated integers",
   "outputFormat": "Space-separated integers in reverse",
   "constraints": "1 <= n <= 100",
+  "points": 10,
+  "hintPenalties": { "idea": 1, "approach": 1, "pseudocode": 1, "code": 2 },
   "hints": {
     "idea": "Think about swapping elements from both ends.",
     "approach": "Use two pointers — one at start, one at end — moving toward center.",
