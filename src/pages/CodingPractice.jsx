@@ -224,7 +224,7 @@ export default function CodingPractice() {
             <ProblemEditor
               problem={modal}
               isSolved={solvedProblems.includes(modal.id)}
-              onSolve={() => solveProblem(modal.id)}
+              onSolve={result => solveProblem(modal.id, result)}
               onSubmit={sub => saveSubmission(modal.id, sub)}
               submissions={codingSubmissions[modal.id] || []}
               onHintUsed={cost => setPoints(p => Math.max(0, p - cost))}

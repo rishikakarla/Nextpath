@@ -475,12 +475,14 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
     setSubmitting(false)
 
     const passCount = newResults.filter(r => r.verdict === 'pass').length
+    const total = newResults.length
+    const allPassed = passCount === total
     const langName = SUPPORTED_LANGS.find(l => l.id === langId)?.name || 'Unknown'
     if (onSubmit) {
-      onSubmit({ passed: passCount, total: newResults.length, langId, langName, code, submittedAt: new Date().toISOString() })
+      onSubmit({ passed: passCount, total, langId, langName, code, submittedAt: new Date().toISOString() })
     }
-    if (onSolve && !isSolved) {
-      onSolve({ passed: passCount, total: newResults.length })
+    if (onSolve && !isSolved && allPassed) {
+      onSolve({ passed: passCount, total })
     }
   }
 
