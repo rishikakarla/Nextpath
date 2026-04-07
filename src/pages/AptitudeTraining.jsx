@@ -77,6 +77,14 @@ function TopicCard({ topic, attempts, recommended, onClick }) {
 function LearnTab({ topic }) {
   return (
     <div className="at-learn">
+      <div className="at-learn-header">
+        <span className="at-learn-header-icon">{topic.icon}</span>
+        <div className="at-learn-header-text">
+          <div className="at-learn-header-title">{topic.title}</div>
+          <div className="at-learn-header-sub">{topic.description}</div>
+        </div>
+        <span className="at-learn-header-count">📖 {topic.module.concepts.length} concepts</span>
+      </div>
       {topic.module.concepts.map((c, i) => (
         <div key={i} className="at-concept-block">
           <div className="at-concept-num"><span>{i + 1}</span></div>
