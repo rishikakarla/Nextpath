@@ -100,7 +100,7 @@ function HintSystem({ problem, onUnlock }) {
 }
 
 // ── Problem Panel ─────────────────────────────────────────────────────────────
-function ProblemPanel({ problem, onHintUnlock, availablePoints }) {
+function ProblemPanel({ problem, onHintUnlock, availablePoints, isSolved }) {
   const [activeEx, setActiveEx] = useState(0)
   const diffColor = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' }[problem.difficulty] || '#6366f1'
   const basePoints = problem.points || 10
@@ -114,8 +114,8 @@ function ProblemPanel({ problem, onHintUnlock, availablePoints }) {
           {problem.difficulty}
         </span>
         <span className="pe-cat-badge">{problem.category}</span>
-        <span className="pe-pts-badge" title="Points available to earn (reduces with each hint)">
-          🏆 {availablePoints}/{basePoints} pts
+        <span className="pe-pts-badge" title={isSolved ? 'Points earned' : 'Points available (reduces with each hint)'}>
+          🏆 {isSolved ? `+${availablePoints} earned` : `${availablePoints}/${basePoints} pts`}
         </span>
       </div>
 
@@ -383,6 +383,11 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
   const [hintDeductions, setHintDeductions] = useState(0)
   const availablePoints = Math.max(0, basePoints - hintDeductions)
 
+  // When already solved, show the best earnedPts from submission history
+  const bestEarned = isSolved
+    ? Math.max(...(submissions || []).map(s => s.earnedPts ?? 0), 0) || basePoints
+    : null
+
   const handleHintUnlock = (cost) => setHintDeductions(d => d + cost)
 
   const [langId, setLangId]             = useState(71)
@@ -514,7 +519,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
       <div className="pe-body">
         {/* Left — Problem */}
         <div className="pe-left">
-          <ProblemPanel problem={problem} onHintUnlock={handleHintUnlock} availablePoints={availablePoints} />
+          <ProblemPanel problem={problem} onHintUnlock={handleHintUnlock} availablePoints={isSolved ? bestEarned : availablePoints} isSolved={isSolved} />
         </div>
 
         {/* Right — Editor + Results */}
@@ -747,7 +752,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
           {/* Already solved banner */}
           {isSolved && (
             <div className="pe-solved-banner">
-              {solvedMessage || `✅ Problem solved! +${availablePoints} pts earned.`}
+              {solvedMessage || `✅ Problem solved! +${bestEarned} pts earned.`}
             </div>
           )}
         </div>
