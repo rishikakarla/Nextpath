@@ -198,28 +198,19 @@ function QuizTab({ topic, onComplete }) {
   }
 
   return (
-    <div className="at-quiz-single">
-      {/* Step dots + progress bar */}
-      <div className="at-qprog-wrap">
-        <div className="at-qprog-bar">
-          <div className="at-qprog-fill" style={{ width: `${(current / questions.length) * 100}%` }} />
+    <div className="at-quiz-game">
+      {/* Top bar: progress + counter + streak */}
+      <div className="at-game-topbar">
+        <div className="at-game-counter">
+          <span className="at-game-counter-cur">{current + 1}</span>
+          <span className="at-game-counter-sep"> / {questions.length}</span>
         </div>
-        <div className="at-qprog-steps">
-          {questions.map((_, i) => (
-            <div key={i} className={`at-qprog-dot${i < current ? ' done' : i === current ? ' active' : ''}`} />
-          ))}
+        <div className="at-game-prog-bar">
+          <div className="at-game-prog-fill" style={{ width: `${(current / questions.length) * 100}%` }} />
         </div>
-      </div>
-
-      {/* Counter row */}
-      <div className="at-q-counter">
-        <span className="at-q-counter-num">
-          <span className="at-q-counter-cur">{current + 1}</span>
-          <span className="at-q-counter-sep"> / {questions.length}</span>
-        </span>
-        <div className="at-q-header-right">
+        <div className="at-game-right">
           {streak >= 2 && !revealed && (
-            <span className="at-streak-badge">🔥 {streak} Streak!</span>
+            <span className="at-streak-badge">🔥 {streak}</span>
           )}
           {revealed && (
             <span className={`at-q-status${isRight ? ' correct' : ' wrong'}`}>
@@ -234,48 +225,52 @@ function QuizTab({ topic, onComplete }) {
         <div key={xpPopup.key} className="at-xp-popup">+{xpPopup.amount} XP ⚡</div>
       )}
 
-      {/* Question */}
-      <div className={`at-q-text-lg${revealed ? (isRight ? ' q-correct' : ' q-wrong') : ''}`}>
-        {q.q}
+      {/* Question hexagon */}
+      <div className="at-game-q-wrap">
+        <div className={`at-game-qbox${revealed ? (isRight ? ' correct' : ' wrong') : ''}`}>
+          {q.q}
+        </div>
       </div>
 
-      {/* Options */}
-      <div className="at-options-single">
+      {/* Options 2×2 grid */}
+      <div className="at-game-options">
         {q.options.map((opt, oi) => {
-          let cls = 'at-option-single'
+          let state = ''
           if (revealed) {
-            if (oi === q.answer)       cls += ' correct'
-            else if (oi === chosen)    cls += ' wrong'
+            if (oi === q.answer)    state = ' correct'
+            else if (oi === chosen) state = ' wrong'
           } else if (chosen === oi) {
-            cls += ' selected'
+            state = ' selected'
           }
           return (
-            <button key={oi} className={cls} onClick={() => pick(oi)} disabled={revealed}>
-              <span className="at-opt-letter">{String.fromCharCode(65 + oi)}</span>
-              <span className="at-opt-text">{opt}</span>
-              {revealed && oi === q.answer && <span className="at-opt-check">✓</span>}
-            </button>
+            <div key={oi} className={`at-game-opt-wrap${state}`}>
+              <button className={`at-game-opt${state}`} onClick={() => pick(oi)} disabled={revealed}>
+                <span className="at-game-opt-letter">{String.fromCharCode(65 + oi)}:</span>
+                <span className="at-game-opt-text">{opt}</span>
+                {revealed && oi === q.answer && <span className="at-game-opt-check">✓</span>}
+              </button>
+            </div>
           )
         })}
       </div>
 
       {/* Explanation */}
       {revealed && q.explanation && (
-        <div className="at-explanation-single">
+        <div className="at-game-explanation">
           <span className="at-expl-icon">{isRight ? '💡' : '📖'}</span>
           <span><strong>Explanation:</strong> {q.explanation}</span>
         </div>
       )}
 
-      {/* Actions */}
-      <div className="at-quiz-actions">
+      {/* Action button */}
+      <div className="at-game-actions">
         {!revealed ? (
-          <button className="at-quiz-btn primary" disabled={chosen === undefined} onClick={handleSubmitQ}>
-            Submit Answer
+          <button className="at-game-btn" disabled={chosen === undefined} onClick={handleSubmitQ}>
+            Confirm Answer
           </button>
         ) : (
-          <button className="at-quiz-btn primary" onClick={handleNext}>
-            {isLast ? '🏁 Finish Quiz' : 'Next Question →'}
+          <button className="at-game-btn active" onClick={handleNext}>
+            {isLast ? '🏁 See Results' : 'Next Question →'}
           </button>
         )}
       </div>
