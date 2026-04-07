@@ -3,16 +3,22 @@ import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 import { LEVEL_ORDER, getRecommendedLevel } from '../data/aptitudeData'
 
-// ── helpers ──────────────────────────────────────────────────────────────────
 function bestAttempt(attempts = []) {
   if (!attempts.length) return null
   return attempts.reduce((best, a) => (a.score > (best?.score ?? -1) ? a : best), null)
 }
 
 const LEVEL_META = {
-  Rookie: { color: '#10b981', light: '#d1fae5', border: '#6ee7b7', label: 'Beginner', icon: '🟢', gradient: 'linear-gradient(135deg,#10b981,#06b6d4)' },
-  Coder:  { color: '#6366f1', light: '#eef2ff', border: '#a5b4fc', label: 'Intermediate', icon: '🔷', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
-  Master: { color: '#ef4444', light: '#fef2f2', border: '#fca5a5', label: 'Advanced', icon: '🔴', gradient: 'linear-gradient(135deg,#ef4444,#f59e0b)' },
+  Rookie: { color: '#10b981', light: '#d1fae5', border: '#6ee7b7', label: 'Beginner',     icon: '🟢', gradient: 'linear-gradient(135deg,#10b981,#06b6d4)', glow: 'rgba(16,185,129,.4)' },
+  Coder:  { color: '#6366f1', light: '#eef2ff', border: '#a5b4fc', label: 'Intermediate', icon: '🔷', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)', glow: 'rgba(99,102,241,.4)' },
+  Master: { color: '#ef4444', light: '#fef2f2', border: '#fca5a5', label: 'Advanced',     icon: '🔴', gradient: 'linear-gradient(135deg,#ef4444,#f59e0b)', glow: 'rgba(239,68,68,.4)' },
+}
+
+function starsFromPct(pct) {
+  if (pct >= 80) return 3
+  if (pct >= 60) return 2
+  if (pct >= 40) return 1
+  return 0
 }
 
 // ── Topic Card ────────────────────────────────────────────────────────────────
@@ -20,22 +26,24 @@ function TopicCard({ topic, attempts, recommended, onClick }) {
   const best   = bestAttempt(attempts)
   const pct    = best ? Math.round(best.score) : null
   const solved = pct !== null && pct >= 60
+  const stars  = pct !== null ? starsFromPct(pct) : null
   const lm     = LEVEL_META[topic.level]
+  const maxXP  = topic.quiz.length * 10
 
   return (
     <div
       className={`at-card${solved ? ' at-card-done' : ''}${recommended ? ' at-card-rec' : ''}`}
       onClick={() => onClick(topic)}
+      style={solved ? { '--glow': lm.glow } : {}}
     >
       {recommended && <div className="at-rec-ribbon">⭐ Recommended</div>}
 
-      {/* Colored header strip */}
       <div className="at-card-header" style={{ background: lm.gradient }}>
         <span className="at-card-big-icon">{topic.icon}</span>
-        <span className="at-card-level-pill" style={{ background: 'rgba(255,255,255,.2)', color: '#fff' }}>
-          {topic.level}
-        </span>
-        {solved && <div className="at-card-solved-ring">✓</div>}
+        <div className="at-card-header-badges">
+          <span className="at-card-xp-badge">⚡ +{maxXP} XP</span>
+          {solved && <div className="at-card-solved-ring">✓</div>}
+        </div>
       </div>
 
       <div className="at-card-body">
@@ -43,10 +51,12 @@ function TopicCard({ topic, attempts, recommended, onClick }) {
         <div className="at-card-desc">{topic.description}</div>
 
         <div className="at-card-footer">
-          <span className="at-card-qcount">📝 {topic.quiz.length} questions</span>
-          {pct !== null ? (
-            <span className={`at-score-pill${solved ? ' pass' : ' warn'}`}>
-              {solved ? '✓' : '~'} {pct}%
+          <span className="at-card-qcount">📝 {topic.quiz.length} Qs</span>
+          {stars !== null ? (
+            <span className="at-card-stars">
+              {[0, 1, 2].map(i => (
+                <span key={i} className={`at-star${i < stars ? ' filled' : ''}`}>★</span>
+              ))}
             </span>
           ) : (
             <span className="at-score-pill untried">Not tried</span>
@@ -55,13 +65,7 @@ function TopicCard({ topic, attempts, recommended, onClick }) {
 
         {pct !== null && (
           <div className="at-card-bar">
-            <div
-              className="at-card-bar-fill"
-              style={{
-                width: pct + '%',
-                background: solved ? '#10b981' : '#f59e0b',
-              }}
-            />
+            <div className="at-card-bar-fill" style={{ width: pct + '%', background: solved ? lm.color : '#f59e0b' }} />
           </div>
         )}
       </div>
@@ -75,9 +79,7 @@ function LearnTab({ topic }) {
     <div className="at-learn">
       {topic.module.concepts.map((c, i) => (
         <div key={i} className="at-concept-block">
-          <div className="at-concept-num">
-            <span>{i + 1}</span>
-          </div>
+          <div className="at-concept-num"><span>{i + 1}</span></div>
           <div className="at-concept-content">
             <div className="at-concept-heading">{c.heading}</div>
             <pre className="at-concept-body">{c.body}</pre>
@@ -92,14 +94,19 @@ function LearnTab({ topic }) {
 function QuizTab({ topic, onComplete }) {
   const questions = topic.quiz
   const [current,   setCurrent]   = useState(0)
-  const [answers,   setAnswers]   = useState({})    // qi → chosen option index
-  const [revealed,  setRevealed]  = useState(false) // show answer for current q
+  const [answers,   setAnswers]   = useState({})
+  const [revealed,  setRevealed]  = useState(false)
   const [finished,  setFinished]  = useState(false)
   const [score,     setScore]     = useState(null)
+  const [streak,    setStreak]    = useState(0)
+  const [maxStreak, setMaxStreak] = useState(0)
+  const [xpEarned,  setXpEarned]  = useState(0)
+  const [xpPopup,   setXpPopup]   = useState(null)
 
   const q      = questions[current]
   const chosen = answers[current]
   const isLast = current === questions.length - 1
+  const isRight = revealed && chosen === q.answer
 
   const pick = (oi) => {
     if (revealed) return
@@ -109,17 +116,29 @@ function QuizTab({ topic, onComplete }) {
   const handleSubmitQ = () => {
     if (chosen === undefined) return
     setRevealed(true)
+    const correct = chosen === q.answer
+    if (correct) {
+      const newStreak = streak + 1
+      const bonus = Math.min(newStreak - 1, 5) * 2
+      const xp = 10 + bonus
+      setStreak(newStreak)
+      setMaxStreak(s => Math.max(s, newStreak))
+      setXpEarned(x => x + xp)
+      setXpPopup({ amount: xp, key: Date.now() })
+    } else {
+      setStreak(0)
+    }
   }
 
   const handleNext = () => {
     setRevealed(false)
     if (isLast) {
-      // calculate final score
       let correct = 0
-      const finalAnswers = { ...answers }
-      questions.forEach((q, i) => { if (finalAnswers[i] === q.answer) correct++ })
+      const fa = { ...answers }
+      questions.forEach((q, i) => { if (fa[i] === q.answer) correct++ })
       const pct = Math.round((correct / questions.length) * 100)
-      setScore({ correct, total: questions.length, pct })
+      const finalScore = { correct, total: questions.length, pct, xpEarned, maxStreak }
+      setScore(finalScore)
       setFinished(true)
       onComplete({ score: pct, correct, total: questions.length, date: new Date().toISOString() })
     } else {
@@ -129,15 +148,28 @@ function QuizTab({ topic, onComplete }) {
 
   const reset = () => {
     setCurrent(0); setAnswers({}); setRevealed(false); setFinished(false); setScore(null)
+    setStreak(0); setMaxStreak(0); setXpEarned(0); setXpPopup(null)
   }
 
   if (finished && score) {
+    const stars = starsFromPct(score.pct)
     return (
       <div className="at-quiz-result">
+        <div className="at-result-trophy">
+          {score.pct >= 80 ? '🏆' : score.pct >= 60 ? '🎖️' : '📚'}
+        </div>
+        <div className="at-result-stars">
+          {[0, 1, 2].map(i => (
+            <span key={i} className={`at-result-star${i < stars ? ' lit' : ''}`}>★</span>
+          ))}
+        </div>
         <div className={`at-result-circle${score.pct >= 60 ? ' pass' : ' fail'}`}>
           <div className="at-result-pct">{score.pct}%</div>
-          <div className="at-result-label">{score.pct >= 60 ? 'Passed!' : 'Keep going'}</div>
+          <div className="at-result-label">
+            {score.pct >= 80 ? 'Excellent!' : score.pct >= 60 ? 'Passed!' : 'Keep going'}
+          </div>
         </div>
+        <div className="at-result-xp-earned">⚡ +{score.xpEarned} XP earned</div>
         <div className="at-result-stats">
           <div className="at-result-stat">
             <span className="at-result-stat-val" style={{ color: '#10b981' }}>{score.correct}</span>
@@ -148,44 +180,64 @@ function QuizTab({ topic, onComplete }) {
             <span className="at-result-stat-lbl">Wrong</span>
           </div>
           <div className="at-result-stat">
-            <span className="at-result-stat-val">{score.total}</span>
-            <span className="at-result-stat-lbl">Total</span>
+            <span className="at-result-stat-val" style={{ color: '#f59e0b' }}>{score.maxStreak}</span>
+            <span className="at-result-stat-lbl">🔥 Best Streak</span>
           </div>
         </div>
-        <button className="at-quiz-btn" onClick={reset}>🔄 Try Again</button>
+        <button className="at-quiz-btn primary" onClick={reset}>🔄 Try Again</button>
       </div>
     )
   }
 
-  const isRight = revealed && chosen === q.answer
-
   return (
     <div className="at-quiz-single">
-      {/* Progress bar */}
-      <div className="at-qprog-bar">
-        <div className="at-qprog-fill" style={{ width: `${((current) / questions.length) * 100}%` }} />
+      {/* Step dots + progress bar */}
+      <div className="at-qprog-wrap">
+        <div className="at-qprog-bar">
+          <div className="at-qprog-fill" style={{ width: `${(current / questions.length) * 100}%` }} />
+        </div>
+        <div className="at-qprog-steps">
+          {questions.map((_, i) => (
+            <div key={i} className={`at-qprog-dot${i < current ? ' done' : i === current ? ' active' : ''}`} />
+          ))}
+        </div>
       </div>
 
-      {/* Question counter */}
+      {/* Counter row */}
       <div className="at-q-counter">
-        <span className="at-q-counter-num">Question {current + 1} <span style={{ color: 'var(--text-muted)' }}>/ {questions.length}</span></span>
-        {revealed && (
-          <span className={`at-q-status${isRight ? ' correct' : ' wrong'}`}>
-            {isRight ? '✓ Correct' : '✗ Wrong'}
-          </span>
-        )}
+        <span className="at-q-counter-num">
+          <span className="at-q-counter-cur">{current + 1}</span>
+          <span className="at-q-counter-sep"> / {questions.length}</span>
+        </span>
+        <div className="at-q-header-right">
+          {streak >= 2 && !revealed && (
+            <span className="at-streak-badge">🔥 {streak} Streak!</span>
+          )}
+          {revealed && (
+            <span className={`at-q-status${isRight ? ' correct' : ' wrong'}`}>
+              {isRight ? '✓ Correct!' : '✗ Wrong'}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Question text */}
-      <div className="at-q-text-lg">{q.q}</div>
+      {/* XP popup */}
+      {xpPopup && (
+        <div key={xpPopup.key} className="at-xp-popup">+{xpPopup.amount} XP ⚡</div>
+      )}
+
+      {/* Question */}
+      <div className={`at-q-text-lg${revealed ? (isRight ? ' q-correct' : ' q-wrong') : ''}`}>
+        {q.q}
+      </div>
 
       {/* Options */}
       <div className="at-options-single">
         {q.options.map((opt, oi) => {
           let cls = 'at-option-single'
           if (revealed) {
-            if (oi === q.answer)  cls += ' correct'
-            else if (oi === chosen) cls += ' wrong'
+            if (oi === q.answer)       cls += ' correct'
+            else if (oi === chosen)    cls += ' wrong'
           } else if (chosen === oi) {
             cls += ' selected'
           }
@@ -193,12 +245,13 @@ function QuizTab({ topic, onComplete }) {
             <button key={oi} className={cls} onClick={() => pick(oi)} disabled={revealed}>
               <span className="at-opt-letter">{String.fromCharCode(65 + oi)}</span>
               <span className="at-opt-text">{opt}</span>
+              {revealed && oi === q.answer && <span className="at-opt-check">✓</span>}
             </button>
           )
         })}
       </div>
 
-      {/* Explanation after reveal */}
+      {/* Explanation */}
       {revealed && q.explanation && (
         <div className="at-explanation-single">
           <span className="at-expl-icon">{isRight ? '💡' : '📖'}</span>
@@ -206,10 +259,10 @@ function QuizTab({ topic, onComplete }) {
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Actions */}
       <div className="at-quiz-actions">
         {!revealed ? (
-          <button className="at-quiz-btn" disabled={chosen === undefined} onClick={handleSubmitQ}>
+          <button className="at-quiz-btn primary" disabled={chosen === undefined} onClick={handleSubmitQ}>
             Submit Answer
           </button>
         ) : (
@@ -227,10 +280,10 @@ function TopicModal({ topic, attempts, onComplete, onClose }) {
   const [tab, setTab] = useState('learn')
   const lm   = LEVEL_META[topic.level]
   const best = bestAttempt(attempts)
+  const stars = best ? starsFromPct(Math.round(best.score)) : null
 
   return (
     <div className="at-fullpage">
-      {/* Top bar */}
       <div className="at-fullpage-topbar" style={{ background: lm.gradient }}>
         <div className="at-fullpage-topbar-left">
           <button className="at-back-btn" onClick={onClose}>← Back</button>
@@ -240,25 +293,26 @@ function TopicModal({ topic, attempts, onComplete, onClose }) {
             <div className="at-fullpage-title">{topic.title}</div>
           </div>
           {best && (
-            <div className="at-fullpage-best">
-              Best: {Math.round(best.score)}% · {attempts.length} attempt{attempts.length !== 1 ? 's' : ''}
+            <div className="at-fullpage-best-wrap">
+              <div className="at-fullpage-best">Best: {Math.round(best.score)}%</div>
+              <div className="at-fullpage-best-stars">
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{ color: i < stars ? '#fbbf24' : 'rgba(255,255,255,.3)', fontSize: 14 }}>★</span>
+                ))}
+              </div>
             </div>
           )}
         </div>
-        {/* Tabs in topbar */}
         <div className="at-fullpage-tabs">
-          <button
-            className={`at-fullpage-tab${tab === 'learn' ? ' active' : ''}`}
-            onClick={() => setTab('learn')}
-          >📖 Learn</button>
-          <button
-            className={`at-fullpage-tab${tab === 'quiz' ? ' active' : ''}`}
-            onClick={() => setTab('quiz')}
-          >🧠 Quiz · {topic.quiz.length} Qs</button>
+          <button className={`at-fullpage-tab${tab === 'learn' ? ' active' : ''}`} onClick={() => setTab('learn')}>
+            📖 Learn
+          </button>
+          <button className={`at-fullpage-tab${tab === 'quiz' ? ' active' : ''}`} onClick={() => setTab('quiz')}>
+            🧠 Quiz · {topic.quiz.length} Qs
+          </button>
         </div>
       </div>
 
-      {/* Body */}
       <div className="at-fullpage-body">
         {tab === 'learn'
           ? <LearnTab topic={topic} />
@@ -292,6 +346,10 @@ export default function AptitudeTraining() {
     const b = bestAttempt(quizAttempts[t.id])
     return b && b.score >= 60
   }).length
+  const totalXP = aptitudeTopics.reduce((acc, t) => {
+    const b = bestAttempt(quizAttempts[t.id])
+    return acc + (b ? Math.round(b.score / 100 * t.quiz.length * 10) : 0)
+  }, 0)
 
   const handleComplete = (attempt) => {
     if (modal) saveQuizAttempt(modal.id, attempt)
@@ -299,9 +357,8 @@ export default function AptitudeTraining() {
 
   return (
     <div>
-      {/* ── Hero Banner ── */}
+      {/* ── Hero ── */}
       <div className="at-hero">
-        {/* Decorative math symbols */}
         <div className="at-hero-symbols" aria-hidden="true">
           <span>Σ</span><span>π</span><span>∞</span><span>√</span>
           <span>÷</span><span>∧</span><span>∫</span><span>Δ</span>
@@ -313,23 +370,38 @@ export default function AptitudeTraining() {
           <div className="at-hero-title">Aptitude Training</div>
           <div className="at-hero-sub">Sharpen your maths and logical thinking skills</div>
           {assessmentResult?.level && (
-            <div className="at-hero-badge" style={{ background: LEVEL_META[assessmentResult.level]?.color + '33' || '#6366f133', borderColor: LEVEL_META[assessmentResult.level]?.color + '66' || '#6366f166', color: LEVEL_META[assessmentResult.level]?.color || '#6366f1' }}>
+            <div className="at-hero-badge"
+              style={{
+                background: (LEVEL_META[assessmentResult.level]?.color || '#6366f1') + '33',
+                borderColor: (LEVEL_META[assessmentResult.level]?.color || '#6366f1') + '66',
+                color: LEVEL_META[assessmentResult.level]?.color || '#6366f1',
+              }}
+            >
               <span className="at-hero-badge-dot" style={{ background: LEVEL_META[assessmentResult.level]?.color || '#6366f1' }} />
               {assessmentResult.level} Level
             </div>
           )}
+          <div className="at-hero-xp-bar">
+            <div className="at-hero-xp-label">
+              <span>⚡ Total XP</span>
+              <span className="at-hero-xp-val">{totalXP} XP</span>
+            </div>
+            <div className="at-hero-xp-track">
+              <div className="at-hero-xp-fill" style={{ width: `${Math.min(100, totalTopics ? (totalXP / (totalTopics * 100)) * 100 : 0)}%` }} />
+            </div>
+          </div>
         </div>
 
         <div className="at-hero-stats">
           {[
-            { val: totalTopics,    lbl: 'Topics',    icon: '📚' },
-            { val: attemptedCount, lbl: 'Attempted',  icon: '✏️' },
-            { val: passedCount,    lbl: 'Passed',     icon: '✅' },
-            { val: assessmentResult?.level || '—', lbl: 'Your Level', icon: '🎯' },
+            { val: totalTopics,    lbl: 'Topics',   icon: '📚', color: '#818cf8' },
+            { val: attemptedCount, lbl: 'Attempted', icon: '✏️', color: '#fbbf24' },
+            { val: passedCount,    lbl: 'Passed',    icon: '🏆', color: '#34d399' },
+            { val: `${totalXP}`,   lbl: 'Total XP',  icon: '⚡', color: '#c084fc' },
           ].map(s => (
             <div key={s.lbl} className="at-hero-stat">
               <div className="at-hero-stat-icon">{s.icon}</div>
-              <div className="at-hero-stat-val">{s.val}</div>
+              <div className="at-hero-stat-val" style={{ color: s.color }}>{s.val}</div>
               <div className="at-hero-stat-lbl">{s.lbl}</div>
             </div>
           ))}
@@ -342,8 +414,7 @@ export default function AptitudeTraining() {
           className={`at-filter-btn${levelFilter === 'All' ? ' active' : ''}`}
           onClick={() => setLevelFilter('All')}
         >
-          All Topics
-          <span className="at-filter-count">{aptitudeTopics.length}</span>
+          All Topics <span className="at-filter-count">{aptitudeTopics.length}</span>
         </button>
         {LEVEL_ORDER.map(l => {
           const lm = LEVEL_META[l]
@@ -355,8 +426,7 @@ export default function AptitudeTraining() {
               style={levelFilter === l ? { borderColor: lm.color, color: lm.color, background: lm.light } : {}}
               onClick={() => setLevelFilter(l)}
             >
-              {lm.icon} {l}
-              <span className="at-filter-count">{count}</span>
+              {lm.icon} {l} <span className="at-filter-count">{count}</span>
               {l === recommended && <span className="at-filter-rec">★</span>}
             </button>
           )
@@ -375,7 +445,6 @@ export default function AptitudeTraining() {
 
         return (
           <div key={level} className="at-section">
-            {/* Section header */}
             <div className="at-section-hdr">
               <div className="at-section-hdr-left">
                 <div className="at-section-accent" style={{ background: lm.gradient }} />
@@ -397,7 +466,7 @@ export default function AptitudeTraining() {
                 <svg width="44" height="44" viewBox="0 0 44 44">
                   <circle cx="22" cy="22" r="17" fill="none" stroke={lm.border} strokeWidth="4"/>
                   <circle cx="22" cy="22" r="17" fill="none" stroke={lm.color} strokeWidth="4"
-                    strokeDasharray={`${2 * Math.PI * 17 * (topics.length ? levelPassed / topics.length : 0) * 100 / 100} ${2 * Math.PI * 17}`}
+                    strokeDasharray={`${2 * Math.PI * 17 * (topics.length ? levelPassed / topics.length : 0)} ${2 * Math.PI * 17}`}
                     strokeLinecap="round" transform="rotate(-90 22 22)"
                     style={{ transition: 'stroke-dasharray .8s ease' }}
                   />
@@ -408,7 +477,6 @@ export default function AptitudeTraining() {
               </div>
             </div>
 
-            {/* Cards grid */}
             <div className="at-grid">
               {topics.map(topic => (
                 <TopicCard
@@ -424,7 +492,6 @@ export default function AptitudeTraining() {
         )
       })}
 
-      {/* ── Modal ── */}
       {modal && (
         <TopicModal
           topic={modal}
