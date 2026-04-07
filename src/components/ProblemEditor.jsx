@@ -100,9 +100,10 @@ function HintSystem({ problem, onUnlock }) {
 }
 
 // ── Problem Panel ─────────────────────────────────────────────────────────────
-function ProblemPanel({ problem, onHintUnlock }) {
+function ProblemPanel({ problem, onHintUnlock, availablePoints }) {
   const [activeEx, setActiveEx] = useState(0)
   const diffColor = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' }[problem.difficulty] || '#6366f1'
+  const basePoints = problem.points || 10
 
   return (
     <div className="pe-problem-panel">
@@ -113,6 +114,9 @@ function ProblemPanel({ problem, onHintUnlock }) {
           {problem.difficulty}
         </span>
         <span className="pe-cat-badge">{problem.category}</span>
+        <span className="pe-pts-badge" title="Points available to earn (reduces with each hint)">
+          🏆 {availablePoints}/{basePoints} pts
+        </span>
       </div>
 
       {/* Description */}
@@ -375,7 +379,12 @@ function SubmissionsPanel({ submissions, onLoadCode }) {
 // ── Main ProblemEditor ────────────────────────────────────────────────────────
 export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, submissions, solvedMessage }) {
   const { setPoints } = useApp()
-  const handleHintUnlock = (cost) => setPoints(p => Math.max(0, p - cost))
+  const basePoints = problem.points || 10
+  const [hintDeductions, setHintDeductions] = useState(0)
+  const availablePoints = Math.max(0, basePoints - hintDeductions)
+
+  const handleHintUnlock = (cost) => setHintDeductions(d => d + cost)
+
   const [langId, setLangId]             = useState(71)
   const [code, setCode]                 = useState(() => problem.starterCode?.[71] || LANGUAGES.find(l => l.id === 71)?.template || '')
   const [customInput, setCustomInput]   = useState('')
@@ -482,11 +491,18 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
     const total = newResults.length
     const allPassed = passCount === total
     const langName = SUPPORTED_LANGS.find(l => l.id === langId)?.name || 'Unknown'
+
+    // Scoring: (basePoints - hintDeductions) × (passed / total), rounded
+    const earnedPts = total > 0 ? Math.round(availablePoints * passCount / total) : 0
+
     if (onSubmit) {
-      onSubmit({ passed: passCount, total, langId, langName, code, submittedAt: new Date().toISOString() })
+      onSubmit({ passed: passCount, total, langId, langName, code, submittedAt: new Date().toISOString(), earnedPts })
+    }
+    if (!isSolved && earnedPts > 0) {
+      setPoints(p => p + earnedPts)
     }
     if (onSolve && !isSolved && allPassed) {
-      onSolve({ passed: passCount, total, points: problem.points })
+      onSolve({ passed: passCount, total, earnedPts })
     }
   }
 
@@ -498,7 +514,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
       <div className="pe-body">
         {/* Left — Problem */}
         <div className="pe-left">
-          <ProblemPanel problem={problem} onHintUnlock={handleHintUnlock} />
+          <ProblemPanel problem={problem} onHintUnlock={handleHintUnlock} availablePoints={availablePoints} />
         </div>
 
         {/* Right — Editor + Results */}
@@ -731,7 +747,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
           {/* Already solved banner */}
           {isSolved && (
             <div className="pe-solved-banner">
-              {solvedMessage || `✅ Problem solved! +${problem.points || 10} pts earned.`}
+              {solvedMessage || `✅ Problem solved! +${availablePoints} pts earned.`}
             </div>
           )}
         </div>
