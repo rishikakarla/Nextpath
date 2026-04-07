@@ -67,9 +67,9 @@ export default function CodingPractice() {
         <div className="cp-hero-stats">
           {[
             { val: solvedCount, lbl: 'Solved',  sub: `of ${total}`,    color: '#6366f1' },
-            { val: `${easySolved}/${easyCount}`,  lbl: 'Easy',   sub: '+10 pts each', color: '#10b981' },
-            { val: `${medSolved}/${medCount}`,    lbl: 'Medium', sub: '+10 pts each', color: '#f59e0b' },
-            { val: `${hardSolved}/${hardCount}`,  lbl: 'Hard',   sub: '+10 pts each', color: '#ef4444' },
+            { val: `${easySolved}/${easyCount}`,  lbl: 'Easy',   sub: 'up to +10 pts', color: '#10b981' },
+            { val: `${medSolved}/${medCount}`,    lbl: 'Medium', sub: 'up to +10 pts', color: '#f59e0b' },
+            { val: `${hardSolved}/${hardCount}`,  lbl: 'Hard',   sub: 'up to +10 pts', color: '#ef4444' },
           ].map(s => (
             <div key={s.lbl} className="cp-hero-stat">
               <div className="cp-hero-stat-val" style={{ color: s.color }}>{s.val}</div>
@@ -176,7 +176,10 @@ export default function CodingPractice() {
                 <span className="cp-td cp-td-tc">{p.testCases?.length || 0} tests</span>
                 <span className="cp-td cp-td-pts">
                   <span className={`cp-pts-chip${solved ? ' earned' : ''}`}>
-                    {solved ? '✓ +10' : '+10'}
+                    {solved
+                      ? `✓ +${Math.max(...(codingSubmissions[p.id] || []).map(s => s.earnedPts ?? 0), 0) || (p.points || 10)}`
+                      : `+${p.points || 10}`
+                    }
                   </span>
                 </span>
               </div>
