@@ -90,158 +90,180 @@ function LearnTab({ topic }) {
 
 // ── Quiz Tab ──────────────────────────────────────────────────────────────────
 function QuizTab({ topic, onComplete }) {
-  const [answers, setAnswers]     = useState({})
-  const [submitted, setSubmitted] = useState(false)
-  const [score, setScore]         = useState(null)
-
   const questions = topic.quiz
+  const [current,   setCurrent]   = useState(0)
+  const [answers,   setAnswers]   = useState({})    // qi → chosen option index
+  const [revealed,  setRevealed]  = useState(false) // show answer for current q
+  const [finished,  setFinished]  = useState(false)
+  const [score,     setScore]     = useState(null)
 
-  const pick = (qi, opt) => {
-    if (submitted) return
-    setAnswers(a => ({ ...a, [qi]: opt }))
+  const q      = questions[current]
+  const chosen = answers[current]
+  const isLast = current === questions.length - 1
+
+  const pick = (oi) => {
+    if (revealed) return
+    setAnswers(a => ({ ...a, [current]: oi }))
   }
 
-  const submit = () => {
-    if (Object.keys(answers).length < questions.length) return
-    let correct = 0
-    questions.forEach((q, i) => { if (answers[i] === q.answer) correct++ })
-    const pct = Math.round((correct / questions.length) * 100)
-    setScore({ correct, total: questions.length, pct })
-    setSubmitted(true)
-    onComplete({ score: pct, correct, total: questions.length, date: new Date().toISOString() })
+  const handleSubmitQ = () => {
+    if (chosen === undefined) return
+    setRevealed(true)
   }
 
-  const reset = () => { setAnswers({}); setSubmitted(false); setScore(null) }
+  const handleNext = () => {
+    setRevealed(false)
+    if (isLast) {
+      // calculate final score
+      let correct = 0
+      const finalAnswers = { ...answers }
+      questions.forEach((q, i) => { if (finalAnswers[i] === q.answer) correct++ })
+      const pct = Math.round((correct / questions.length) * 100)
+      setScore({ correct, total: questions.length, pct })
+      setFinished(true)
+      onComplete({ score: pct, correct, total: questions.length, date: new Date().toISOString() })
+    } else {
+      setCurrent(c => c + 1)
+    }
+  }
 
-  const answered = Object.keys(answers).length
+  const reset = () => {
+    setCurrent(0); setAnswers({}); setRevealed(false); setFinished(false); setScore(null)
+  }
+
+  if (finished && score) {
+    return (
+      <div className="at-quiz-result">
+        <div className={`at-result-circle${score.pct >= 60 ? ' pass' : ' fail'}`}>
+          <div className="at-result-pct">{score.pct}%</div>
+          <div className="at-result-label">{score.pct >= 60 ? 'Passed!' : 'Keep going'}</div>
+        </div>
+        <div className="at-result-stats">
+          <div className="at-result-stat">
+            <span className="at-result-stat-val" style={{ color: '#10b981' }}>{score.correct}</span>
+            <span className="at-result-stat-lbl">Correct</span>
+          </div>
+          <div className="at-result-stat">
+            <span className="at-result-stat-val" style={{ color: '#ef4444' }}>{score.total - score.correct}</span>
+            <span className="at-result-stat-lbl">Wrong</span>
+          </div>
+          <div className="at-result-stat">
+            <span className="at-result-stat-val">{score.total}</span>
+            <span className="at-result-stat-lbl">Total</span>
+          </div>
+        </div>
+        <button className="at-quiz-btn" onClick={reset}>🔄 Try Again</button>
+      </div>
+    )
+  }
+
+  const isRight = revealed && chosen === q.answer
 
   return (
-    <div className="at-quiz">
-      {score && (
-        <div className={`at-result-box${score.pct >= 60 ? ' pass' : ' fail'}`}>
-          <div className="at-result-score">{score.pct}%</div>
-          <div className="at-result-detail">
-            {score.correct}/{score.total} correct &nbsp;·&nbsp;
-            {score.pct >= 60 ? '✅ Passed!' : '❌ Keep practising'}
-          </div>
-          <button className="btn btn-ghost btn-sm" onClick={reset} style={{ marginTop: 10 }}>
-            🔄 Try Again
-          </button>
+    <div className="at-quiz-single">
+      {/* Progress bar */}
+      <div className="at-qprog-bar">
+        <div className="at-qprog-fill" style={{ width: `${((current) / questions.length) * 100}%` }} />
+      </div>
+
+      {/* Question counter */}
+      <div className="at-q-counter">
+        <span className="at-q-counter-num">Question {current + 1} <span style={{ color: 'var(--text-muted)' }}>/ {questions.length}</span></span>
+        {revealed && (
+          <span className={`at-q-status${isRight ? ' correct' : ' wrong'}`}>
+            {isRight ? '✓ Correct' : '✗ Wrong'}
+          </span>
+        )}
+      </div>
+
+      {/* Question text */}
+      <div className="at-q-text-lg">{q.q}</div>
+
+      {/* Options */}
+      <div className="at-options-single">
+        {q.options.map((opt, oi) => {
+          let cls = 'at-option-single'
+          if (revealed) {
+            if (oi === q.answer)  cls += ' correct'
+            else if (oi === chosen) cls += ' wrong'
+          } else if (chosen === oi) {
+            cls += ' selected'
+          }
+          return (
+            <button key={oi} className={cls} onClick={() => pick(oi)} disabled={revealed}>
+              <span className="at-opt-letter">{String.fromCharCode(65 + oi)}</span>
+              <span className="at-opt-text">{opt}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Explanation after reveal */}
+      {revealed && q.explanation && (
+        <div className="at-explanation-single">
+          <span className="at-expl-icon">{isRight ? '💡' : '📖'}</span>
+          <span><strong>Explanation:</strong> {q.explanation}</span>
         </div>
       )}
 
-      {questions.map((q, qi) => {
-        const chosen  = answers[qi]
-        const isRight = submitted && chosen === q.answer
-        const isWrong = submitted && chosen !== undefined && chosen !== q.answer
-
-        return (
-          <div key={qi} className={`at-question${submitted ? ' done' : ''}`}>
-            <div className="at-q-header">
-              <span className="at-q-num">Q{qi + 1}</span>
-              {submitted && (
-                <span className={`at-q-status${isRight ? ' correct' : ' wrong'}`}>
-                  {isRight ? '✓ Correct' : '✗ Wrong'}
-                </span>
-              )}
-            </div>
-            <div className="at-q-text">{q.q}</div>
-
-            <div className="at-options">
-              {q.options.map((opt, oi) => {
-                let cls = 'at-option'
-                if (submitted) {
-                  if (oi === q.answer) cls += ' correct'
-                  else if (oi === chosen) cls += ' wrong'
-                } else if (chosen === oi) {
-                  cls += ' selected'
-                }
-                return (
-                  <button key={oi} className={cls} onClick={() => pick(qi, oi)}>
-                    <span className="at-opt-letter">{String.fromCharCode(65 + oi)}</span>
-                    {opt}
-                  </button>
-                )
-              })}
-            </div>
-
-            {submitted && (
-              <div className="at-explanation">
-                <span className="at-expl-icon">{isRight ? '💡' : '📖'}</span>
-                <span><strong>Explanation:</strong> {q.explanation}</span>
-              </div>
-            )}
-          </div>
-        )
-      })}
-
-      {!submitted && (
-        <button
-          className="at-submit-btn"
-          disabled={answered < questions.length}
-          onClick={submit}
-        >
-          Submit Quiz
-          <span className="at-submit-progress">
-            {answered}/{questions.length} answered
-          </span>
-        </button>
-      )}
+      {/* Action buttons */}
+      <div className="at-quiz-actions">
+        {!revealed ? (
+          <button className="at-quiz-btn" disabled={chosen === undefined} onClick={handleSubmitQ}>
+            Submit Answer
+          </button>
+        ) : (
+          <button className="at-quiz-btn primary" onClick={handleNext}>
+            {isLast ? '🏁 Finish Quiz' : 'Next Question →'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
 
-// ── Topic Modal ───────────────────────────────────────────────────────────────
+// ── Topic Full Page ───────────────────────────────────────────────────────────
 function TopicModal({ topic, attempts, onComplete, onClose }) {
   const [tab, setTab] = useState('learn')
   const lm   = LEVEL_META[topic.level]
   const best = bestAttempt(attempts)
 
   return (
-    <div className="at-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="at-modal">
-        {/* Modal Header */}
-        <div className="at-modal-hdr" style={{ background: lm.gradient }}>
-          <div className="at-modal-hdr-left">
-            <span className="at-modal-big-icon">{topic.icon}</span>
-            <div>
-              <div className="at-modal-level-tag">{lm.icon} {topic.level} · {topic.quiz.length} questions</div>
-              <div className="at-modal-title">{topic.title}</div>
-              {best && (
-                <div className="at-modal-best">
-                  Best score: {Math.round(best.score)}% · {attempts.length} attempt{attempts.length !== 1 ? 's' : ''}
-                </div>
-              )}
-            </div>
+    <div className="at-fullpage">
+      {/* Top bar */}
+      <div className="at-fullpage-topbar" style={{ background: lm.gradient }}>
+        <div className="at-fullpage-topbar-left">
+          <button className="at-back-btn" onClick={onClose}>← Back</button>
+          <span className="at-fullpage-icon">{topic.icon}</span>
+          <div>
+            <div className="at-fullpage-level">{lm.icon} {topic.level}</div>
+            <div className="at-fullpage-title">{topic.title}</div>
           </div>
-          <button className="at-modal-close" onClick={onClose}>✕</button>
+          {best && (
+            <div className="at-fullpage-best">
+              Best: {Math.round(best.score)}% · {attempts.length} attempt{attempts.length !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
-
-        {/* Tabs */}
-        <div className="at-tabs">
+        {/* Tabs in topbar */}
+        <div className="at-fullpage-tabs">
           <button
-            className={`at-tab${tab === 'learn' ? ' active' : ''}`}
-            style={tab === 'learn' ? { borderBottomColor: lm.color, color: lm.color } : {}}
+            className={`at-fullpage-tab${tab === 'learn' ? ' active' : ''}`}
             onClick={() => setTab('learn')}
-          >
-            📖 Learn
-          </button>
+          >📖 Learn</button>
           <button
-            className={`at-tab${tab === 'quiz' ? ' active' : ''}`}
-            style={tab === 'quiz' ? { borderBottomColor: lm.color, color: lm.color } : {}}
+            className={`at-fullpage-tab${tab === 'quiz' ? ' active' : ''}`}
             onClick={() => setTab('quiz')}
-          >
-            🧠 Quiz
-          </button>
+          >🧠 Quiz · {topic.quiz.length} Qs</button>
         </div>
+      </div>
 
-        {/* Body */}
-        <div className="at-modal-body">
-          {tab === 'learn'
-            ? <LearnTab topic={topic} />
-            : <QuizTab topic={topic} onComplete={onComplete} />
-          }
-        </div>
+      {/* Body */}
+      <div className="at-fullpage-body">
+        {tab === 'learn'
+          ? <LearnTab topic={topic} />
+          : <QuizTab topic={topic} onComplete={onComplete} />
+        }
       </div>
     </div>
   )
