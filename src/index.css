@@ -2086,6 +2086,12 @@ nav { flex: 1; padding: 12px 0; }
 }
 .at-fullpage-body::-webkit-scrollbar { display: none; }
 
+/* Quiz mode — full width, no padding, no max-width */
+.at-fullpage-body--quiz {
+  max-width: 100%; margin: 0; padding: 0;
+  display: flex; flex-direction: column;
+}
+
 /* ── Learn tab ── */
 .at-learn { display: flex; flex-direction: column; gap: 14px; }
 
@@ -2144,12 +2150,12 @@ nav { flex: 1; padding: 12px 0; }
 /* ── Game show quiz ── */
 .at-quiz-game {
   background: radial-gradient(ellipse at 50% 20%, #0f1f4a 0%, #080d1e 75%);
-  border-radius: 20px;
-  padding: 28px 28px 32px;
+  border-radius: 0;
+  padding: 32px max(32px, calc((100% - 760px) / 2)) 40px;
+  flex: 1;
   display: flex; flex-direction: column; gap: 24px;
   position: relative; overflow: hidden;
-  min-height: 480px;
-  box-shadow: inset 0 0 80px rgba(99,102,241,.08);
+  box-shadow: inset 0 0 100px rgba(99,102,241,.08);
 }
 /* subtle grid lines decoration */
 .at-quiz-game::before {
@@ -2158,6 +2164,10 @@ nav { flex: 1; padding: 12px 0; }
     linear-gradient(rgba(99,149,255,.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(99,149,255,.04) 1px, transparent 1px);
   background-size: 40px 40px;
+}
+/* light theme: keep dark game feel but slightly lighter */
+[data-theme="light"] .at-quiz-game {
+  background: radial-gradient(ellipse at 50% 20%, #162048 0%, #080e26 75%);
 }
 
 /* Top bar */
@@ -2308,8 +2318,13 @@ nav { flex: 1; padding: 12px 0; }
 
 /* ── Quiz result screen ── */
 .at-quiz-result {
-  display: flex; flex-direction: column; align-items: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 24px; padding: 48px 24px; text-align: center;
+  flex: 1; min-height: 0;
+  background: radial-gradient(ellipse at 50% 20%, #0f1f4a 0%, #080d1e 75%);
+}
+[data-theme="light"] .at-quiz-result {
+  background: radial-gradient(ellipse at 50% 20%, #162048 0%, #080e26 75%);
 }
 .at-result-trophy { font-size: 64px; animation: at-pop-in .5s ease; }
 .at-result-stars {

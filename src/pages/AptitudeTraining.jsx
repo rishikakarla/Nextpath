@@ -316,7 +316,7 @@ function TopicModal({ topic, attempts, onComplete, onClose }) {
         </div>
       </div>
 
-      <div className="at-fullpage-body">
+      <div className={`at-fullpage-body${tab === 'quiz' ? ' at-fullpage-body--quiz' : ''}`}>
         {tab === 'learn'
           ? <LearnTab topic={topic} />
           : <QuizTab topic={topic} onComplete={onComplete} />
