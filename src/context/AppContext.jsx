@@ -263,13 +263,13 @@ export function AppProvider({ children }) {
   }
 
   // ── Coding Practice ───────────────────────────────────────────────────────
-  const solveProblem = (id, { passed, total } = {}) => {
+  const solveProblem = (id, { passed, total, points: pts } = {}) => {
     if (solvedProblems.includes(id)) return
     // Only mark solved and award points if ALL test cases passed
     const allPassed = !total || passed === total
     if (!allPassed) return
     setSolvedProblems(prev => [...prev, id])
-    setPoints(p => p + 10)
+    setPoints(p => p + (pts || 10))
     setProgress(prev => ({ ...prev, dsa: Math.min(100, prev.dsa + 4) }))
   }
 

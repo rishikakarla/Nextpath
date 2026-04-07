@@ -45,7 +45,9 @@ function ActiveCard({ children }) {
 const BLANK_PROB = {
   title: '', category: 'Arrays', difficulty: 'Easy',
   description: '', inputFormat: '', outputFormat: '', constraints: '',
+  points: 10,
   hints: { idea: '', approach: '', pseudocode: '', code: '' },
+  hintPenalties: { idea: 1, approach: 1, pseudocode: 1, code: 2 },
   examples:  [{ input: '', output: '', explanation: '' }],
   testCases: [{ input: '', expectedOutput: '', hidden: false }],
   starterCode: { 71: '', 63: '', 54: '' },
@@ -60,6 +62,8 @@ const JSON_TEMPLATE = `{
   "inputFormat": "First line: array elements separated by spaces\\nSecond line: target integer",
   "outputFormat": "Two space-separated indices",
   "constraints": "2 <= nums.length <= 10^4\\n-10^9 <= nums[i] <= 10^9",
+  "points": 10,
+  "hintPenalties": { "idea": 1, "approach": 1, "pseudocode": 1, "code": 2 },
   "hints": {
     "idea": "Think about how you can avoid the nested loop using a data structure.",
     "approach": "Use a hash map to store each number and its index as you iterate.",
@@ -282,33 +286,45 @@ function ProblemForm({ form, set, setForm, onSave, onCancel }) {
         </Field>
       </div>
 
-      <Field label="Constraints">
-        <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.constraints}
-          onChange={e => set('constraints', e.target.value)} placeholder="1 ≤ N ≤ 10⁵&#10;-10⁹ ≤ nums[i] ≤ 10⁹" />
-      </Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <Field label="Constraints">
+          <textarea style={{ ...s.inp, height: 60, resize: 'vertical' }} value={form.constraints}
+            onChange={e => set('constraints', e.target.value)} placeholder="1 ≤ N ≤ 10⁵&#10;-10⁹ ≤ nums[i] ≤ 10⁹" />
+        </Field>
+        <Field label="Points (awarded on solve)">
+          <input type="number" min="1" style={s.inp} value={form.points ?? 10}
+            onChange={e => set('points', Number(e.target.value) || 1)} placeholder="10" />
+        </Field>
+      </div>
 
-      {/* ── Staged Hints ── */}
+      {/* ── Staged Hints + Penalties ── */}
       <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>
-          💡 Staged Hints <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}>(each costs -1 pt to unlock)</span>
+          💡 Staged Hints &amp; Penalties
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {[
-            { key: 'idea',       label: 'Hint 1 — Idea',         placeholder: 'Give students the key insight...' },
-            { key: 'approach',   label: 'Hint 2 — Approach',     placeholder: 'Describe the algorithm approach...' },
-            { key: 'pseudocode', label: 'Hint 3 — Pseudocode',   placeholder: 'Outline the steps in pseudocode...' },
-            { key: 'code',       label: 'Final — Solution Code',  placeholder: 'Provide the full solution code...' },
-          ].map(h => (
-            <Field key={h.key} label={h.label}>
+        {[
+          { key: 'idea',       label: 'Hint 1 — Idea',        placeholder: 'Give students the key insight...', mono: false },
+          { key: 'approach',   label: 'Hint 2 — Approach',    placeholder: 'Describe the algorithm approach...', mono: false },
+          { key: 'pseudocode', label: 'Hint 3 — Pseudocode',  placeholder: 'Outline the steps in pseudocode...', mono: true },
+          { key: 'code',       label: 'Final — Solution Code', placeholder: 'Provide the full solution code...', mono: true },
+        ].map(h => (
+          <div key={h.key} style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 10, marginBottom: 10, alignItems: 'start' }}>
+            <Field label={h.label}>
               <textarea
-                style={{ ...s.inp, height: 70, resize: 'vertical', fontFamily: (h.key === 'code' || h.key === 'pseudocode') ? 'monospace' : 'inherit', fontSize: h.key === 'code' ? 12 : 'inherit' }}
+                style={{ ...s.inp, height: 70, resize: 'vertical', fontFamily: h.mono ? 'monospace' : 'inherit', fontSize: h.mono ? 12 : 'inherit' }}
                 value={form.hints?.[h.key] || ''}
                 onChange={e => set('hints', { ...(form.hints || {}), [h.key]: e.target.value })}
                 placeholder={h.placeholder}
               />
             </Field>
-          ))}
-        </div>
+            <Field label="Penalty (pts)">
+              <input type="number" min="0" style={s.inp}
+                value={form.hintPenalties?.[h.key] ?? (h.key === 'code' ? 2 : 1)}
+                onChange={e => set('hintPenalties', { ...(form.hintPenalties || {}), [h.key]: Number(e.target.value) || 0 })}
+              />
+            </Field>
+          </div>
+        ))}
       </div>
 
       {/* ── Sample Examples ── */}
@@ -910,7 +926,9 @@ const BLANK_DAILY_CODING = {
   format: 'coding',
   title: '', category: 'Arrays', difficulty: 'Easy',
   description: '', inputFormat: '', outputFormat: '', constraints: '',
+  points: 10,
   hints: { idea: '', approach: '', pseudocode: '', code: '' },
+  hintPenalties: { idea: 1, approach: 1, pseudocode: 1, code: 2 },
   examples:    [{ input: '', output: '', explanation: '' }],
   testCases:   [{ input: '', expectedOutput: '', hidden: false }],
   starterCode: { 71: '', 63: '', 54: '' },

@@ -34,10 +34,10 @@ function VerdictChip({ verdict }) {
 
 // ── Staged Hint System ────────────────────────────────────────────────────────
 const HINT_STAGES = [
-  { key: 'idea',       label: 'Hint 1', sub: 'Idea',       icon: '💡', cost: 1 },
-  { key: 'approach',   label: 'Hint 2', sub: 'Approach',   icon: '🗺️', cost: 1 },
-  { key: 'pseudocode', label: 'Hint 3', sub: 'Pseudocode', icon: '📝', cost: 1 },
-  { key: 'code',       label: 'Final',  sub: 'Solution',   icon: '🔓', cost: 2 },
+  { key: 'idea',       label: 'Hint 1', sub: 'Idea',       icon: '💡', defaultCost: 1 },
+  { key: 'approach',   label: 'Hint 2', sub: 'Approach',   icon: '🗺️', defaultCost: 1 },
+  { key: 'pseudocode', label: 'Hint 3', sub: 'Pseudocode', icon: '📝', defaultCost: 1 },
+  { key: 'code',       label: 'Final',  sub: 'Solution',   icon: '🔓', defaultCost: 2 },
 ]
 
 function HintSystem({ problem, onUnlock }) {
@@ -48,7 +48,11 @@ function HintSystem({ problem, onUnlock }) {
     || (problem.hint ? { idea: problem.hint } : null)
   if (!hints) return null
 
-  const stages = HINT_STAGES.filter(s => hints[s.key]?.trim())
+  const penalties = problem.hintPenalties || {}
+  const stages = HINT_STAGES
+    .filter(s => hints[s.key]?.trim())
+    .map(s => ({ ...s, cost: penalties[s.key] ?? s.defaultCost }))
+
   if (stages.length === 0) return null
 
   const handleUnlock = (cost) => {
@@ -482,7 +486,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
       onSubmit({ passed: passCount, total, langId, langName, code, submittedAt: new Date().toISOString() })
     }
     if (onSolve && !isSolved && allPassed) {
-      onSolve({ passed: passCount, total })
+      onSolve({ passed: passCount, total, points: problem.points })
     }
   }
 
@@ -727,7 +731,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
           {/* Already solved banner */}
           {isSolved && (
             <div className="pe-solved-banner">
-              {solvedMessage || '✅ Problem solved! +10 pts earned.'}
+              {solvedMessage || `✅ Problem solved! +${problem.points || 10} pts earned.`}
             </div>
           )}
         </div>
