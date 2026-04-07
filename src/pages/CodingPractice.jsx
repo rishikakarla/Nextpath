@@ -10,7 +10,7 @@ const DIFF_META = {
 }
 
 export default function CodingPractice() {
-  const { solvedProblems, solveProblem, codingSubmissions, saveSubmission, setPoints } = useApp()
+  const { solvedProblems, solveProblem, codingSubmissions, saveSubmission } = useApp()
   const { codingProblems } = useContent()
   const [cat, setCat]     = useState('All')
   const [diff, setDiff]   = useState('All')
@@ -227,7 +227,6 @@ export default function CodingPractice() {
               onSolve={result => solveProblem(modal.id, result)}
               onSubmit={sub => saveSubmission(modal.id, sub)}
               submissions={codingSubmissions[modal.id] || []}
-              onHintUsed={cost => setPoints(p => Math.max(0, p - cost))}
             />
           </div>
         </div>

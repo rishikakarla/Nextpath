@@ -43,13 +43,8 @@ function useTimer() {
 // ── Coding Challenge Modal ────────────────────────────────────────────────────
 function CodingModal({ task, done, submission, onComplete, onClose }) {
   const { stop } = useTimer()
-  const { setPoints } = useApp()
   const [testScore, setTestScore] = useState(null)
   const solvedRef = useRef(false)
-
-  const handleHintUsed = (cost = 1) => {
-    setPoints(p => Math.max(0, p - cost))
-  }
 
   const handleSolve = ({ passed, total } = {}) => {
     if (solvedRef.current) return
@@ -87,7 +82,6 @@ function CodingModal({ task, done, submission, onComplete, onClose }) {
           problem={task}
           isSolved={isCompleted}
           onSolve={handleSolve}
-          onHintUsed={handleHintUsed}
           solvedMessage={
             testScore
               ? `✅ +${testScore.pts} pts · ${testScore.passed}/${testScore.total} test cases passed`

@@ -40,8 +40,7 @@ const HINT_STAGES = [
   { key: 'code',       label: 'Final',  sub: 'Solution',   icon: '🔓', cost: 2 },
 ]
 
-function HintSystem({ problem, onHintUsed }) {
-  const { setPoints } = useApp()
+function HintSystem({ problem, onUnlock }) {
   const [unlocked, setUnlocked] = useState(0)
 
   // Support both new `hints` object and legacy `hint` string
@@ -52,9 +51,8 @@ function HintSystem({ problem, onHintUsed }) {
   const stages = HINT_STAGES.filter(s => hints[s.key]?.trim())
   if (stages.length === 0) return null
 
-  const unlock = (cost) => {
-    setPoints(p => Math.max(0, p - cost))
-    if (onHintUsed) onHintUsed(cost)
+  const handleUnlock = (cost) => {
+    onUnlock(cost)
     setUnlocked(u => u + 1)
   }
 
@@ -77,7 +75,7 @@ function HintSystem({ problem, onHintUsed }) {
         }
         if (unlocked === i) {
           return (
-            <button key={stage.key} className="pe-hint-unlock-btn" onClick={() => unlock(stage.cost)}>
+            <button key={stage.key} className="pe-hint-unlock-btn" onClick={() => handleUnlock(stage.cost)}>
               {stage.icon} Unlock {stage.label}
               <span className="pe-hint-unlock-sub">→ {stage.sub}</span>
               <span className="pe-hint-unlock-cost">-{stage.cost} pt{stage.cost > 1 ? 's' : ''}</span>
@@ -98,7 +96,7 @@ function HintSystem({ problem, onHintUsed }) {
 }
 
 // ── Problem Panel ─────────────────────────────────────────────────────────────
-function ProblemPanel({ problem, onHintUsed }) {
+function ProblemPanel({ problem, onHintUnlock }) {
   const [activeEx, setActiveEx] = useState(0)
   const diffColor = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' }[problem.difficulty] || '#6366f1'
 
@@ -175,7 +173,7 @@ function ProblemPanel({ problem, onHintUsed }) {
         )
       })()}
 
-      <HintSystem problem={problem} onHintUsed={onHintUsed} />
+      <HintSystem problem={problem} onUnlock={onHintUnlock} />
     </div>
   )
 }
@@ -371,7 +369,9 @@ function SubmissionsPanel({ submissions, onLoadCode }) {
 }
 
 // ── Main ProblemEditor ────────────────────────────────────────────────────────
-export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, onSubmit, submissions, solvedMessage }) {
+export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, submissions, solvedMessage }) {
+  const { setPoints } = useApp()
+  const handleHintUnlock = (cost) => setPoints(p => Math.max(0, p - cost))
   const [langId, setLangId]             = useState(71)
   const [code, setCode]                 = useState(() => problem.starterCode?.[71] || LANGUAGES.find(l => l.id === 71)?.template || '')
   const [customInput, setCustomInput]   = useState('')
@@ -494,7 +494,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onHintUsed, 
       <div className="pe-body">
         {/* Left — Problem */}
         <div className="pe-left">
-          <ProblemPanel problem={problem} onHintUsed={onHintUsed} />
+          <ProblemPanel problem={problem} onHintUnlock={handleHintUnlock} />
         </div>
 
         {/* Right — Editor + Results */}
