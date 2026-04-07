@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { LANGUAGES, submitCode, getResult } from '../services/judge0'
+import { useApp } from '../context/AppContext'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 function normalize(s) {
@@ -40,6 +41,7 @@ const HINT_STAGES = [
 ]
 
 function HintSystem({ problem, onHintUsed }) {
+  const { setPoints } = useApp()
   const [unlocked, setUnlocked] = useState(0)
 
   // Support both new `hints` object and legacy `hint` string
@@ -51,6 +53,7 @@ function HintSystem({ problem, onHintUsed }) {
   if (stages.length === 0) return null
 
   const unlock = (cost) => {
+    setPoints(p => Math.max(0, p - cost))
     if (onHintUsed) onHintUsed(cost)
     setUnlocked(u => u + 1)
   }
