@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 48 48">
+    <svg width="20" height="20" viewBox="0 0 48 48">
       <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
       <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
       <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.5-3.3-11.2-7.9l-6.5 5C9.5 39.5 16.2 44 24 44z"/>
@@ -15,39 +15,17 @@ function GoogleIcon() {
 
 function GithubIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z"/>
     </svg>
   )
 }
 
 export default function Login() {
-  const { login, loginWithGoogle, loginWithGithub } = useApp()
+  const { loginWithGoogle, loginWithGithub } = useApp()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const [socialLoading, setSocialLoading] = useState('')
-
-  const handle = async (e) => {
-    e.preventDefault()
-    setError('')
-    if (!form.email || !form.password) { setError('Please fill in all fields.'); return }
-    setLoading(true)
-    try {
-      await login(form.email, form.password)
-      navigate('/dashboard')
-    } catch (err) {
-      const msg = err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
-        ? 'Invalid email or password.'
-        : err.code === 'auth/too-many-requests'
-        ? 'Too many attempts. Try again later.'
-        : 'Login failed. Please try again.'
-      setError(msg)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSocial = async (provider, label) => {
     setError('')
@@ -76,15 +54,15 @@ export default function Login() {
         </div>
 
         <h2 className="auth-title">Welcome back</h2>
+        <p className="auth-subtitle">Sign in to continue your journey</p>
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        {/* Social login */}
         <div className="auth-social">
           <button
             className="auth-social-btn"
             onClick={() => handleSocial('google', 'Google')}
-            disabled={!!socialLoading || loading}
+            disabled={!!socialLoading}
           >
             <GoogleIcon />
             {socialLoading === 'Google' ? 'Signing in…' : 'Continue with Google'}
@@ -92,41 +70,11 @@ export default function Login() {
           <button
             className="auth-social-btn auth-social-btn--github"
             onClick={() => handleSocial('github', 'GitHub')}
-            disabled={!!socialLoading || loading}
+            disabled={!!socialLoading}
           >
             <GithubIcon />
             {socialLoading === 'GitHub' ? 'Signing in…' : 'Continue with GitHub'}
           </button>
-        </div>
-
-        <div className="auth-divider"><span>or sign in with email</span></div>
-
-        <form onSubmit={handle}>
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-            />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={form.password}
-              onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary btn-full btn-lg" style={{ marginTop: 8 }} disabled={loading || !!socialLoading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="auth-link">
-          Don't have an account? <Link to="/register">Create one</Link>
         </div>
       </div>
     </div>
