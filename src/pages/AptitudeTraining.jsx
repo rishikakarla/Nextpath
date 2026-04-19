@@ -74,26 +74,106 @@ function TopicCard({ topic, attempts, recommended, onClick }) {
 }
 
 // ── Learn Tab ─────────────────────────────────────────────────────────────────
+const LEARN_SECTIONS = [
+  { key: 'description',  label: 'Overview',         icon: '📘', color: '#6366f1', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
+  { key: 'formulas',     label: 'Formulas',         icon: '🧮', color: '#0ea5e9', gradient: 'linear-gradient(135deg,#0ea5e9,#6366f1)' },
+  { key: 'tips',         label: 'Tips & Tricks',    icon: '💡', color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#ef4444)' },
+  { key: 'shortcuts',    label: 'Shortcuts',        icon: '⚡', color: '#10b981', gradient: 'linear-gradient(135deg,#10b981,#0ea5e9)' },
+  { key: 'howToSolve',   label: 'How to Solve',     icon: '🎯', color: '#ef4444', gradient: 'linear-gradient(135deg,#ef4444,#f59e0b)' },
+]
+
 function LearnTab({ topic }) {
+  const m = topic.module
   return (
     <div className="at-learn">
-      <div className="at-learn-header">
-        <span className="at-learn-header-icon">{topic.icon}</span>
-        <div className="at-learn-header-text">
-          <div className="at-learn-header-title">{topic.title}</div>
-          <div className="at-learn-header-sub">{topic.description}</div>
+      {/* Description */}
+      <div className="at-learn-section">
+        <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+          <span className="at-learn-sec-icon">📘</span>
+          <span className="at-learn-sec-title">Overview</span>
         </div>
-        <span className="at-learn-header-count">📖 {topic.module.concepts.length} concepts</span>
+        <div className="at-learn-sec-body">
+          <p className="at-learn-desc">{m.description}</p>
+        </div>
       </div>
-      {topic.module.concepts.map((c, i) => (
-        <div key={i} className="at-concept-block">
-          <div className="at-concept-num"><span>{i + 1}</span></div>
-          <div className="at-concept-content">
-            <div className="at-concept-heading">{c.heading}</div>
-            <pre className="at-concept-body">{c.body}</pre>
+
+      {/* Formulas */}
+      {m.formulas?.length > 0 && (
+        <div className="at-learn-section">
+          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)' }}>
+            <span className="at-learn-sec-icon">🧮</span>
+            <span className="at-learn-sec-title">Formulas</span>
+          </div>
+          <div className="at-learn-sec-body at-formulas-grid">
+            {m.formulas.map((f, i) => (
+              <div key={i} className="at-formula-card">
+                <div className="at-formula-label">{f.label}</div>
+                <div className="at-formula-value">{f.value}</div>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Tips & Tricks */}
+      {m.tips?.length > 0 && (
+        <div className="at-learn-section">
+          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#f59e0b,#ef4444)' }}>
+            <span className="at-learn-sec-icon">💡</span>
+            <span className="at-learn-sec-title">Tips & Tricks</span>
+          </div>
+          <div className="at-learn-sec-body">
+            <ul className="at-learn-list at-tips-list">
+              {m.tips.map((t, i) => (
+                <li key={i} className="at-learn-list-item at-tip-item">
+                  <span className="at-list-bullet" style={{ background: 'linear-gradient(135deg,#f59e0b,#ef4444)' }}>💡</span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Shortcuts */}
+      {m.shortcuts?.length > 0 && (
+        <div className="at-learn-section">
+          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#10b981,#0ea5e9)' }}>
+            <span className="at-learn-sec-icon">⚡</span>
+            <span className="at-learn-sec-title">Shortcuts</span>
+          </div>
+          <div className="at-learn-sec-body">
+            <ul className="at-learn-list at-shortcuts-list">
+              {m.shortcuts.map((s, i) => (
+                <li key={i} className="at-learn-list-item at-shortcut-item">
+                  <span className="at-shortcut-num">{i + 1}</span>
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* How to Solve */}
+      {m.howToSolve?.length > 0 && (
+        <div className="at-learn-section">
+          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#ef4444,#f59e0b)' }}>
+            <span className="at-learn-sec-icon">🎯</span>
+            <span className="at-learn-sec-title">How to Solve</span>
+          </div>
+          <div className="at-learn-sec-body">
+            <ol className="at-steps-list">
+              {m.howToSolve.map((step, i) => (
+                <li key={i} className="at-step-item">
+                  <div className="at-step-num">{i + 1}</div>
+                  <div className="at-step-text">{step}</div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
