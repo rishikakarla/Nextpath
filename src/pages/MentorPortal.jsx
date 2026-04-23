@@ -47,7 +47,8 @@ export default function MentorPortal() {
   useEffect(() => {
     if (!isMentor) return
     getDocs(collection(db, 'leaderboard')).then(snap => {
-      setStudents(snap.docs.map(d => d.data()).sort((a, b) => (b.points || 0) - (a.points || 0)))
+      // use doc.id as uid fallback — leaderboard docs are keyed by uid
+      setStudents(snap.docs.map(d => ({ ...d.data(), uid: d.id })).sort((a, b) => (b.points || 0) - (a.points || 0)))
       setLoadingS(false)
     }).catch(() => setLoadingS(false))
   }, [isMentor])
@@ -63,9 +64,18 @@ export default function MentorPortal() {
         getDoc(doc(db, 'users', s.uid)),
         getDoc(doc(db, 'feedback', s.uid)),
       ])
-      setStudentData(userSnap.exists() ? userSnap.data() : {})
+      const data = userSnap.exists() ? userSnap.data() : null
+      if (!data) {
+        console.warn('No user doc found for uid:', s.uid)
+        setStudentData({})
+      } else {
+        setStudentData(data)
+      }
       setFeedbacks(fbSnap.exists() ? (fbSnap.data().items || []) : [])
-    } catch (e) { console.error(e) }
+    } catch (e) {
+      console.error('Failed to read student data:', e.message)
+      setStudentData({})
+    }
     setLoadingD(false)
   }
 
@@ -173,10 +183,10 @@ export default function MentorPortal() {
                 </div>
                 <div className="mp-student-stats">
                   {[
-                    { lbl: 'Problems Solved', val: solveds.length },
+                    { lbl: 'Problems Solved', val: solveds.length  || selected?.solvedCount || 0 },
                     { lbl: 'Quiz Attempts',   val: Object.keys(attempts).length },
-                    { lbl: 'Points',          val: studentData?.points || 0 },
-                    { lbl: 'Streak',          val: `${studentData?.streak?.count || 0}d` },
+                    { lbl: 'Points',          val: studentData?.points ?? selected?.points ?? 0 },
+                    { lbl: 'Streak',          val: `${studentData?.streak?.count ?? selected?.streak ?? 0}d` },
                   ].map(st => (
                     <div key={st.lbl} className="mp-stat">
                       <div className="mp-stat-val">{st.val}</div>

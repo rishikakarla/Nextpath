@@ -68,6 +68,7 @@ export function AppProvider({ children }) {
             photoURL: firebaseUser.photoURL || '',
             points: data.points || 0,
             streak: data.streak?.count || 0,
+            solvedCount: (data.solvedProblems || []).length,
             updatedAt: new Date().toISOString(),
           }, { merge: true }).catch(console.error)
         }
@@ -117,9 +118,10 @@ export function AppProvider({ children }) {
       photoURL: auth.currentUser.photoURL || user.photoURL || '',
       points,
       streak: streak.count,
+      solvedCount: solvedProblems.length,
       updatedAt: new Date().toISOString(),
     }, { merge: true }).catch(console.error)
-  }, [points, streak.count]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [points, streak.count, solvedProblems.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const register = async (formData) => {
