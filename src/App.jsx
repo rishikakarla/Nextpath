@@ -11,6 +11,7 @@ import CodingPractice from './pages/CodingPractice'
 import Leaderboard from './pages/Leaderboard'
 import Progress from './pages/Progress'
 import MentorFeedback from './pages/MentorFeedback'
+import MentorPortal from './pages/MentorPortal'
 import Admin from './pages/Admin'
 import IDE from './pages/IDE'
 import AptitudeTraining from './pages/AptitudeTraining'
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="aptitude-training" element={<AptitudeTraining />} />
         <Route path="company-learning" element={<CompanyLearning />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="mentor-portal" element={<MentorPortal />} />
       </Route>
       <Route path="/admin" element={<Admin />} />
       <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />

@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
+import { db } from '../firebase'
+import { doc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore'
 
 const ADMIN_EMAIL = 'kakarlarishi5124@gmail.com'
 const PROB_CATS = ['Arrays', 'Strings', 'Recursion', 'Linked Lists', 'Stacks', 'Queues']
@@ -2444,7 +2446,105 @@ const TABS = [
   { key: 'quote',      label: '💬 Daily Quote' },
   { key: 'companies',  label: '🏢 Manage Companies' },
   { key: 'company',    label: '📋 Company Questions' },
+  { key: 'mentors',    label: '👨‍🏫 Mentors' },
 ]
+
+const AVATAR_COLORS = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ef4444','#0ea5e9','#ec4899']
+const adminMentorKey = (email) => email.replace(/\./g, '__').replace(/@/g, '--at--')
+
+function MentorsTab() {
+  const [mentors, setMentors] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState({ name: '', title: '', email: '', avatarColor: '#6366f1' })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+  const [success, setSuccess] = useState('')
+
+  useEffect(() => {
+    getDocs(collection(db, 'mentors')).then(snap => {
+      setMentors(snap.docs.map(d => d.data()))
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [])
+
+  const addMentor = async () => {
+    setErr(''); setSuccess('')
+    if (!form.name.trim() || !form.email.trim() || !form.title.trim()) { setErr('Name, email and title are required.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setErr('Enter a valid email address.'); return }
+    setSaving(true)
+    try {
+      const key = adminMentorKey(form.email.toLowerCase())
+      const data = { ...form, email: form.email.toLowerCase(), createdAt: new Date().toISOString() }
+      await setDoc(doc(db, 'mentors', key), data)
+      setMentors(prev => [...prev.filter(m => m.email !== data.email), data])
+      setSuccess(`✓ ${form.name} added as mentor. They can now log in to access the Mentor Portal.`)
+      setForm({ name: '', title: '', email: '', avatarColor: '#6366f1' })
+    } catch (e) { setErr('Failed to save: ' + e.message) }
+    setSaving(false)
+  }
+
+  const removeMentor = async (email) => {
+    if (!window.confirm(`Remove ${email} as mentor?`)) return
+    const key = adminMentorKey(email.toLowerCase())
+    await deleteDoc(doc(db, 'mentors', key))
+    setMentors(prev => prev.filter(m => m.email !== email))
+  }
+
+  return (
+    <div>
+      <h2 style={{ margin: '0 0 20px', fontSize: 20 }}>Manage Mentors</h2>
+
+      {/* Add form */}
+      <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 24 }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 15 }}>Add New Mentor</h3>
+        <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)' }}>
+          The person must already have a NextPath account with this email. Once added they can log in and access the Mentor Portal.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          <Field label="Full Name"><input style={s.inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Dr. Priya Sharma" /></Field>
+          <Field label="Title / Role"><input style={s.inp} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Senior SDE @ Google" /></Field>
+          <Field label="Email (NextPath account)"><input style={s.inp} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="mentor@example.com" /></Field>
+          <Field label="Avatar Color">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+              {AVATAR_COLORS.map(c => (
+                <button key={c} onClick={() => setForm(f => ({ ...f, avatarColor: c }))} style={{
+                  width: 28, height: 28, borderRadius: '50%', background: c, border: form.avatarColor === c ? '3px solid var(--text)' : '2px solid transparent', cursor: 'pointer',
+                }} />
+              ))}
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: form.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>
+                {form.name.charAt(0).toUpperCase() || '?'}
+              </div>
+            </div>
+          </Field>
+        </div>
+        {err     && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 10px' }}>{err}</p>}
+        {success && <p style={{ color: '#10b981', fontSize: 13, margin: '0 0 10px' }}>{success}</p>}
+        <Btn variant="success" onClick={addMentor}>{saving ? 'Saving…' : '+ Add Mentor'}</Btn>
+      </div>
+
+      {/* Mentor list */}
+      <h3 style={{ fontSize: 15, margin: '0 0 12px' }}>Current Mentors ({mentors.length})</h3>
+      {loading ? <p style={{ color: 'var(--text-secondary)' }}>Loading…</p> : mentors.length === 0 ? (
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No mentors added yet.</p>
+      ) : (
+        mentors.map(m => (
+          <div key={m.email} style={{ ...s.card, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: m.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, flexShrink: 0 }}>
+              {m.name.charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{m.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{m.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{m.email}</div>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(m.createdAt).toLocaleDateString()}</div>
+            <Btn sm variant="danger" onClick={() => removeMentor(m.email)}>Remove</Btn>
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
 
 export default function Admin() {
   const { user, logout } = useApp()
@@ -2496,6 +2596,7 @@ export default function Admin() {
           {tab === 'quote'      && <QuoteTab          quote={dailyQuote}                onUpdate={d => updateContent('dailyQuote', d)} />}
           {tab === 'companies'  && <CompaniesTab        companies={companies}             onUpdate={d => updateContent('companies', { items: d })} />}
           {tab === 'company'    && <CompanyQuestionsTab companies={companies} companyProblems={companyProblems} onUpdate={d => updateContent('companyProblems', d)} />}
+          {tab === 'mentors'    && <MentorsTab />}
         </main>
       </div>
     </div>

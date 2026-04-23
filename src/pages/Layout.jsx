@@ -29,7 +29,7 @@ const NAV = [
 const ADMIN_EMAIL = 'kakarlarishi5124@gmail.com'
 
 export default function Layout() {
-  const { user, streak, points, logout } = useApp()
+  const { user, streak, points, logout, isMentor } = useApp()
   const navigate = useNavigate()
   const [theme, toggleTheme] = useTheme()
 
@@ -63,6 +63,15 @@ export default function Layout() {
               {item.label}
             </NavLink>
           ))}
+          {isMentor && (
+            <>
+              <div className="nav-section-title" style={{ marginTop: 16 }}>Mentor</div>
+              <NavLink to="/mentor-portal" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+                <span className="nav-icon">🎓</span>
+                Mentor Portal
+              </NavLink>
+            </>
+          )}
           {user?.email === ADMIN_EMAIL && (
             <>
               <div className="nav-section-title" style={{ marginTop: 16 }}>Admin</div>

@@ -8,7 +8,9 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore'
+
+const mentorKey = (email) => email.replace(/\./g, '__').replace(/@/g, '--at--')
 
 const AppContext = createContext(null)
 
@@ -29,6 +31,8 @@ export function AppProvider({ children }) {
   const [quizAttempts, setQuizAttempts] = useState({})
   const [taskHistory, setTaskHistory] = useState({})
   const [codingSubmissions, setCodingSubmissions] = useState({})
+  const [isMentor, setIsMentor] = useState(false)
+  const [mentorProfile, setMentorProfile] = useState(null)
 
   // Prevents syncing state back to Firestore right after it was loaded from there
   const dataLoaded = useRef(false)
@@ -50,6 +54,10 @@ export function AppProvider({ children }) {
           setQuizAttempts(data.quizAttempts || {})
           setTaskHistory(data.taskHistory || {})
           setCodingSubmissions(data.codingSubmissions || {})
+          // Check mentor role
+          const mSnap = await getDoc(doc(db, 'mentors', mentorKey(firebaseUser.email)))
+          if (mSnap.exists()) { setIsMentor(true); setMentorProfile(mSnap.data()) }
+          else { setIsMentor(false); setMentorProfile(null) }
           // Delay enabling sync so the load-triggered effects don't write back to Firestore
           setTimeout(() => { dataLoaded.current = true }, 0)
           // Backfill leaderboard entry with latest data on every login
@@ -76,6 +84,8 @@ export function AppProvider({ children }) {
         setQuizAttempts({})
         setTaskHistory({})
         setCodingSubmissions({})
+        setIsMentor(false)
+        setMentorProfile(null)
       }
       setAuthLoading(false)
     })
@@ -338,6 +348,7 @@ export function AppProvider({ children }) {
       quizAttempts, saveQuizAttempt,
       taskHistory,
       codingSubmissions, saveSubmission,
+      isMentor, mentorProfile, mentorKey,
       register, login, loginWithGoogle, loginWithGithub, updateProfile, logout, saveAssessment,
       completeTask, solveProblem, toggleTopic, levelUp, getLeaderboard, setPoints,
     }}>
