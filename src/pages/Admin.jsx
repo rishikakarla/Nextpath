@@ -414,9 +414,29 @@ function ProblemForm({ form, set, setForm, onSave, onCancel }) {
 // ── Assessment Questions ──────────────────────────────────────────────────────
 const BLANK_Q = { question: '', category: 'Programming', options: ['', '', '', ''], answer: 0 }
 
+const ASSESSMENT_JSON_TEMPLATE = `[
+  {
+    "category": "Programming",
+    "question": "What is the time complexity of binary search?",
+    "options": ["O(n)", "O(log n)", "O(n²)", "O(1)"],
+    "answer": 1
+  },
+  {
+    "category": "Logical Reasoning",
+    "question": "If A > B and B > C, which is always true?",
+    "options": ["A = C", "A < C", "A > C", "A ≤ C"],
+    "answer": 2
+  }
+]`
+
 function AssessmentTab({ questions = [], onUpdate }) {
-  const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState(BLANK_Q)
+  const [editing,     setEditing]     = useState(null)
+  const [form,        setForm]        = useState(BLANK_Q)
+  const [jsonMode,    setJsonMode]    = useState(false)
+  const [jsonText,    setJsonText]    = useState('')
+  const [jsonError,   setJsonError]   = useState('')
+  const [jsonSuccess, setJsonSuccess] = useState('')
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const setOpt = (i, v) => setForm(f => ({ ...f, options: f.options.map((o, idx) => idx === i ? v : o) }))
 
@@ -435,12 +455,60 @@ function AssessmentTab({ questions = [], onUpdate }) {
     onUpdate(questions.filter(q => q.id !== id))
   }
 
+  const handleJsonUpload = () => {
+    setJsonError(''); setJsonSuccess('')
+    let parsed
+    try { parsed = JSON.parse(jsonText) } catch { setJsonError('Invalid JSON — check syntax.'); return }
+    if (!Array.isArray(parsed)) { setJsonError('JSON must be an array of questions [ ... ]'); return }
+    const valid = [], bad = []
+    parsed.forEach((q, i) => {
+      if (!q.question?.trim()) { bad.push(`#${i + 1}: missing "question"`); return }
+      if (!Array.isArray(q.options) || q.options.length !== 4) { bad.push(`#${i + 1}: "options" must be array of 4`); return }
+      if (typeof q.answer !== 'number' || q.answer < 0 || q.answer > 3) { bad.push(`#${i + 1}: "answer" must be 0–3`); return }
+      const cat = Q_CATS.includes(q.category) ? q.category : 'Programming'
+      valid.push({ question: q.question.trim(), options: q.options.map(String), answer: q.answer, category: cat, id: Date.now() + i })
+    })
+    if (bad.length) { setJsonError(bad.join('\n')); return }
+    onUpdate([...questions, ...valid])
+    setJsonSuccess(`✓ Added ${valid.length} question${valid.length !== 1 ? 's' : ''} successfully.`)
+    setJsonText('')
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Assessment Questions <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400 }}>({questions.length})</span></h2>
-        <Btn onClick={() => { setForm(BLANK_Q); setEditing('new') }}>+ Add Question</Btn>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Btn variant="ghost" onClick={() => { setJsonMode(m => !m); setJsonError(''); setJsonSuccess('') }}>
+            {jsonMode ? '✕ Close JSON' : '{ } Paste JSON'}
+          </Btn>
+          <Btn onClick={() => { setForm(BLANK_Q); setEditing('new'); setJsonMode(false) }}>+ Add Question</Btn>
+        </div>
       </div>
+
+      {jsonMode && (
+        <div style={{ ...s.card, marginBottom: 20, border: '2px solid var(--primary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ margin: 0, fontSize: 15 }}>Paste JSON — Bulk Add Questions</h3>
+            <Btn sm variant="ghost" onClick={() => setJsonText(ASSESSMENT_JSON_TEMPLATE)}>Load Template</Btn>
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--text-secondary)' }}>
+            Paste a JSON array of questions. Each must have: <code>question</code>, <code>options</code> (4 items), <code>answer</code> (0–3 index), optional <code>category</code>.
+          </p>
+          <textarea
+            style={{ ...s.inp, height: 220, fontFamily: 'monospace', fontSize: 12, resize: 'vertical' }}
+            placeholder={ASSESSMENT_JSON_TEMPLATE}
+            value={jsonText}
+            onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
+          />
+          {jsonError && <pre style={{ color: '#ef4444', fontSize: 12, margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{jsonError}</pre>}
+          {jsonSuccess && <p style={{ color: '#10b981', fontSize: 13, fontWeight: 600, margin: '8px 0 0' }}>{jsonSuccess}</p>}
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <Btn variant="success" onClick={handleJsonUpload}>Upload Questions</Btn>
+            <Btn variant="ghost" onClick={() => { setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Clear</Btn>
+          </div>
+        </div>
+      )}
 
       {editing === 'new' && (
         <ActiveCard>
