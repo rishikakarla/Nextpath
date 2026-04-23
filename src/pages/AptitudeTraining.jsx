@@ -174,6 +174,34 @@ function LearnTab({ topic }) {
           </div>
         </div>
       )}
+
+      {/* Video Resources */}
+      {m.videos?.length > 0 && (
+        <div className="at-learn-section">
+          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#ff0000,#ff6b35)' }}>
+            <span className="at-learn-sec-icon">▶️</span>
+            <span className="at-learn-sec-title">Video Resources</span>
+          </div>
+          <div className="at-learn-sec-body">
+            <div className="at-videos-grid">
+              {m.videos.map((vid, i) => (
+                <a key={i} href={vid.url} target="_blank" rel="noopener noreferrer" className="at-video-card">
+                  <div className="at-video-thumb">
+                    <div className="at-video-play">▶</div>
+                  </div>
+                  <div className="at-video-info">
+                    <div className="at-video-title">{vid.title}</div>
+                    <div className="at-video-meta">
+                      {vid.channel && <span className="at-video-channel">📺 {vid.channel}</span>}
+                      {vid.duration && <span className="at-video-dur">⏱ {vid.duration}</span>}
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

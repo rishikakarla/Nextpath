@@ -47,6 +47,11 @@ export const APTITUDE_TOPICS = [
         'Step 6: For divisibility, apply the rule for each divisor individually.',
         'Step 7: Count factors using the formula after prime factorization.',
       ],
+      videos: [
+        { title: 'HCF & LCM Shortcut Tricks — Aptitude', url: 'https://www.youtube.com/results?search_query=hcf+lcm+shortcut+tricks+aptitude', channel: 'YouTube Search', duration: '~15 min' },
+        { title: 'Divisibility Rules Shortcuts for All Exams', url: 'https://www.youtube.com/results?search_query=divisibility+rules+shortcut+tricks+aptitude', channel: 'YouTube Search', duration: '~12 min' },
+        { title: 'Number System Full Chapter — Competitive Exams', url: 'https://www.youtube.com/results?search_query=number+system+aptitude+full+chapter+competitive+exams', channel: 'YouTube Search', duration: '~30 min' },
+      ],
     },
     quiz: [
       { q: 'What is the HCF of 24 and 36?', options: ['6', '8', '12', '18'], answer: 2, explanation: '24 = 2³×3, 36 = 2²×3². HCF = 2²×3 = 12.' },
@@ -114,6 +119,11 @@ export const APTITUDE_TOPICS = [
         'Step 5: For successive changes — apply formula or multiply factors: (1+a/100)(1+b/100).',
         'Step 6: For reverse percentage, divide by the multiplier to find original.',
       ],
+      videos: [
+        { title: 'Percentage Shortcuts & Tricks — Aptitude', url: 'https://www.youtube.com/results?search_query=percentage+shortcut+tricks+aptitude+competitive+exam', channel: 'YouTube Search', duration: '~18 min' },
+        { title: 'Percentage Problems Solved Fast — Placements', url: 'https://www.youtube.com/results?search_query=percentage+problems+solved+fast+placement+aptitude', channel: 'YouTube Search', duration: '~20 min' },
+        { title: 'Successive Percentage Change — Aptitude Tricks', url: 'https://www.youtube.com/results?search_query=successive+percentage+change+aptitude+tricks', channel: 'YouTube Search', duration: '~10 min' },
+      ],
     },
     quiz: [
       { q: 'What is 35% of 400?', options: ['120', '140', '150', '160'], answer: 1, explanation: '35/100 × 400 = 140.' },
@@ -173,6 +183,11 @@ export const APTITUDE_TOPICS = [
         'Step 3: Multiply k by each ratio part to get individual values.',
         'Step 4: For proportion problems, cross-multiply and solve.',
         'Step 5: For combined ratios, find LCM of the shared term.',
+      ],
+      videos: [
+        { title: 'Ratio & Proportion Tricks — Aptitude Shortcuts', url: 'https://www.youtube.com/results?search_query=ratio+proportion+aptitude+tricks+shortcuts', channel: 'YouTube Search', duration: '~15 min' },
+        { title: 'Alligation & Mixture Problems — Shortcut Method', url: 'https://www.youtube.com/results?search_query=alligation+mixture+ratio+proportion+shortcuts+aptitude', channel: 'YouTube Search', duration: '~12 min' },
+        { title: 'Proportion Problems — Competitive Exam Prep', url: 'https://www.youtube.com/results?search_query=proportion+problems+competitive+exam+shortcuts', channel: 'YouTube Search', duration: '~14 min' },
       ],
     },
     quiz: [
@@ -234,6 +249,11 @@ export const APTITUDE_TOPICS = [
         'Step 4: Subtract P from Amount to get interest earned.',
         'Step 5: For comparison questions, compute both and find the difference.',
       ],
+      videos: [
+        { title: 'Simple & Compound Interest Tricks — Aptitude', url: 'https://www.youtube.com/results?search_query=simple+compound+interest+aptitude+tricks+shortcuts', channel: 'YouTube Search', duration: '~20 min' },
+        { title: 'CI vs SI Difference Formula — Quick Method', url: 'https://www.youtube.com/results?search_query=compound+interest+simple+interest+difference+formula+aptitude', channel: 'YouTube Search', duration: '~12 min' },
+        { title: 'Interest Calculations for Bank & SSC Exams', url: 'https://www.youtube.com/results?search_query=interest+calculation+bank+ssc+aptitude+shortcuts', channel: 'YouTube Search', duration: '~18 min' },
+      ],
     },
     quiz: [
       { q: 'Find SI on ₹2000 at 5% p.a. for 3 years.', options: ['₹200', '₹250', '₹300', '₹350'], answer: 2, explanation: 'SI = 2000×5×3/100 = ₹300.' },
@@ -293,6 +313,11 @@ export const APTITUDE_TOPICS = [
         'Step 3: Add daily outputs for combined work per day.',
         'Step 4: Days needed = Total work / Combined daily output.',
         'Step 5: For partial days or midway problems, track work done in each phase.',
+      ],
+      videos: [
+        { title: 'Time & Work Shortcut Tricks — Aptitude', url: 'https://www.youtube.com/results?search_query=time+and+work+shortcut+tricks+aptitude', channel: 'YouTube Search', duration: '~20 min' },
+        { title: 'Pipes & Cisterns — Quick Solving Method', url: 'https://www.youtube.com/results?search_query=pipes+cisterns+aptitude+shortcut+tricks', channel: 'YouTube Search', duration: '~15 min' },
+        { title: 'LCM Method for Time & Work — Placement Prep', url: 'https://www.youtube.com/results?search_query=lcm+method+time+work+aptitude+placement', channel: 'YouTube Search', duration: '~12 min' },
       ],
     },
     quiz: [
@@ -355,6 +380,11 @@ export const APTITUDE_TOPICS = [
         'Step 4: Apply Time = Distance / Speed.',
         'Step 5: For boats/streams, solve for B and S using the two equations.',
       ],
+      videos: [
+        { title: 'Speed Distance Time Tricks — Aptitude', url: 'https://www.youtube.com/results?search_query=speed+distance+time+aptitude+shortcut+tricks', channel: 'YouTube Search', duration: '~18 min' },
+        { title: 'Trains & Relative Speed — Shortcut Methods', url: 'https://www.youtube.com/results?search_query=trains+relative+speed+aptitude+shortcut', channel: 'YouTube Search', duration: '~15 min' },
+        { title: 'Boats & Streams Problems — Quick Tricks', url: 'https://www.youtube.com/results?search_query=boats+streams+aptitude+tricks+shortcuts', channel: 'YouTube Search', duration: '~12 min' },
+      ],
     },
     quiz: [
       { q: 'A train 200 m long passes a pole in 10 s. Its speed in km/h is:', options: ['60', '66', '72', '80'], answer: 2, explanation: 'Speed = 200/10 = 20 m/s = 20×18/5 = 72 km/h.' },
@@ -413,6 +443,11 @@ export const APTITUDE_TOPICS = [
         'Step 3: For mixture problems, identify the two component prices and mean price.',
         'Step 4: Apply alligation: ratio = (higher – mean) : (mean – lower).',
         'Step 5: Use ratio to find actual quantities if total mixture is given.',
+      ],
+      videos: [
+        { title: 'Averages Shortcut Tricks — Aptitude', url: 'https://www.youtube.com/results?search_query=averages+shortcut+tricks+aptitude+competitive+exam', channel: 'YouTube Search', duration: '~15 min' },
+        { title: 'Alligation & Mixture — Quick Method', url: 'https://www.youtube.com/results?search_query=alligation+mixture+problems+shortcut+aptitude', channel: 'YouTube Search', duration: '~18 min' },
+        { title: 'Weighted Average Problems — Placement Prep', url: 'https://www.youtube.com/results?search_query=weighted+average+aptitude+problems+placement', channel: 'YouTube Search', duration: '~12 min' },
       ],
     },
     quiz: [

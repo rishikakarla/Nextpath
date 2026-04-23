@@ -1289,20 +1289,99 @@ function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onU
 const AT_LEVELS = ['Rookie', 'Coder', 'Master']
 const BLANK_AT_TOPIC = {
   title: '', icon: '📚', level: 'Rookie', description: '',
-  module: { concepts: [{ heading: '', body: '' }] },
+  module: {
+    concepts: [{ heading: '', body: '' }],
+    videos: [],
+  },
   quiz: [{ q: '', options: ['', '', '', ''], answer: 0, explanation: '' }],
 }
 
+const APTITUDE_JSON_TEMPLATE = `{
+  "title": "Percentages",
+  "icon": "%",
+  "level": "Rookie",
+  "description": "Master percentage calculations, increase/decrease and comparisons.",
+  "module": {
+    "concepts": [
+      {
+        "heading": "What is a Percentage?",
+        "body": "A percentage means per hundred. It expresses a fraction of 100.\\n\\nFormula: Percentage = (Part / Whole) × 100\\nPart from %: Part = (Percentage × Whole) / 100"
+      },
+      {
+        "heading": "Percentage Change",
+        "body": "% Increase = [(New – Old) / Old] × 100\\n% Decrease = [(Old – New) / Old] × 100\\nSuccessive Change: Net % = a + b + (ab/100)"
+      }
+    ],
+    "videos": [
+      {
+        "title": "Percentage Tricks & Shortcuts",
+        "url": "https://www.youtube.com/results?search_query=percentage+aptitude+tricks+shortcuts",
+        "channel": "YouTube Search",
+        "duration": "~15 min"
+      }
+    ]
+  },
+  "quiz": [
+    {
+      "q": "What is 35% of 400?",
+      "options": ["120", "140", "150", "160"],
+      "answer": 1,
+      "explanation": "35/100 × 400 = 140."
+    }
+  ]
+}`
+
 function AptitudeTab({ topics = [], onUpdate }) {
-  const [editing, setEditing]     = useState(null)   // null | 'new' | topic.id
+  const [editing, setEditing]     = useState(null)
   const [form, setForm]           = useState(BLANK_AT_TOPIC)
   const [levelFilter, setLevel]   = useState('All')
+  const [jsonMode, setJsonMode]   = useState(false)
+  const [jsonText, setJsonText]   = useState('')
+  const [jsonError, setJsonError] = useState('')
+  const [jsonSuccess, setJsonSuccess] = useState('')
 
   const deepClone = t => ({
     ...t,
-    module: { concepts: (t.module?.concepts || []).map(c => ({ ...c })) },
-    quiz:   (t.quiz || []).map(q => ({ ...q, options: [...q.options] })),
+    module: {
+      concepts: (t.module?.concepts || []).map(c => ({ ...c })),
+      videos:   (t.module?.videos   || []).map(v => ({ ...v })),
+    },
+    quiz: (t.quiz || []).map(q => ({ ...q, options: [...q.options] })),
   })
+
+  const handleJsonUpload = () => {
+    setJsonError('')
+    setJsonSuccess('')
+    let parsed
+    try {
+      parsed = JSON.parse(jsonText.trim())
+    } catch (e) {
+      setJsonError('Invalid JSON: ' + e.message)
+      return
+    }
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    const errors = []
+    items.forEach((item, idx) => {
+      if (!item.title?.trim()) errors.push(`Item ${idx + 1}: missing "title"`)
+      if (!item.level || !AT_LEVELS.includes(item.level)) errors.push(`Item ${idx + 1}: "level" must be Rookie, Coder, or Master`)
+    })
+    if (errors.length) { setJsonError(errors.join('\n')); return }
+
+    const newTopics = items.map(item => ({
+      ...BLANK_AT_TOPIC,
+      ...item,
+      module: {
+        concepts: item.module?.concepts || [{ heading: '', body: '' }],
+        videos:   item.module?.videos   || [],
+      },
+      quiz: (item.quiz || [{ q: '', options: ['', '', '', ''], answer: 0, explanation: '' }]),
+      id: `at-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    }))
+    onUpdate([...topics, ...newTopics])
+    setJsonSuccess(`✅ ${newTopics.length} topic${newTopics.length > 1 ? 's' : ''} added successfully!`)
+    setJsonText('')
+    setTimeout(() => { setJsonMode(false); setJsonSuccess('') }, 1800)
+  }
 
   const save = () => {
     if (!form.title.trim()) return
@@ -1337,11 +1416,51 @@ function AptitudeTab({ topics = [], onUpdate }) {
         <div>
           <h2 style={{ margin: '0 0 4px', fontSize: 20 }}>Aptitude Training</h2>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
-            Manage topics, learning modules (concepts), and quiz questions.
+            Manage topics, learning modules, video resources, and quiz questions.
           </p>
         </div>
-        <Btn onClick={() => { setForm(BLANK_AT_TOPIC); setEditing('new') }}>+ Add Topic</Btn>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Btn variant="ghost" onClick={() => { setJsonMode(m => !m); setJsonError(''); setJsonSuccess('') }}>
+            {jsonMode ? '✕ Close JSON' : '📋 Paste JSON'}
+          </Btn>
+          <Btn onClick={() => { setForm(BLANK_AT_TOPIC); setEditing('new'); setJsonMode(false) }}>+ Add Topic</Btn>
+        </div>
       </div>
+
+      {/* JSON paste panel */}
+      {jsonMode && (
+        <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📋 Paste JSON to Upload Topic(s)</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                Paste a single object <code>{'{...}'}</code> or an array <code>{'[{...},{...}]'}</code> to add multiple topics at once.
+              </div>
+            </div>
+            <Btn sm variant="ghost" onClick={() => setJsonText(APTITUDE_JSON_TEMPLATE)}>Load Template</Btn>
+          </div>
+          <textarea
+            value={jsonText}
+            onChange={e => { setJsonText(e.target.value); setJsonError(''); setJsonSuccess('') }}
+            placeholder={'Paste your topic JSON here…\n\nClick "Load Template" to see the expected format.'}
+            style={{ ...s.inp, minHeight: 280, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
+          />
+          {jsonError && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#b91c1c', whiteSpace: 'pre-line' }}>
+              {jsonError}
+            </div>
+          )}
+          {jsonSuccess && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: 6, fontSize: 13, color: '#065f46', fontWeight: 600 }}>
+              {jsonSuccess}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <Btn onClick={handleJsonUpload} variant="success">⬆ Upload Topic(s)</Btn>
+            <Btn variant="ghost" onClick={() => { setJsonMode(false); setJsonText(''); setJsonError(''); setJsonSuccess('') }}>Cancel</Btn>
+          </div>
+        </div>
+      )}
 
       {/* Level filter */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
@@ -1421,6 +1540,10 @@ function AptitudeTab({ topics = [], onUpdate }) {
 }
 
 function AptitudeTopicForm({ form, setForm, addConcept, removeConcept, setConcept, addQuizQ, removeQuizQ, setQuizQ, setQuizOpt, onSave, onCancel, sep }) {
+  const videos = form.module?.videos || []
+  const addVideo    = () => setForm(f => ({ ...f, module: { ...f.module, videos: [...(f.module?.videos || []), { title: '', url: '', channel: '', duration: '' }] } }))
+  const removeVideo = i  => setForm(f => ({ ...f, module: { ...f.module, videos: f.module.videos.filter((_, idx) => idx !== i) } }))
+  const setVideo    = (i, k, v) => setForm(f => ({ ...f, module: { ...f.module, videos: f.module.videos.map((vid, idx) => idx === i ? { ...vid, [k]: v } : vid) } }))
   return (
     <>
       {/* Basic info */}
@@ -1470,6 +1593,56 @@ function AptitudeTopicForm({ form, setForm, addConcept, removeConcept, setConcep
                 value={c.body} onChange={e => setConcept(i, 'body', e.target.value)}
                 placeholder="Explain this concept clearly. Use line breaks for readability." />
             </Field>
+          </div>
+        ))}
+      </div>
+
+      {/* Video Resources */}
+      <div style={sep}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>
+            ▶️ Video Resources
+            <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12, marginLeft: 6 }}>
+              ({videos.length} video{videos.length !== 1 ? 's' : ''})
+            </span>
+          </span>
+          <Btn sm onClick={addVideo}>+ Add Video</Btn>
+        </div>
+        {videos.length === 0 && (
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>
+            No videos yet. Click "+ Add Video" to add a YouTube link.
+          </div>
+        )}
+        {videos.map((vid, i) => (
+          <div key={i} style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 10, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Video {i + 1}</span>
+              <Btn sm variant="danger" onClick={() => removeVideo(i)}>Remove</Btn>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              <Field label="Title">
+                <input style={s.inp} value={vid.title} onChange={e => setVideo(i, 'title', e.target.value)} placeholder="e.g. Percentage Tricks & Shortcuts" />
+              </Field>
+              <Field label="YouTube URL">
+                <input style={s.inp} value={vid.url} onChange={e => setVideo(i, 'url', e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+              </Field>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <Field label="Channel Name">
+                <input style={s.inp} value={vid.channel} onChange={e => setVideo(i, 'channel', e.target.value)} placeholder="e.g. CareerRide" />
+              </Field>
+              <Field label="Duration">
+                <input style={s.inp} value={vid.duration} onChange={e => setVideo(i, 'duration', e.target.value)} placeholder="e.g. 15 min" />
+              </Field>
+            </div>
+            {vid.url && (
+              <div style={{ marginTop: 8 }}>
+                <a href={vid.url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>
+                  🔗 Preview link ↗
+                </a>
+              </div>
+            )}
           </div>
         ))}
       </div>
