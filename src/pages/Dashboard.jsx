@@ -4,7 +4,7 @@ import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestor
 import { db } from '../firebase'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
-import { ROADMAP_PHASES } from '../data/appData'
+// ROADMAP_PHASES import removed — using live Firestore data via useContent
 
 function useTopPerformers(currentUid) {
   const [board, setBoard] = useState([])
@@ -132,15 +132,19 @@ function RingProgress({ pct, color, size = 90, stroke = 9 }) {
 
 export default function Dashboard() {
   const { user, streak, progress, solvedProblems, dailyTasks, points, assessmentResult, quizAttempts, getLeaderboard } = useApp()
-  const { aptitudeTopics, codingProblems, dailyQuote } = useContent()
+  const { aptitudeTopics, codingProblems, dailyQuote, roadmapPhases: roadmapByLevel } = useContent()
   const navigate = useNavigate()
   const { board: topBoard, loading: boardLoading } = useTopPerformers(user?.uid)
 
   const fullBoard = getLeaderboard()
   const myRank = topBoard.find(e => e.isMe)?.rank ?? fullBoard.find(e => e.isMe)?.rank ?? '—'
   const tasksToday = [dailyTasks.coding, dailyTasks.aptitude, dailyTasks.revision].filter(Boolean).length
-  const allPhasesTopicCount = ROADMAP_PHASES.reduce((a, p) => a + p.topics.length, 0)
+  const LEVEL_MAP = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'intermediate', Master: 'advanced' }
+  const levelKey = assessmentResult?.level ? (LEVEL_MAP[assessmentResult.level] || 'beginner') : null
+  const userPhases = levelKey ? (roadmapByLevel[levelKey] || []) : []
+  const allPhasesTopicCount = userPhases.reduce((a, p) => a + p.topics.length, 0)
   const completedTopics = progress.completedTopics?.length ?? 0
+  const roadmapPct = allPhasesTopicCount ? Math.round((completedTopics / allPhasesTopicCount) * 100) : 0
   const totalProblems = codingProblems.length || 1
   const dsaPct = Math.round((solvedProblems.length / totalProblems) * 100)
 
@@ -265,9 +269,9 @@ export default function Dashboard() {
           {/* Roadmap */}
           <div className="db-learn-card" style={{ '--lc': '#10b981' }}>
             <div className="db-ring-wrap">
-              <RingProgress pct={progress.roadmap} color="#10b981" />
+              <RingProgress pct={roadmapPct} color="#10b981" />
               <div className="db-ring-center">
-                <div className="db-ring-pct" style={{ color: '#10b981' }}>{progress.roadmap}%</div>
+                <div className="db-ring-pct" style={{ color: '#10b981' }}>{roadmapPct}%</div>
               </div>
             </div>
             <div className="db-learn-info">
@@ -277,7 +281,7 @@ export default function Dashboard() {
                 <span>/ {allPhasesTopicCount} topics done</span>
               </div>
               <div className="db-learn-bar-wrap">
-                <div className="db-learn-bar-fill" style={{ width: `${progress.roadmap}%`, background: '#10b981' }} />
+                <div className="db-learn-bar-fill" style={{ width: `${roadmapPct}%`, background: '#10b981' }} />
               </div>
               <button className="db-learn-cta" style={{ color: '#10b981' }} onClick={() => navigate('/roadmap')}>
                 View Roadmap →
