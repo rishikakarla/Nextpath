@@ -2086,11 +2086,12 @@ nav { flex: 1; padding: 12px 0; }
 }
 .at-fullpage-body::-webkit-scrollbar { display: none; }
 
-/* Quiz mode — full width, no padding, no max-width */
+/* Quiz mode */
 .at-fullpage-body--quiz {
   max-width: 100%; margin: 0; padding: 0;
-  display: flex; flex-direction: column;
+  overflow-y: auto; scrollbar-width: none;
 }
+.at-fullpage-body--quiz::-webkit-scrollbar { display: none; }
 
 /* ════════════════════════════════════════════════════════
    AL — Aptitude Learn (redesigned)
@@ -2400,9 +2401,9 @@ nav { flex: 1; padding: 12px 0; }
 
 /* ── Clean Quiz ── */
 .qz-wrap {
-  max-width: 680px; margin: 0 auto;
-  padding: 32px 24px 48px;
-  display: flex; flex-direction: column; gap: 20px;
+  max-width: 660px; margin: 0 auto;
+  padding: 24px 24px 40px;
+  display: flex; flex-direction: column; gap: 14px;
 }
 
 /* Progress */
@@ -2436,7 +2437,7 @@ nav { flex: 1; padding: 12px 0; }
 /* Question card */
 .qz-question {
   background: var(--card); border: 1.5px solid var(--border);
-  border-radius: 16px; padding: 28px 28px 24px;
+  border-radius: 16px; padding: 22px 24px 18px;
   box-shadow: 0 2px 12px rgba(0,0,0,.06);
   transition: border-color .25s;
 }
@@ -2447,8 +2448,8 @@ nav { flex: 1; padding: 12px 0; }
   text-transform: uppercase; margin-bottom: 12px;
 }
 .qz-question-text {
-  font-size: 17px; font-weight: 600; color: var(--text);
-  line-height: 1.6; margin: 0 0 16px;
+  font-size: 16px; font-weight: 600; color: var(--text);
+  line-height: 1.55; margin: 0 0 12px;
 }
 .qz-verdict {
   display: inline-flex; align-items: center; gap: 5px;
@@ -2459,10 +2460,10 @@ nav { flex: 1; padding: 12px 0; }
 .qz-verdict.wrong   { background: rgba(239,68,68,.1);   color: #dc2626; border: 1px solid rgba(239,68,68,.25); }
 
 /* Options */
-.qz-options { display: flex; flex-direction: column; gap: 10px; }
+.qz-options { display: flex; flex-direction: column; gap: 8px; }
 .qz-opt {
-  display: flex; align-items: center; gap: 14px;
-  width: 100%; padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 12px 16px;
   background: var(--card); border: 1.5px solid var(--border);
   border-radius: 12px; cursor: pointer; text-align: left;
   font-size: 14px; font-weight: 500; color: var(--text);

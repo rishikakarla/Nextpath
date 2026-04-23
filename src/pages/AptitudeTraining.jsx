@@ -297,6 +297,7 @@ function QuizTab({ topic, onComplete }) {
   const [maxStreak, setMaxStreak] = useState(0)
   const [xpEarned,  setXpEarned]  = useState(0)
   const [xpPopup,   setXpPopup]   = useState(null)
+  const actionRef = useRef(null)
 
   const q      = questions[current]
   const chosen = answers[current]
@@ -323,6 +324,7 @@ function QuizTab({ topic, onComplete }) {
     } else {
       setStreak(0)
     }
+    setTimeout(() => actionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100)
   }
 
   const handleNext = () => {
@@ -442,7 +444,7 @@ function QuizTab({ topic, onComplete }) {
       )}
 
       {/* Action */}
-      <div className="qz-action">
+      <div className="qz-action" ref={actionRef}>
         {!revealed ? (
           <button className="qz-btn" disabled={chosen === undefined} onClick={handleSubmitQ}>
             Confirm Answer
