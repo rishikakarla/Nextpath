@@ -82,7 +82,6 @@ function getYTId(url = '') {
 function LearnTab({ topic }) {
   const m = topic.module
   const secRef = useRef({})
-  const [active, setActive] = useState('overview')
 
   const hasFormulas  = m.formulas?.length > 0
   const hasTips      = m.tips?.length > 0
@@ -91,19 +90,8 @@ function LearnTab({ topic }) {
   const hasConcepts  = m.concepts?.length > 0
   const hasVideos    = m.videos?.length > 0
 
-  const navItems = [
-    { key: 'overview',  icon: '📘', label: 'Overview' },
-    hasConcepts  && { key: 'concepts',  icon: '📖', label: 'Concepts',   count: m.concepts.length },
-    hasFormulas  && { key: 'formulas',  icon: '🧮', label: 'Formulas',   count: m.formulas.length },
-    hasTips      && { key: 'tips',      icon: '💡', label: 'Tips',       count: m.tips.length },
-    hasShortcuts && { key: 'shortcuts', icon: '⚡', label: 'Shortcuts',  count: m.shortcuts.length },
-    hasSteps     && { key: 'steps',     icon: '🎯', label: 'Steps' },
-    hasVideos    && { key: 'videos',    icon: '▶️', label: 'Videos',     count: m.videos.length },
-  ].filter(Boolean)
-
   const scrollTo = key => {
     secRef.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    setActive(key)
   }
 
   const statItems = [
@@ -117,17 +105,6 @@ function LearnTab({ topic }) {
 
   return (
     <div className="al-wrap">
-
-      {/* ── Sticky section nav ── */}
-      <div className="al-nav">
-        {navItems.map(n => (
-          <button key={n.key} className={`al-nav-pill${active === n.key ? ' active' : ''}`} onClick={() => scrollTo(n.key)}>
-            <span className="al-nav-icon">{n.icon}</span>
-            <span className="al-nav-label">{n.label}</span>
-            {n.count != null && <span className="al-nav-badge">{n.count}</span>}
-          </button>
-        ))}
-      </div>
 
       {/* ── Overview ── */}
       <div ref={el => secRef.current.overview = el} className="al-section">
