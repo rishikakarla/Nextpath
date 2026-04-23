@@ -5231,3 +5231,24 @@ nav { flex: 1; padding: 12px 0; }
 .mp-past-metric-chip { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
 .mp-past-suggestion { font-size: 13px; font-weight: 600; color: #6366f1; margin-bottom: 6px; }
 .mp-past-notes { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+
+/* ── Achievement badge LinkedIn button ────────────────────────────────────── */
+.gpf-badge { position: relative; }
+.gpf-badge-linkedin {
+  display: none;
+  width: 100%;
+  margin-top: 6px;
+  padding: 4px 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0a66c2;
+  background: rgba(10, 102, 194, 0.1);
+  border: 1px solid rgba(10, 102, 194, 0.25);
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.3px;
+  transition: background 0.15s;
+}
+.gpf-badge--on:hover .gpf-badge-linkedin { display: block; }
+.gpf-badge-linkedin:hover { background: rgba(10, 102, 194, 0.2); }

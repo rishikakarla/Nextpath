@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
+import { useContent } from '../context/ContentContext'
+import { ROADMAP_PHASES } from '../data/appData'
 
 const YEARS    = ['1st Year', '2nd Year', '3rd Year', '4th Year']
 const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other']
@@ -57,6 +59,28 @@ export default function Profile() {
 
   const isComplete = !!(user?.name && user?.college && user?.branch && user?.yearOfStudy && user?.careerGoal)
 
+  const { aptitudeTopics } = useContent()
+  const aptitudePassed = aptitudeTopics.filter(t => {
+    const best = (quizAttempts[t.id] || []).reduce((b, a) => a.score > (b?.score ?? -1) ? a : b, null)
+    return best && best.score >= 60
+  }).length
+  const phaseStats = ROADMAP_PHASES.map(phase => ({
+    pct: Math.round((phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length / phase.topics.length) * 100),
+  }))
+
+  const shareOnLinkedIn = (badge) => {
+    const now = new Date()
+    const params = new URLSearchParams({
+      startTask: 'CERTIFICATION_NAME',
+      name: `${badge.title} — NextPath`,
+      organizationName: 'NextPath Career Prep',
+      issueYear: now.getFullYear(),
+      issueMonth: now.getMonth() + 1,
+      certUrl: window.location.origin,
+    })
+    window.open(`https://www.linkedin.com/profile/add?${params}`, '_blank')
+  }
+
   const xpPerLevel = 50
   const xpInLvl    = points % xpPerLevel
   const xpPct      = Math.round((xpInLvl / xpPerLevel) * 100)
@@ -66,21 +90,24 @@ export default function Profile() {
   const nextLevel   = assessLevel ? LEVEL_ORDER[LEVEL_ORDER.indexOf(assessLevel) + 1] || null : null
 
   const ALL_ACHIEVEMENTS = [
-    { icon: '💻', title: 'First Blood',    desc: 'Solve 1st problem',     rarity: 'common',    unlocked: solvedProblems.length >= 1  },
-    { icon: '🔥', title: 'Problem Slayer', desc: 'Solve 5 problems',      rarity: 'common',    unlocked: solvedProblems.length >= 5  },
-    { icon: '⚔️', title: 'Code Warrior',  desc: 'Solve 10 problems',     rarity: 'rare',      unlocked: solvedProblems.length >= 10 },
-    { icon: '🏆', title: 'Code Champ',     desc: 'Solve 25 problems',     rarity: 'epic',      unlocked: solvedProblems.length >= 25 },
-    { icon: '⚡', title: 'On a Roll',      desc: '3-day streak',          rarity: 'common',    unlocked: streak.count >= 3  },
-    { icon: '🌟', title: 'Streak Master',  desc: '7-day streak',          rarity: 'rare',      unlocked: streak.count >= 7  },
-    { icon: '👑', title: 'Unstoppable',    desc: '30-day streak',         rarity: 'legendary', unlocked: streak.count >= 30 },
-    { icon: '🎯', title: 'XP Starter',     desc: 'Earn 50 XP',            rarity: 'common',    unlocked: points >= 50   },
-    { icon: '💎', title: 'Century Club',   desc: 'Earn 100 XP',           rarity: 'rare',      unlocked: points >= 100  },
-    { icon: '🚀', title: 'XP Hunter',      desc: 'Earn 500 XP',           rarity: 'epic',      unlocked: points >= 500  },
-    { icon: '⭐', title: 'Elite Player',   desc: 'Earn 1000 XP',          rarity: 'legendary', unlocked: points >= 1000 },
-    { icon: '🧮', title: 'Quiz Taker',     desc: 'Attempt a quiz',        rarity: 'common',    unlocked: Object.values(quizAttempts).some(a => a?.length > 0) },
-    { icon: '✅', title: 'Profile Pro',    desc: 'Complete profile',      rarity: 'rare',      unlocked: isComplete },
-    { icon: '🗺️', title: 'Pathfinder',    desc: '50% roadmap',           rarity: 'epic',      unlocked: progress.roadmap >= 50  },
-    { icon: '🌍', title: 'Road Master',    desc: '100% roadmap',          rarity: 'legendary', unlocked: progress.roadmap >= 100 },
+    { icon: '💻', title: 'First Blood',    desc: 'Solve your first problem', rarity: 'common',    unlocked: solvedProblems.length >= 1  },
+    { icon: '🔥', title: 'Problem Slayer', desc: 'Solve 5 problems',         rarity: 'common',    unlocked: solvedProblems.length >= 5  },
+    { icon: '⚔️', title: 'Code Warrior',  desc: 'Solve 10 problems',        rarity: 'rare',      unlocked: solvedProblems.length >= 10 },
+    { icon: '🏆', title: 'Code Champ',     desc: 'Solve 25 problems',        rarity: 'epic',      unlocked: solvedProblems.length >= 25 },
+    { icon: '🥇', title: 'Half Century',   desc: 'Solve 50 problems',        rarity: 'legendary', unlocked: solvedProblems.length >= 50 },
+    { icon: '⚡', title: 'On a Roll',      desc: '3-day streak',             rarity: 'common',    unlocked: streak.count >= 3  },
+    { icon: '🌟', title: 'Streak Master',  desc: '7-day streak',             rarity: 'rare',      unlocked: streak.count >= 7  },
+    { icon: '👑', title: 'Unstoppable',    desc: '30-day streak',            rarity: 'legendary', unlocked: streak.count >= 30 },
+    { icon: '🎯', title: 'XP Starter',     desc: 'Earn 50 XP',               rarity: 'common',    unlocked: points >= 50   },
+    { icon: '💎', title: 'Century Club',   desc: 'Earn 100 XP',              rarity: 'rare',      unlocked: points >= 100  },
+    { icon: '🚀', title: 'XP Hunter',      desc: 'Earn 500 XP',              rarity: 'epic',      unlocked: points >= 500  },
+    { icon: '⭐', title: 'Elite Player',   desc: 'Earn 1000 XP',             rarity: 'legendary', unlocked: points >= 1000 },
+    { icon: '🧮', title: 'Quiz Taker',     desc: 'Attempt a quiz',           rarity: 'common',    unlocked: Object.values(quizAttempts).some(a => a?.length > 0) },
+    { icon: '🎓', title: 'Quiz Master',    desc: 'Pass 5 aptitude topics',   rarity: 'epic',      unlocked: aptitudePassed >= 5 },
+    { icon: '✅', title: 'Profile Pro',    desc: 'Complete your profile',    rarity: 'rare',      unlocked: isComplete },
+    { icon: '📖', title: 'Phase Master',   desc: 'Complete a roadmap phase', rarity: 'rare',      unlocked: phaseStats.some(p => p.pct === 100) },
+    { icon: '🗺️', title: 'Pathfinder',    desc: '50% roadmap done',         rarity: 'epic',      unlocked: progress.roadmap >= 50  },
+    { icon: '🌍', title: 'Road Master',    desc: '100% roadmap done',        rarity: 'legendary', unlocked: progress.roadmap >= 100 },
   ]
   const unlockedCount = ALL_ACHIEVEMENTS.filter(a => a.unlocked).length
 
@@ -311,6 +338,11 @@ export default function Profile() {
                     <div className="gpf-badge-name" style={a.unlocked ? { color: rc.color } : {}}>{a.title}</div>
                     <div className="gpf-badge-hint">{a.desc}</div>
                     {a.unlocked && <div className="gpf-badge-dot" style={{ background: rc.color }} />}
+                    {a.unlocked && (
+                      <button className="gpf-badge-linkedin" onClick={() => shareOnLinkedIn(a)} title="Add to LinkedIn Profile">
+                        in Add to LinkedIn
+                      </button>
+                    )}
                   </div>
                 )
               })}

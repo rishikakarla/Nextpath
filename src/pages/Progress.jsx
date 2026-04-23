@@ -19,6 +19,12 @@ const CAT_ICONS = {
   Arrays: '📊', Strings: '🔤', Recursion: '🔄',
   'Linked Lists': '🔗', Stacks: '📚', Queues: '🎯',
 }
+const RARITY = {
+  common:    { color: '#94a3b8', bg: 'rgba(148,163,184,.08)', border: 'rgba(148,163,184,.2)' },
+  rare:      { color: '#3b82f6', bg: 'rgba(59,130,246,.08)',  border: 'rgba(59,130,246,.25)' },
+  epic:      { color: '#8b5cf6', bg: 'rgba(139,92,246,.08)',  border: 'rgba(139,92,246,.25)' },
+  legendary: { color: '#f59e0b', bg: 'rgba(245,158,11,.08)',  border: 'rgba(245,158,11,.28)' },
+}
 
 function SkillBar({ label, sub, pct, color, icon, onClick }) {
   return (
@@ -41,7 +47,7 @@ function SkillBar({ label, sub, pct, color, icon, onClick }) {
 
 export default function Progress() {
   const navigate = useNavigate()
-  const { progress, solvedProblems, streak, points, dailyTasks, quizAttempts } = useApp()
+  const { user, progress, solvedProblems, streak, points, dailyTasks, quizAttempts } = useApp()
   const { aptitudeTopics, codingProblems } = useContent()
 
   const TOTAL_PROBLEMS  = codingProblems.length || 1
@@ -77,17 +83,42 @@ export default function Progress() {
   const xpNeeded = (nextLvl?.min ?? level.min + 100) - level.min
   const xpPct    = Math.min(Math.round((xpIn / xpNeeded) * 100), 100)
 
-  const milestones = [
-    { icon: '🌱', label: 'First Step',   desc: 'Solve your first problem',  unlocked: solvedProblems.length >= 1 },
-    { icon: '🔥', label: '7-Day Streak', desc: 'Maintain a 7-day streak',   unlocked: streak.count >= 7 },
-    { icon: '💯', label: 'Century',      desc: 'Earn 100 points',           unlocked: points >= 100 },
-    { icon: '🧠', label: 'DSA Explorer', desc: 'Solve 10 problems',         unlocked: solvedProblems.length >= 10 },
-    { icon: '📖', label: 'Phase Master', desc: 'Complete a roadmap phase',  unlocked: phaseStats.some(p => p.pct === 100) },
-    { icon: '⚡', label: 'Speed Demon',  desc: '30-day streak',             unlocked: streak.count >= 30 },
-    { icon: '🏆', label: 'Half Century', desc: 'Solve 50 problems',         unlocked: solvedProblems.length >= 50 },
-    { icon: '🎯', label: 'Quiz Master',  desc: 'Pass 5 aptitude topics',    unlocked: aptitudePassed >= 5 },
+  const isComplete = !!(user?.name && user?.college && user?.branch && user?.yearOfStudy && user?.careerGoal)
+
+  const shareOnLinkedIn = (badge) => {
+    const now = new Date()
+    const params = new URLSearchParams({
+      startTask: 'CERTIFICATION_NAME',
+      name: `${badge.title} — NextPath`,
+      organizationName: 'NextPath Career Prep',
+      issueYear: now.getFullYear(),
+      issueMonth: now.getMonth() + 1,
+      certUrl: window.location.origin,
+    })
+    window.open(`https://www.linkedin.com/profile/add?${params}`, '_blank')
+  }
+
+  const ALL_ACHIEVEMENTS = [
+    { icon: '💻', title: 'First Blood',    desc: 'Solve your first problem', rarity: 'common',    unlocked: solvedProblems.length >= 1  },
+    { icon: '🔥', title: 'Problem Slayer', desc: 'Solve 5 problems',         rarity: 'common',    unlocked: solvedProblems.length >= 5  },
+    { icon: '⚔️', title: 'Code Warrior',  desc: 'Solve 10 problems',        rarity: 'rare',      unlocked: solvedProblems.length >= 10 },
+    { icon: '🏆', title: 'Code Champ',     desc: 'Solve 25 problems',        rarity: 'epic',      unlocked: solvedProblems.length >= 25 },
+    { icon: '🥇', title: 'Half Century',   desc: 'Solve 50 problems',        rarity: 'legendary', unlocked: solvedProblems.length >= 50 },
+    { icon: '⚡', title: 'On a Roll',      desc: '3-day streak',             rarity: 'common',    unlocked: streak.count >= 3  },
+    { icon: '🌟', title: 'Streak Master',  desc: '7-day streak',             rarity: 'rare',      unlocked: streak.count >= 7  },
+    { icon: '👑', title: 'Unstoppable',    desc: '30-day streak',            rarity: 'legendary', unlocked: streak.count >= 30 },
+    { icon: '🎯', title: 'XP Starter',     desc: 'Earn 50 XP',               rarity: 'common',    unlocked: points >= 50   },
+    { icon: '💎', title: 'Century Club',   desc: 'Earn 100 XP',              rarity: 'rare',      unlocked: points >= 100  },
+    { icon: '🚀', title: 'XP Hunter',      desc: 'Earn 500 XP',              rarity: 'epic',      unlocked: points >= 500  },
+    { icon: '⭐', title: 'Elite Player',   desc: 'Earn 1000 XP',             rarity: 'legendary', unlocked: points >= 1000 },
+    { icon: '🧮', title: 'Quiz Taker',     desc: 'Attempt a quiz',           rarity: 'common',    unlocked: Object.values(quizAttempts).some(a => a?.length > 0) },
+    { icon: '🎓', title: 'Quiz Master',    desc: 'Pass 5 aptitude topics',   rarity: 'epic',      unlocked: aptitudePassed >= 5 },
+    { icon: '✅', title: 'Profile Pro',    desc: 'Complete your profile',    rarity: 'rare',      unlocked: isComplete },
+    { icon: '📖', title: 'Phase Master',   desc: 'Complete a roadmap phase', rarity: 'rare',      unlocked: phaseStats.some(p => p.pct === 100) },
+    { icon: '🗺️', title: 'Pathfinder',    desc: '50% roadmap done',         rarity: 'epic',      unlocked: progress.roadmap >= 50  },
+    { icon: '🌍', title: 'Road Master',    desc: '100% roadmap done',        rarity: 'legendary', unlocked: progress.roadmap >= 100 },
   ]
-  const unlockedCount = milestones.filter(m => m.unlocked).length
+  const unlockedCount = ALL_ACHIEVEMENTS.filter(a => a.unlocked).length
 
   return (
     <div className="pr-root">
@@ -306,23 +337,29 @@ export default function Progress() {
         <div className="pr-section-head">
           <h3 className="pr-section-title">Achievements</h3>
           <span className="pr-badge-chip" style={{ color: '#f59e0b', background: '#fef3c7', borderColor: '#fde68a' }}>
-            🏅 {unlockedCount} / {milestones.length} unlocked
+            🏅 {unlockedCount} / {ALL_ACHIEVEMENTS.length} unlocked
           </span>
         </div>
-        <div className="pr-ach-grid">
-          {milestones.map(m => (
-            <div key={m.label} className={`pr-ach${m.unlocked ? ' unlocked' : ''}`}>
-              <div className="pr-ach-icon-wrap">
-                <span className="pr-ach-icon">{m.icon}</span>
-              </div>
-              <div className="pr-ach-name">{m.label}</div>
-              <div className="pr-ach-desc">{m.desc}</div>
-              {m.unlocked
-                ? <div className="pr-ach-earned">Earned ✓</div>
-                : <div className="pr-ach-locked">🔒 Locked</div>
-              }
-            </div>
-          ))}
+        <div className="pr-card">
+          <div className="gpf-badges-grid">
+            {ALL_ACHIEVEMENTS.map((a, i) => {
+              const rc = RARITY[a.rarity]
+              return (
+                <div key={i} className={`gpf-badge${a.unlocked ? ' gpf-badge--on' : ' gpf-badge--off'}`}
+                  style={a.unlocked ? { background: rc.bg, borderColor: rc.border } : {}}>
+                  <div className="gpf-badge-icon">{a.unlocked ? a.icon : '🔒'}</div>
+                  <div className="gpf-badge-name" style={a.unlocked ? { color: rc.color } : {}}>{a.title}</div>
+                  <div className="gpf-badge-hint">{a.desc}</div>
+                  {a.unlocked && <div className="gpf-badge-dot" style={{ background: rc.color }} />}
+                  {a.unlocked && (
+                    <button className="gpf-badge-linkedin" onClick={() => shareOnLinkedIn(a)} title="Add to LinkedIn Profile">
+                      in Add to LinkedIn
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
 
