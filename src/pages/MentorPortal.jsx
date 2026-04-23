@@ -59,23 +59,22 @@ export default function MentorPortal() {
     setFeedbacks([])
     setSaved('')
     setLoadingD(true)
+
     try {
-      const [userSnap, fbSnap] = await Promise.all([
-        getDoc(doc(db, 'users', s.uid)),
-        getDoc(doc(db, 'feedback', s.uid)),
-      ])
-      const data = userSnap.exists() ? userSnap.data() : null
-      if (!data) {
-        console.warn('No user doc found for uid:', s.uid)
-        setStudentData({})
-      } else {
-        setStudentData(data)
-      }
-      setFeedbacks(fbSnap.exists() ? (fbSnap.data().items || []) : [])
+      const userSnap = await getDoc(doc(db, 'users', s.uid))
+      setStudentData(userSnap.exists() ? userSnap.data() : {})
     } catch (e) {
-      console.error('Failed to read student data:', e.message)
+      console.error('Failed to read student user data:', e.message)
       setStudentData({})
     }
+
+    try {
+      const fbSnap = await getDoc(doc(db, 'feedback', s.uid))
+      setFeedbacks(fbSnap.exists() ? (fbSnap.data().items || []) : [])
+    } catch (e) {
+      setFeedbacks([])
+    }
+
     setLoadingD(false)
   }
 

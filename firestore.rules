@@ -36,10 +36,10 @@ service cloud.firestore {
                    && request.auth.token.email == 'kakarlarishi5124@gmail.com';
     }
 
-    // Feedback — student reads their own feedback; any authenticated user can write
-    // (write is restricted to mentors at the app level via the Mentor Portal)
+    // Feedback — any authenticated user can read (mentors need to read all students' feedback)
+    // Students see only their own feedback (enforced at app level in MentorFeedback page)
     match /feedback/{studentId} {
-      allow read: if request.auth != null && request.auth.uid == studentId;
+      allow read: if request.auth != null;
       allow write: if request.auth != null;
     }
   }
