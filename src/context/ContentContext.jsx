@@ -64,7 +64,19 @@ export function ContentProvider({ children }) {
       {
         key: 'aptitudeTopics',
         seed: { items: APTITUDE_TOPICS },
-        setter: d => setAptitudeTopics(d.items || APTITUDE_TOPICS),
+        setter: d => {
+          const firestoreItems = d.items
+          if (!firestoreItems?.length) { setAptitudeTopics(APTITUDE_TOPICS); return }
+          const localById = Object.fromEntries(APTITUDE_TOPICS.map(t => [t.id, t]))
+          const merged = firestoreItems.map(fi => {
+            const local = localById[fi.id]
+            if (local) return { ...fi, module: local.module, quiz: local.quiz }
+            return fi
+          })
+          const firestoreIds = new Set(firestoreItems.map(fi => fi.id))
+          APTITUDE_TOPICS.forEach(local => { if (!firestoreIds.has(local.id)) merged.push(local) })
+          setAptitudeTopics(merged)
+        },
       },
       {
         key: 'dailyQuote',
