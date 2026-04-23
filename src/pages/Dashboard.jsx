@@ -142,6 +142,7 @@ export default function Dashboard() {
   const allPhasesTopicCount = ROADMAP_PHASES.reduce((a, p) => a + p.topics.length, 0)
   const completedTopics = progress.completedTopics?.length ?? 0
   const totalProblems = codingProblems.length || 1
+  const dsaPct = Math.round((solvedProblems.length / totalProblems) * 100)
 
   const aptitudePassed = aptitudeTopics.filter(t => {
     const best = (quizAttempts[t.id] || []).reduce((b, a) => a.score > (b?.score ?? -1) ? a : b, null)
@@ -218,9 +219,9 @@ export default function Dashboard() {
           {/* DSA & Coding */}
           <div className="db-learn-card" style={{ '--lc': '#6366f1' }}>
             <div className="db-ring-wrap">
-              <RingProgress pct={progress.dsa} color="#6366f1" />
+              <RingProgress pct={dsaPct} color="#6366f1" />
               <div className="db-ring-center">
-                <div className="db-ring-pct" style={{ color: '#6366f1' }}>{progress.dsa}%</div>
+                <div className="db-ring-pct" style={{ color: '#6366f1' }}>{dsaPct}%</div>
               </div>
             </div>
             <div className="db-learn-info">
@@ -230,7 +231,7 @@ export default function Dashboard() {
                 <span>/ {totalProblems} problems solved</span>
               </div>
               <div className="db-learn-bar-wrap">
-                <div className="db-learn-bar-fill" style={{ width: `${progress.dsa}%`, background: '#6366f1' }} />
+                <div className="db-learn-bar-fill" style={{ width: `${dsaPct}%`, background: '#6366f1' }} />
               </div>
               <button className="db-learn-cta" style={{ color: '#6366f1' }} onClick={() => navigate('/practice/coding')}>
                 Practice Now →
