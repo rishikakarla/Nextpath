@@ -348,119 +348,112 @@ function QuizTab({ topic, onComplete }) {
 
   if (finished && score) {
     const stars = starsFromPct(score.pct)
+    const grade = score.pct >= 80 ? 'Excellent!' : score.pct >= 60 ? 'Good job!' : 'Keep going!'
     return (
-      <div className="at-quiz-result">
-        <div className="at-result-trophy">
-          {score.pct >= 80 ? '🏆' : score.pct >= 60 ? '🎖️' : '📚'}
+      <div className="qz-result">
+        <div className="qz-result-icon">{score.pct >= 80 ? '🏆' : score.pct >= 60 ? '🎖️' : '📚'}</div>
+        <div className="qz-result-grade">{grade}</div>
+        <div className={`qz-result-score ${score.pct >= 60 ? 'pass' : 'fail'}`}>
+          <span className="qz-result-pct">{score.pct}%</span>
+          <span className="qz-result-sub">{score.correct} / {score.total} correct</span>
         </div>
-        <div className="at-result-stars">
+        <div className="qz-result-stars">
           {[0, 1, 2].map(i => (
-            <span key={i} className={`at-result-star${i < stars ? ' lit' : ''}`}>★</span>
+            <span key={i} className={`qz-result-star${i < stars ? ' on' : ''}`}>★</span>
           ))}
         </div>
-        <div className={`at-result-circle${score.pct >= 60 ? ' pass' : ' fail'}`}>
-          <div className="at-result-pct">{score.pct}%</div>
-          <div className="at-result-label">
-            {score.pct >= 80 ? 'Excellent!' : score.pct >= 60 ? 'Passed!' : 'Keep going'}
+        <div className="qz-result-stats">
+          <div className="qz-result-stat">
+            <span className="qz-rs-val green">{score.correct}</span>
+            <span className="qz-rs-lbl">Correct</span>
+          </div>
+          <div className="qz-result-stat">
+            <span className="qz-rs-val red">{score.total - score.correct}</span>
+            <span className="qz-rs-lbl">Wrong</span>
+          </div>
+          <div className="qz-result-stat">
+            <span className="qz-rs-val amber">{score.maxStreak}</span>
+            <span className="qz-rs-lbl">Best streak</span>
+          </div>
+          <div className="qz-result-stat">
+            <span className="qz-rs-val purple">+{score.xpEarned}</span>
+            <span className="qz-rs-lbl">XP earned</span>
           </div>
         </div>
-        <div className="at-result-xp-earned">⚡ +{score.xpEarned} XP earned</div>
-        <div className="at-result-stats">
-          <div className="at-result-stat">
-            <span className="at-result-stat-val" style={{ color: '#10b981' }}>{score.correct}</span>
-            <span className="at-result-stat-lbl">Correct</span>
-          </div>
-          <div className="at-result-stat">
-            <span className="at-result-stat-val" style={{ color: '#ef4444' }}>{score.total - score.correct}</span>
-            <span className="at-result-stat-lbl">Wrong</span>
-          </div>
-          <div className="at-result-stat">
-            <span className="at-result-stat-val" style={{ color: '#f59e0b' }}>{score.maxStreak}</span>
-            <span className="at-result-stat-lbl">🔥 Best Streak</span>
-          </div>
-        </div>
-        <button className="at-quiz-btn primary" onClick={reset}>🔄 Try Again</button>
+        <button className="qz-retry-btn" onClick={reset}>Try Again</button>
       </div>
     )
   }
 
   return (
-    <div className="at-quiz-game">
-      {/* Top bar: progress + counter + streak */}
-      <div className="at-game-topbar">
-        <div className="at-game-counter">
-          <span className="at-game-counter-cur">{current + 1}</span>
-          <span className="at-game-counter-sep"> / {questions.length}</span>
+    <div className="qz-wrap">
+
+      {/* Progress bar */}
+      <div className="qz-progress">
+        <div className="qz-progress-meta">
+          <span className="qz-progress-label">Question <strong>{current + 1}</strong> of {questions.length}</span>
+          <div className="qz-progress-right">
+            {streak >= 2 && <span className="qz-streak">🔥 {streak} streak</span>}
+            {xpPopup && <span key={xpPopup.key} className="qz-xp-flash">+{xpPopup.amount} XP</span>}
+          </div>
         </div>
-        <div className="at-game-prog-bar">
-          <div className="at-game-prog-fill" style={{ width: `${(current / questions.length) * 100}%` }} />
-        </div>
-        <div className="at-game-right">
-          {streak >= 2 && !revealed && (
-            <span className="at-streak-badge">🔥 {streak}</span>
-          )}
-          {revealed && (
-            <span className={`at-q-status${isRight ? ' correct' : ' wrong'}`}>
-              {isRight ? '✓ Correct!' : '✗ Wrong'}
-            </span>
-          )}
+        <div className="qz-progress-track">
+          <div className="qz-progress-fill" style={{ width: `${((current) / questions.length) * 100}%` }} />
         </div>
       </div>
 
-      {/* XP popup */}
-      {xpPopup && (
-        <div key={xpPopup.key} className="at-xp-popup">+{xpPopup.amount} XP ⚡</div>
-      )}
-
-      {/* Question hexagon */}
-      <div className="at-game-q-wrap">
-        <div className={`at-game-qbox${revealed ? (isRight ? ' correct' : ' wrong') : ''}`}>
-          {q.q}
-        </div>
+      {/* Question card */}
+      <div className={`qz-question${revealed ? (isRight ? ' qz-question--correct' : ' qz-question--wrong') : ''}`}>
+        <div className="qz-question-num">Q{current + 1}</div>
+        <p className="qz-question-text">{q.q}</p>
+        {revealed && (
+          <div className={`qz-verdict ${isRight ? 'correct' : 'wrong'}`}>
+            {isRight ? '✓ Correct' : '✗ Incorrect'}
+          </div>
+        )}
       </div>
 
-      {/* Options 2×2 grid */}
-      <div className="at-game-options">
+      {/* Options */}
+      <div className="qz-options">
         {q.options.map((opt, oi) => {
-          let state = ''
+          let mod = ''
           if (revealed) {
-            if (oi === q.answer)    state = ' correct'
-            else if (oi === chosen) state = ' wrong'
+            if (oi === q.answer)    mod = ' qz-opt--correct'
+            else if (oi === chosen) mod = ' qz-opt--wrong'
           } else if (chosen === oi) {
-            state = ' selected'
+            mod = ' qz-opt--selected'
           }
           return (
-            <div key={oi} className={`at-game-opt-wrap${state}`}>
-              <button className={`at-game-opt${state}`} onClick={() => pick(oi)} disabled={revealed}>
-                <span className="at-game-opt-letter">{String.fromCharCode(65 + oi)}:</span>
-                <span className="at-game-opt-text">{opt}</span>
-                {revealed && oi === q.answer && <span className="at-game-opt-check">✓</span>}
-              </button>
-            </div>
+            <button key={oi} className={`qz-opt${mod}`} onClick={() => pick(oi)} disabled={revealed}>
+              <span className="qz-opt-letter">{String.fromCharCode(65 + oi)}</span>
+              <span className="qz-opt-text">{opt}</span>
+              {revealed && oi === q.answer && <span className="qz-opt-tick">✓</span>}
+            </button>
           )
         })}
       </div>
 
       {/* Explanation */}
       {revealed && q.explanation && (
-        <div className="at-game-explanation">
-          <span className="at-expl-icon">{isRight ? '💡' : '📖'}</span>
-          <span><strong>Explanation:</strong> {q.explanation}</span>
+        <div className={`qz-explain ${isRight ? 'correct' : 'wrong'}`}>
+          <span className="qz-explain-icon">{isRight ? '💡' : '📖'}</span>
+          <p><strong>Explanation: </strong>{q.explanation}</p>
         </div>
       )}
 
-      {/* Action button */}
-      <div className="at-game-actions">
+      {/* Action */}
+      <div className="qz-action">
         {!revealed ? (
-          <button className="at-game-btn" disabled={chosen === undefined} onClick={handleSubmitQ}>
+          <button className="qz-btn" disabled={chosen === undefined} onClick={handleSubmitQ}>
             Confirm Answer
           </button>
         ) : (
-          <button className="at-game-btn active" onClick={handleNext}>
-            {isLast ? '🏁 See Results' : 'Next Question →'}
+          <button className="qz-btn qz-btn--next" onClick={handleNext}>
+            {isLast ? 'See Results →' : 'Next Question →'}
           </button>
         )}
       </div>
+
     </div>
   )
 }
