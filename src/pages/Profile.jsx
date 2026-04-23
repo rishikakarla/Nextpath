@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 import { ROADMAP_PHASES } from '../data/appData'
+import BadgeModal from '../components/BadgeModal'
 
 const YEARS    = ['1st Year', '2nd Year', '3rd Year', '4th Year']
 const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other']
@@ -46,6 +47,7 @@ function EditBtn({ onClick }) {
 export default function Profile() {
   const { user, points, streak, progress, solvedProblems, quizAttempts, assessmentResult, updateProfile } = useApp()
 
+  const [sharingBadge, setSharingBadge] = useState(null)
   const [editSection, setEditSection] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saved,  setSaved]  = useState(false)
@@ -67,19 +69,6 @@ export default function Profile() {
   const phaseStats = ROADMAP_PHASES.map(phase => ({
     pct: Math.round((phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length / phase.topics.length) * 100),
   }))
-
-  const shareOnLinkedIn = (badge) => {
-    const now = new Date()
-    const params = new URLSearchParams({
-      startTask: 'CERTIFICATION_NAME',
-      name: `${badge.title} — NextPath`,
-      organizationName: 'NextPath Career Prep',
-      issueYear: now.getFullYear(),
-      issueMonth: now.getMonth() + 1,
-      certUrl: window.location.origin,
-    })
-    window.open(`https://www.linkedin.com/profile/add?${params}`, '_blank')
-  }
 
   const xpPerLevel = 50
   const xpInLvl    = points % xpPerLevel
@@ -130,6 +119,13 @@ export default function Profile() {
 
   return (
     <div className="gpf-page">
+      {sharingBadge && (
+        <BadgeModal
+          badge={sharingBadge}
+          rarityColor={RARITY[sharingBadge.rarity].color}
+          onClose={() => setSharingBadge(null)}
+        />
+      )}
 
       {/* ── COMPACT HERO ─────────────────────────────────────────────────── */}
       <div className="gpf-hero" style={{ '--rc': levelStyle.color, '--rg': levelStyle.glow }}>
@@ -339,7 +335,7 @@ export default function Profile() {
                     <div className="gpf-badge-hint">{a.desc}</div>
                     {a.unlocked && <div className="gpf-badge-dot" style={{ background: rc.color }} />}
                     {a.unlocked && (
-                      <button className="gpf-badge-linkedin" onClick={() => shareOnLinkedIn(a)} title="Add to LinkedIn Profile">
+                      <button className="gpf-badge-linkedin" onClick={() => setSharingBadge(a)} title="Share on LinkedIn">
                         in Add to LinkedIn
                       </button>
                     )}

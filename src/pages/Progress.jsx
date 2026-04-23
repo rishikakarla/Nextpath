@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 import { ROADMAP_PHASES } from '../data/appData'
+import BadgeModal from '../components/BadgeModal'
 
 const LEVELS = [
   { min: 0,    max: 99,   name: 'Rookie',   color: '#94a3b8', next: 100  },
@@ -47,6 +49,7 @@ function SkillBar({ label, sub, pct, color, icon, onClick }) {
 
 export default function Progress() {
   const navigate = useNavigate()
+  const [sharingBadge, setSharingBadge] = useState(null)
   const { user, progress, solvedProblems, streak, points, dailyTasks, quizAttempts } = useApp()
   const { aptitudeTopics, codingProblems } = useContent()
 
@@ -85,19 +88,6 @@ export default function Progress() {
 
   const isComplete = !!(user?.name && user?.college && user?.branch && user?.yearOfStudy && user?.careerGoal)
 
-  const shareOnLinkedIn = (badge) => {
-    const now = new Date()
-    const params = new URLSearchParams({
-      startTask: 'CERTIFICATION_NAME',
-      name: `${badge.title} — NextPath`,
-      organizationName: 'NextPath Career Prep',
-      issueYear: now.getFullYear(),
-      issueMonth: now.getMonth() + 1,
-      certUrl: window.location.origin,
-    })
-    window.open(`https://www.linkedin.com/profile/add?${params}`, '_blank')
-  }
-
   const ALL_ACHIEVEMENTS = [
     { icon: '💻', title: 'First Blood',    desc: 'Solve your first problem', rarity: 'common',    unlocked: solvedProblems.length >= 1  },
     { icon: '🔥', title: 'Problem Slayer', desc: 'Solve 5 problems',         rarity: 'common',    unlocked: solvedProblems.length >= 5  },
@@ -122,6 +112,13 @@ export default function Progress() {
 
   return (
     <div className="pr-root">
+      {sharingBadge && (
+        <BadgeModal
+          badge={sharingBadge}
+          rarityColor={RARITY[sharingBadge.rarity].color}
+          onClose={() => setSharingBadge(null)}
+        />
+      )}
 
       {/* ══ HERO ══════════════════════════════════════════════════════ */}
       <div className="pr-hero">
@@ -352,7 +349,7 @@ export default function Progress() {
                   <div className="gpf-badge-hint">{a.desc}</div>
                   {a.unlocked && <div className="gpf-badge-dot" style={{ background: rc.color }} />}
                   {a.unlocked && (
-                    <button className="gpf-badge-linkedin" onClick={() => shareOnLinkedIn(a)} title="Add to LinkedIn Profile">
+                    <button className="gpf-badge-linkedin" onClick={() => setSharingBadge(a)} title="Share on LinkedIn">
                       in Add to LinkedIn
                     </button>
                   )}

@@ -5252,3 +5252,42 @@ nav { flex: 1; padding: 12px 0; }
 }
 .gpf-badge--on:hover .gpf-badge-linkedin { display: block; }
 .gpf-badge-linkedin:hover { background: rgba(10, 102, 194, 0.2); }
+
+/* ── Badge Share Modal ─────────────────────────────────────────────────────── */
+.bm-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.bm-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px 28px 22px; max-width: 420px; width: 100%;
+  text-align: center; position: relative;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+.bm-close {
+  position: absolute; top: 14px; right: 16px; background: none; border: none;
+  font-size: 22px; color: var(--text-muted); cursor: pointer; line-height: 1;
+}
+.bm-close:hover { color: var(--text); }
+.bm-img {
+  width: 100%; border-radius: 14px; display: block;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+}
+.bm-title { font-size: 20px; font-weight: 800; color: var(--text); margin: 14px 0 4px; }
+.bm-desc  { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+.bm-actions { display: flex; gap: 10px; justify-content: center; }
+.bm-btn {
+  padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 700;
+  cursor: pointer; border: none; transition: all .15s;
+}
+.bm-btn--download {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+}
+.bm-btn--download:hover { background: var(--border); }
+.bm-btn--linkedin {
+  background: #0a66c2; color: #fff;
+  display: flex; align-items: center;
+}
+.bm-btn--linkedin:hover { background: #004182; }
+.bm-hint { font-size: 11px; color: var(--text-muted); margin: 12px 0 0; }
