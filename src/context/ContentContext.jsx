@@ -16,8 +16,8 @@ const SEEDED_PHASES = ROADMAP_PHASES.map(phase => ({
 const DEFAULT_ROADMAP = {
   beginner:     SEEDED_PHASES,
   beginnerPlus: SEEDED_PHASES,
-  intermediate: [],
-  advanced:     [],
+  intermediate: SEEDED_PHASES,
+  advanced:     SEEDED_PHASES,
 }
 
 export function ContentProvider({ children }) {
@@ -48,8 +48,8 @@ export function ContentProvider({ children }) {
         setter: d => setRoadmapPhases({
           beginner:     d.beginner     || (d.items || SEEDED_PHASES),
           beginnerPlus: d.beginnerPlus || SEEDED_PHASES,
-          intermediate: d.intermediate || [],
-          advanced:     d.advanced     || [],
+          intermediate: d.intermediate || SEEDED_PHASES,
+          advanced:     d.advanced     || SEEDED_PHASES,
         }),
       },
       {
