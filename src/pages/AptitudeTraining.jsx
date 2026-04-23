@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
 import { LEVEL_ORDER, getRecommendedLevel } from '../data/aptitudeData'
@@ -74,131 +74,233 @@ function TopicCard({ topic, attempts, recommended, onClick }) {
 }
 
 // ── Learn Tab ─────────────────────────────────────────────────────────────────
-const LEARN_SECTIONS = [
-  { key: 'description',  label: 'Overview',         icon: '📘', color: '#6366f1', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
-  { key: 'formulas',     label: 'Formulas',         icon: '🧮', color: '#0ea5e9', gradient: 'linear-gradient(135deg,#0ea5e9,#6366f1)' },
-  { key: 'tips',         label: 'Tips & Tricks',    icon: '💡', color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#ef4444)' },
-  { key: 'shortcuts',    label: 'Shortcuts',        icon: '⚡', color: '#10b981', gradient: 'linear-gradient(135deg,#10b981,#0ea5e9)' },
-  { key: 'howToSolve',   label: 'How to Solve',     icon: '🎯', color: '#ef4444', gradient: 'linear-gradient(135deg,#ef4444,#f59e0b)' },
-]
+function getYTId(url = '') {
+  const m = url.match(/[?&]v=([^&]{11})/) || url.match(/youtu\.be\/([^?]{11})/)
+  return m ? m[1] : null
+}
 
 function LearnTab({ topic }) {
   const m = topic.module
+  const secRef = useRef({})
+  const [active, setActive] = useState('overview')
+
+  const hasFormulas  = m.formulas?.length > 0
+  const hasTips      = m.tips?.length > 0
+  const hasShortcuts = m.shortcuts?.length > 0
+  const hasSteps     = m.howToSolve?.length > 0
+  const hasConcepts  = m.concepts?.length > 0
+  const hasVideos    = m.videos?.length > 0
+
+  const navItems = [
+    { key: 'overview',  icon: '📘', label: 'Overview' },
+    hasConcepts  && { key: 'concepts',  icon: '📖', label: 'Concepts',   count: m.concepts.length },
+    hasFormulas  && { key: 'formulas',  icon: '🧮', label: 'Formulas',   count: m.formulas.length },
+    hasTips      && { key: 'tips',      icon: '💡', label: 'Tips',       count: m.tips.length },
+    hasShortcuts && { key: 'shortcuts', icon: '⚡', label: 'Shortcuts',  count: m.shortcuts.length },
+    hasSteps     && { key: 'steps',     icon: '🎯', label: 'Steps' },
+    hasVideos    && { key: 'videos',    icon: '▶️', label: 'Videos',     count: m.videos.length },
+  ].filter(Boolean)
+
+  const scrollTo = key => {
+    secRef.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActive(key)
+  }
+
+  const statItems = [
+    hasFormulas  && { icon: '🧮', val: m.formulas.length,   lbl: 'Formulas' },
+    hasTips      && { icon: '💡', val: m.tips.length,       lbl: 'Tips' },
+    hasShortcuts && { icon: '⚡', val: m.shortcuts.length,  lbl: 'Shortcuts' },
+    hasSteps     && { icon: '🎯', val: m.howToSolve.length, lbl: 'Steps' },
+    hasConcepts  && { icon: '📖', val: m.concepts.length,   lbl: 'Concepts' },
+    hasVideos    && { icon: '▶️', val: m.videos.length,     lbl: 'Videos' },
+  ].filter(Boolean)
+
   return (
-    <div className="at-learn">
-      {/* Description */}
-      <div className="at-learn-section">
-        <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
-          <span className="at-learn-sec-icon">📘</span>
-          <span className="at-learn-sec-title">Overview</span>
+    <div className="al-wrap">
+
+      {/* ── Sticky section nav ── */}
+      <div className="al-nav">
+        {navItems.map(n => (
+          <button key={n.key} className={`al-nav-pill${active === n.key ? ' active' : ''}`} onClick={() => scrollTo(n.key)}>
+            <span className="al-nav-icon">{n.icon}</span>
+            <span className="al-nav-label">{n.label}</span>
+            {n.count != null && <span className="al-nav-badge">{n.count}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Overview ── */}
+      <div ref={el => secRef.current.overview = el} className="al-section">
+        <div className="al-sec-hdr" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+          <span className="al-sec-icon">📘</span>
+          <span className="al-sec-title">Overview</span>
         </div>
-        <div className="at-learn-sec-body">
-          <p className="at-learn-desc">{m.description}</p>
+        <div className="al-overview-body">
+          <p className="al-overview-text">{m.description}</p>
+          {statItems.length > 0 && (
+            <div className="al-stats-row">
+              {statItems.map((st, i) => (
+                <button key={i} className="al-stat-chip" onClick={() => scrollTo(
+                  st.lbl === 'Formulas' ? 'formulas' : st.lbl === 'Tips' ? 'tips' :
+                  st.lbl === 'Shortcuts' ? 'shortcuts' : st.lbl === 'Steps' ? 'steps' :
+                  st.lbl === 'Concepts' ? 'concepts' : 'videos'
+                )}>
+                  <span className="al-stat-icon">{st.icon}</span>
+                  <span className="al-stat-val">{st.val}</span>
+                  <span className="al-stat-lbl">{st.lbl}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Formulas */}
-      {m.formulas?.length > 0 && (
-        <div className="at-learn-section">
-          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)' }}>
-            <span className="at-learn-sec-icon">🧮</span>
-            <span className="at-learn-sec-title">Formulas</span>
+      {/* ── Concepts (admin-uploaded topics) ── */}
+      {hasConcepts && (
+        <div ref={el => secRef.current.concepts = el} className="al-section">
+          <div className="al-sec-hdr" style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)' }}>
+            <span className="al-sec-icon">📖</span>
+            <span className="al-sec-title">Concepts</span>
+            <span className="al-sec-count">{m.concepts.length}</span>
           </div>
-          <div className="at-learn-sec-body at-formulas-grid">
-            {m.formulas.map((f, i) => (
-              <div key={i} className="at-formula-card">
-                <div className="at-formula-label">{f.label}</div>
-                <div className="at-formula-value">{f.value}</div>
+          <div className="al-concepts-list">
+            {m.concepts.map((c, i) => (
+              <div key={i} className="al-concept-card">
+                <div className="al-concept-num">{String(i + 1).padStart(2, '0')}</div>
+                <div className="al-concept-body">
+                  {c.heading && <div className="al-concept-heading">{c.heading}</div>}
+                  <p className="al-concept-text" style={{ whiteSpace: 'pre-wrap' }}>{c.body}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Tips & Tricks */}
-      {m.tips?.length > 0 && (
-        <div className="at-learn-section">
-          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#f59e0b,#ef4444)' }}>
-            <span className="at-learn-sec-icon">💡</span>
-            <span className="at-learn-sec-title">Tips & Tricks</span>
+      {/* ── Formulas ── */}
+      {hasFormulas && (
+        <div ref={el => secRef.current.formulas = el} className="al-section">
+          <div className="al-sec-hdr" style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)' }}>
+            <span className="al-sec-icon">🧮</span>
+            <span className="al-sec-title">Formulas</span>
+            <span className="al-sec-count">{m.formulas.length}</span>
           </div>
-          <div className="at-learn-sec-body">
-            <ul className="at-learn-list at-tips-list">
-              {m.tips.map((t, i) => (
-                <li key={i} className="at-learn-list-item at-tip-item">
-                  <span className="at-list-bullet" style={{ background: 'linear-gradient(135deg,#f59e0b,#ef4444)' }}>💡</span>
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* Shortcuts */}
-      {m.shortcuts?.length > 0 && (
-        <div className="at-learn-section">
-          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#10b981,#0ea5e9)' }}>
-            <span className="at-learn-sec-icon">⚡</span>
-            <span className="at-learn-sec-title">Shortcuts</span>
-          </div>
-          <div className="at-learn-sec-body">
-            <ul className="at-learn-list at-shortcuts-list">
-              {m.shortcuts.map((s, i) => (
-                <li key={i} className="at-learn-list-item at-shortcut-item">
-                  <span className="at-shortcut-num">{i + 1}</span>
-                  <span>{s}</span>
-                </li>
-              ))}
-            </ul>
+          <div className="al-formulas-grid">
+            {m.formulas.map((f, i) => (
+              <div key={i} className="al-formula-card">
+                <div className="al-formula-top">
+                  <span className="al-formula-index">#{i + 1}</span>
+                  <span className="al-formula-label">{f.label}</span>
+                </div>
+                <div className="al-formula-value">{f.value}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* How to Solve */}
-      {m.howToSolve?.length > 0 && (
-        <div className="at-learn-section">
-          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#ef4444,#f59e0b)' }}>
-            <span className="at-learn-sec-icon">🎯</span>
-            <span className="at-learn-sec-title">How to Solve</span>
+      {/* ── Tips & Tricks ── */}
+      {hasTips && (
+        <div ref={el => secRef.current.tips = el} className="al-section">
+          <div className="al-sec-hdr" style={{ background: 'linear-gradient(135deg,#f59e0b,#ef4444)' }}>
+            <span className="al-sec-icon">💡</span>
+            <span className="al-sec-title">Tips & Tricks</span>
+            <span className="al-sec-count">{m.tips.length}</span>
           </div>
-          <div className="at-learn-sec-body">
-            <ol className="at-steps-list">
-              {m.howToSolve.map((step, i) => (
-                <li key={i} className="at-step-item">
-                  <div className="at-step-num">{i + 1}</div>
-                  <div className="at-step-text">{step}</div>
-                </li>
-              ))}
-            </ol>
+          <div className="al-tips-list">
+            {m.tips.map((tip, i) => (
+              <div key={i} className="al-tip-card">
+                <div className="al-tip-num">{String(i + 1).padStart(2, '0')}</div>
+                <span className="al-tip-bulb">💡</span>
+                <p className="al-tip-text">{tip}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Video Resources */}
-      {m.videos?.length > 0 && (
-        <div className="at-learn-section">
-          <div className="at-learn-sec-hdr" style={{ background: 'linear-gradient(135deg,#ff0000,#ff6b35)' }}>
-            <span className="at-learn-sec-icon">▶️</span>
-            <span className="at-learn-sec-title">Video Resources</span>
+      {/* ── Shortcuts ── */}
+      {hasShortcuts && (
+        <div ref={el => secRef.current.shortcuts = el} className="al-section">
+          <div className="al-sec-hdr" style={{ background: 'linear-gradient(135deg,#10b981,#0ea5e9)' }}>
+            <span className="al-sec-icon">⚡</span>
+            <span className="al-sec-title">Shortcuts</span>
+            <span className="al-sec-count">{m.shortcuts.length}</span>
           </div>
-          <div className="at-learn-sec-body">
-            <div className="at-videos-grid">
-              {m.videos.map((vid, i) => (
-                <a key={i} href={vid.url} target="_blank" rel="noopener noreferrer" className="at-video-card">
-                  <div className="at-video-thumb">
-                    <div className="at-video-play">▶</div>
+          <div className="al-shortcuts-list">
+            {m.shortcuts.map((sc, i) => (
+              <div key={i} className="al-shortcut-card">
+                <div className="al-shortcut-badge">
+                  <span>⚡</span><span>{i + 1}</span>
+                </div>
+                <p className="al-shortcut-text">{sc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── How to Solve — timeline ── */}
+      {hasSteps && (
+        <div ref={el => secRef.current.steps = el} className="al-section">
+          <div className="al-sec-hdr" style={{ background: 'linear-gradient(135deg,#ef4444,#f59e0b)' }}>
+            <span className="al-sec-icon">🎯</span>
+            <span className="al-sec-title">How to Solve</span>
+            <span className="al-sec-count">{m.howToSolve.length} steps</span>
+          </div>
+          <div className="al-timeline">
+            {m.howToSolve.map((step, i) => {
+              const text = step.replace(/^Step\s+\d+:\s*/i, '')
+              const isLast = i === m.howToSolve.length - 1
+              return (
+                <div key={i} className="al-timeline-row">
+                  <div className="al-timeline-spine">
+                    <div className="al-timeline-dot">{i + 1}</div>
+                    {!isLast && <div className="al-timeline-connector" />}
                   </div>
-                  <div className="at-video-info">
-                    <div className="at-video-title">{vid.title}</div>
-                    <div className="at-video-meta">
-                      {vid.channel && <span className="at-video-channel">📺 {vid.channel}</span>}
-                      {vid.duration && <span className="at-video-dur">⏱ {vid.duration}</span>}
+                  <div className={`al-timeline-card${isLast ? ' al-timeline-card--last' : ''}`}>
+                    <div className="al-timeline-step-tag">Step {i + 1}</div>
+                    <p className="al-timeline-text">{text}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Video Resources ── */}
+      {hasVideos && (
+        <div ref={el => secRef.current.videos = el} className="al-section">
+          <div className="al-sec-hdr" style={{ background: 'linear-gradient(135deg,#ff0000,#ff6b35)' }}>
+            <span className="al-sec-icon">▶️</span>
+            <span className="al-sec-title">Video Resources</span>
+            <span className="al-sec-count">{m.videos.length}</span>
+          </div>
+          <div className="al-videos-grid">
+            {m.videos.map((vid, i) => {
+              const ytId = getYTId(vid.url)
+              return (
+                <a key={i} href={vid.url} target="_blank" rel="noopener noreferrer" className="al-video-card">
+                  <div className="al-video-thumb">
+                    {ytId
+                      ? <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={vid.title} className="al-video-img" onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+                      : null
+                    }
+                    <div className="al-video-fallback" style={{ display: ytId ? 'none' : 'flex' }}>▶</div>
+                    <div className="al-video-overlay">▶ Watch</div>
+                  </div>
+                  <div className="al-video-info">
+                    <div className="al-video-title">{vid.title}</div>
+                    <div className="al-video-meta">
+                      {vid.channel && <span className="al-video-channel">📺 {vid.channel}</span>}
+                      {vid.duration && <span className="al-video-dur">⏱ {vid.duration}</span>}
                     </div>
+                    <div className="al-video-cta">Watch on YouTube ↗</div>
                   </div>
                 </a>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </div>
       )}
