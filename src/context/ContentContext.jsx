@@ -24,6 +24,7 @@ export function ContentProvider({ children }) {
   const [codingProblems, setCodingProblems] = useState(CODING_PROBLEMS)
   const [assessmentQuestions, setAssessmentQuestions] = useState(ASSESSMENT_QUESTIONS)
   const [roadmapPhases, setRoadmapPhases] = useState(DEFAULT_ROADMAP)
+  const [roadmapConfigured, setRoadmapConfigured] = useState({ beginner: true, beginnerPlus: true, intermediate: false, advanced: false })
   const [dailyTasks, setDailyTasks] = useState(DAILY_TASKS)
   const [aptitudeTopics, setAptitudeTopics] = useState(APTITUDE_TOPICS)
   const [dailyQuote, setDailyQuote] = useState({ text: '', author: '' })
@@ -45,12 +46,20 @@ export function ContentProvider({ children }) {
       {
         key: 'roadmapPhases',
         seed: DEFAULT_ROADMAP,
-        setter: d => setRoadmapPhases({
-          beginner:     d.beginner     || (d.items || SEEDED_PHASES),
-          beginnerPlus: d.beginnerPlus || SEEDED_PHASES,
-          intermediate: d.intermediate || SEEDED_PHASES,
-          advanced:     d.advanced     || SEEDED_PHASES,
-        }),
+        setter: d => {
+          setRoadmapPhases({
+            beginner:     d.beginner     || (d.items || SEEDED_PHASES),
+            beginnerPlus: d.beginnerPlus || SEEDED_PHASES,
+            intermediate: d.intermediate || SEEDED_PHASES,
+            advanced:     d.advanced     || SEEDED_PHASES,
+          })
+          setRoadmapConfigured({
+            beginner:     true,
+            beginnerPlus: true,
+            intermediate: !!(d.intermediate?.length),
+            advanced:     !!(d.advanced?.length),
+          })
+        },
       },
       {
         key: 'dailyTasks',
@@ -121,7 +130,7 @@ export function ContentProvider({ children }) {
   }
 
   return (
-    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, companies, updateContent }}>
+    <ContentContext.Provider value={{ codingProblems, assessmentQuestions, roadmapPhases, roadmapConfigured, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, companies, updateContent }}>
       {children}
     </ContentContext.Provider>
   )

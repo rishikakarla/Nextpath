@@ -30,7 +30,9 @@ function Avatar({ name, color, size = 44 }) {
 export default function MentorPortal() {
   const navigate = useNavigate()
   const { user, isMentor, mentorProfile } = useApp()
-  const { codingProblems, aptitudeTopics } = useContent()
+  const { codingProblems, aptitudeTopics, roadmapPhases, roadmapConfigured } = useContent()
+
+  const LEVEL_MAP = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'intermediate', Master: 'advanced' }
 
   const [students,   setStudents]   = useState([])
   const [selected,   setSelected]   = useState(null)
@@ -210,7 +212,7 @@ export default function MentorPortal() {
                   {[
                     { key: 'submissions', label: '💻 Code Submissions', count: Object.keys(subs).length },
                     { key: 'quiz',        label: '🧮 Quiz Attempts',    count: Object.keys(attempts).length },
-                    { key: 'roadmap',     label: '🗺️ Roadmap',          count: `${completedTopics.length}/${ROADMAP_PHASES.reduce((a,p)=>a+p.topics.length,0)}` },
+                    { key: 'roadmap',     label: '🗺️ Roadmap',          count: (() => { const lk = LEVEL_MAP[studentData?.assessmentResult?.level]; const phases = lk ? (roadmapPhases[lk] || []) : []; const total = phases.reduce((a,p)=>a+p.topics.length,0); return total ? `${completedTopics.length}/${total}` : '—' })() },
                   ].map(t => (
                     <button key={t.key} className={`mp-tab${activeTab === t.key ? ' active' : ''}`} onClick={() => setActiveTab(t.key)}>
                       {t.label} <span className="mp-tab-count">{t.count}</span>
@@ -307,40 +309,63 @@ export default function MentorPortal() {
                 )}
 
                 {/* ── Roadmap Progress ── */}
-                {activeTab === 'roadmap' && (
-                  <div className="mp-tab-body">
-                    {ROADMAP_PHASES.map((phase, pi) => {
-                      const done = phase.topics.filter(t => completedTopics.includes(t.id)).length
-                      const pct  = Math.round((done / phase.topics.length) * 100)
-                      const color = pct === 100 ? '#10b981' : pct > 50 ? '#6366f1' : '#94a3b8'
-                      return (
-                        <div key={pi} className="mp-phase-group">
-                          <div className="mp-phase-header">
-                            <span className="mp-phase-title">{phase.phase || phase.title}</span>
-                            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                              <span className="mp-phase-count">{done}/{phase.topics.length} topics</span>
-                              <span className="mp-phase-pct" style={{ color }}>{pct}%</span>
+                {activeTab === 'roadmap' && (() => {
+                  const studentLevel = studentData?.assessmentResult?.level
+                  const levelKey     = studentLevel ? (LEVEL_MAP[studentLevel] || 'beginner') : null
+                  const isConfigured = levelKey ? roadmapConfigured[levelKey] : false
+                  const phases       = levelKey ? (roadmapPhases[levelKey] || []) : []
+
+                  if (!levelKey) return (
+                    <div className="mp-tab-body">
+                      <div className="mp-empty-tab">Student hasn't taken the assessment yet</div>
+                    </div>
+                  )
+                  if (!isConfigured) return (
+                    <div className="mp-tab-body">
+                      <div className="mp-roadmap-unconfigured">
+                        <div style={{ fontSize: 36, marginBottom: 10 }}>🗺️</div>
+                        <div style={{ fontWeight: 700, marginBottom: 6 }}>Roadmap not configured for {studentLevel} level</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                          The admin hasn't added roadmap content for the <strong>{studentLevel}</strong> track yet.
+                        </div>
+                      </div>
+                    </div>
+                  )
+                  return (
+                    <div className="mp-tab-body">
+                      {phases.map((phase, pi) => {
+                        const done  = phase.topics.filter(t => completedTopics.includes(t.id)).length
+                        const pct   = Math.round((done / phase.topics.length) * 100)
+                        const color = pct === 100 ? '#10b981' : pct > 50 ? '#6366f1' : '#94a3b8'
+                        return (
+                          <div key={pi} className="mp-phase-group">
+                            <div className="mp-phase-header">
+                              <span className="mp-phase-title">{phase.phase || phase.title}</span>
+                              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                <span className="mp-phase-count">{done}/{phase.topics.length} topics</span>
+                                <span className="mp-phase-pct" style={{ color }}>{pct}%</span>
+                              </div>
+                            </div>
+                            <div className="mp-phase-bar-wrap">
+                              <div className="mp-phase-bar" style={{ width: `${pct}%`, background: color }} />
+                            </div>
+                            <div className="mp-topics-list">
+                              {phase.topics.map(topic => {
+                                const isDone = completedTopics.includes(topic.id)
+                                return (
+                                  <div key={topic.id} className={`mp-topic-item${isDone ? ' done' : ''}`}>
+                                    <span className={`mp-topic-check${isDone ? ' done' : ''}`}>{isDone ? '✓' : '○'}</span>
+                                    <span className="mp-topic-name">{topic.title}</span>
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
-                          <div className="mp-phase-bar-wrap">
-                            <div className="mp-phase-bar" style={{ width: `${pct}%`, background: color }} />
-                          </div>
-                          <div className="mp-topics-list">
-                            {phase.topics.map(topic => {
-                              const isDone = completedTopics.includes(topic.id)
-                              return (
-                                <div key={topic.id} className={`mp-topic-item${isDone ? ' done' : ''}`}>
-                                  <span className={`mp-topic-check${isDone ? ' done' : ''}`}>{isDone ? '✓' : '○'}</span>
-                                  <span className="mp-topic-name">{topic.title}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* Feedback form */}
