@@ -5354,3 +5354,15 @@ nav { flex: 1; padding: 12px 0; }
 .mp-topic-check { font-size: 13px; font-weight: 700; width: 18px; text-align: center; color: var(--border); flex-shrink: 0; }
 .mp-topic-check.done { color: #10b981; }
 .mp-topic-name { font-size: 13px; }
+
+/* Submission date tag — visible pill next to attempt number */
+.mp-sub-date-tag {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

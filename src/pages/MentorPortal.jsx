@@ -224,8 +224,9 @@ export default function MentorPortal() {
                     {Object.keys(subs).length === 0 ? (
                       <div className="mp-empty-tab">No code submissions yet</div>
                     ) : Object.entries(subs).map(([pid, list]) => {
-                      const problem = codingProblems.find(p => String(p.id) === String(pid))
-                      const accepted = list.filter(s => s.verdict === 'Accepted').length
+                      const problem  = codingProblems.find(p => String(p.id) === String(pid))
+                      const sorted   = [...list].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+                      const accepted = sorted.filter(s => s.verdict === 'Accepted').length
                       return (
                         <div key={pid} className="mp-prob-group">
                           <div className="mp-prob-header">
@@ -235,17 +236,17 @@ export default function MentorPortal() {
                               {problem?.difficulty && <span className={`mp-prob-diff mp-diff-${(problem.difficulty||'').toLowerCase()}`}>{problem.difficulty}</span>}
                             </div>
                             <span className={`mp-acc-badge ${accepted > 0 ? 'pass' : 'fail'}`}>
-                              {accepted}/{list.length} Accepted
+                              {accepted}/{sorted.length} Accepted
                             </span>
                           </div>
-                          {list.map((sub, i) => (
+                          {sorted.map((sub, i) => (
                             <div key={i} className="mp-sub-row">
-                              <span className="mp-sub-num">#{list.length - i}</span>
+                              <span className="mp-sub-num">#{i + 1}</span>
+                              <span className="mp-sub-date-tag">{fmtDate(sub.date)}</span>
                               <span className="mp-sub-lang">{sub.language || '—'}</span>
                               <span className={`mp-sub-verdict ${sub.verdict === 'Accepted' ? 'pass' : 'fail'}`}>
                                 {sub.verdict || 'Submitted'}
                               </span>
-                              <span className="mp-sub-date">{fmtDate(sub.date)}</span>
                               {sub.code && (
                                 <details className="mp-sub-code-wrap">
                                   <summary>View Code</summary>
