@@ -5291,3 +5291,66 @@ nav { flex: 1; padding: 12px 0; }
 }
 .bm-btn--linkedin:hover { background: #004182; }
 .bm-hint { font-size: 11px; color: var(--text-muted); margin: 12px 0 0; }
+
+/* ── Mentor Portal: Activity Tabs ─────────────────────────────────────────── */
+.mp-tabs { display: flex; gap: 2px; background: var(--bg); border-radius: 12px 12px 0 0; padding: 6px 6px 0; border-bottom: 1px solid var(--border); }
+.mp-tab { padding: 9px 16px; border-radius: 8px 8px 0 0; border: none; background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s; white-space: nowrap; }
+.mp-tab:hover { color: var(--text); background: var(--card); }
+.mp-tab.active { color: var(--primary); background: var(--card); border-bottom: 2px solid var(--primary); }
+.mp-tab-count { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--bg); color: var(--text-muted); font-weight: 700; }
+.mp-tab.active .mp-tab-count { background: var(--primary-light); color: var(--primary); }
+.mp-tab-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.mp-empty-tab { text-align: center; padding: 32px; color: var(--text-muted); font-size: 14px; }
+
+/* Problem groups */
+.mp-prob-group { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.mp-prob-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.mp-prob-title { font-size: 14px; font-weight: 700; color: var(--text); margin-right: 6px; }
+.mp-prob-cat { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: rgba(99,102,241,.1); color: #6366f1; font-weight: 600; margin-right: 4px; }
+.mp-prob-diff { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+.mp-diff-easy   { background: rgba(16,185,129,.1); color: #10b981; }
+.mp-diff-medium { background: rgba(245,158,11,.1);  color: #f59e0b; }
+.mp-diff-hard   { background: rgba(239,68,68,.1);   color: #ef4444; }
+.mp-acc-badge { font-size: 11px; padding: 3px 10px; border-radius: 99px; font-weight: 700; white-space: nowrap; }
+.mp-acc-badge.pass { background: rgba(16,185,129,.12); color: #10b981; }
+.mp-acc-badge.fail { background: rgba(239,68,68,.1);   color: #ef4444; }
+.mp-sub-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; font-size: 13px; }
+.mp-sub-row:last-child { border-bottom: none; }
+.mp-sub-num  { font-size: 11px; color: var(--text-muted); width: 24px; flex-shrink: 0; }
+.mp-sub-lang { font-size: 12px; color: var(--text-secondary); min-width: 60px; }
+.mp-sub-verdict { font-size: 12px; font-weight: 700; min-width: 80px; }
+.mp-sub-verdict.pass { color: #10b981; }
+.mp-sub-verdict.fail { color: #ef4444; }
+.mp-sub-date { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+.mp-sub-code-wrap { width: 100%; margin-top: 6px; }
+.mp-sub-code-wrap summary { font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600; }
+.mp-sub-code { font-size: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow-x: auto; margin-top: 6px; white-space: pre; color: var(--text); line-height: 1.5; }
+
+/* Quiz groups */
+.mp-quiz-group { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.mp-quiz-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+.mp-quiz-topic { font-size: 14px; font-weight: 700; color: var(--text); margin-right: 6px; }
+.mp-quiz-att-count { font-size: 12px; color: var(--text-muted); }
+.mp-quiz-summary { display: flex; gap: 20px; padding: 8px 14px; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+.mp-att-row { display: flex; align-items: center; gap: 10px; padding: 7px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.mp-att-row:last-child { border-bottom: none; }
+.mp-att-num  { color: var(--text-muted); width: 28px; flex-shrink: 0; }
+.mp-att-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.mp-att-bar  { height: 100%; border-radius: 99px; transition: width .4s ease; }
+.mp-att-score { font-weight: 700; font-size: 13px; min-width: 38px; text-align: right; }
+.mp-att-date { font-size: 11px; color: var(--text-muted); min-width: 70px; text-align: right; }
+
+/* Roadmap groups */
+.mp-phase-group { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.mp-phase-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
+.mp-phase-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.mp-phase-count { font-size: 12px; color: var(--text-secondary); }
+.mp-phase-pct   { font-size: 13px; font-weight: 800; min-width: 36px; text-align: right; }
+.mp-phase-bar-wrap { height: 4px; background: var(--border); }
+.mp-phase-bar { height: 100%; transition: width .4s ease; }
+.mp-topics-list { display: grid; grid-template-columns: 1fr 1fr; padding: 10px 14px; gap: 6px; }
+.mp-topic-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; font-size: 13px; color: var(--text-secondary); }
+.mp-topic-item.done { color: var(--text); }
+.mp-topic-check { font-size: 13px; font-weight: 700; width: 18px; text-align: center; color: var(--border); flex-shrink: 0; }
+.mp-topic-check.done { color: #10b981; }
+.mp-topic-name { font-size: 13px; }

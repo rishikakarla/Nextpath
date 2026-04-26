@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useContent } from '../context/ContentContext'
+import { ROADMAP_PHASES } from '../data/appData'
 import { db } from '../firebase'
 import { collection, getDocs, getDoc, doc, setDoc } from 'firebase/firestore'
 
@@ -28,6 +30,7 @@ function Avatar({ name, color, size = 44 }) {
 export default function MentorPortal() {
   const navigate = useNavigate()
   const { user, isMentor, mentorProfile } = useApp()
+  const { codingProblems, aptitudeTopics } = useContent()
 
   const [students,   setStudents]   = useState([])
   const [selected,   setSelected]   = useState(null)
@@ -43,6 +46,7 @@ export default function MentorPortal() {
   const [notes,      setNotes]      = useState('')
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState('')
+  const [activeTab,  setActiveTab]  = useState('submissions')
 
   useEffect(() => {
     if (!isMentor) return
@@ -58,6 +62,7 @@ export default function MentorPortal() {
     setStudentData(null)
     setFeedbacks([])
     setSaved('')
+    setActiveTab('submissions')
     setLoadingD(true)
 
     try {
@@ -118,10 +123,13 @@ export default function MentorPortal() {
     !search || s.name?.toLowerCase().includes(search.toLowerCase()) || s.college?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const profile   = studentData?.profile   || {}
-  const solveds   = studentData?.solvedProblems || []
-  const subs      = studentData?.codingSubmissions || {}
-  const attempts  = studentData?.quizAttempts || {}
+  const profile         = studentData?.profile            || {}
+  const solveds         = studentData?.solvedProblems      || []
+  const subs            = studentData?.codingSubmissions   || {}
+  const attempts        = studentData?.quizAttempts        || {}
+  const completedTopics = studentData?.progress?.completedTopics || []
+
+  const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
   return (
     <div className="mp-root">
@@ -195,33 +203,144 @@ export default function MentorPortal() {
                 </div>
               </div>
 
-              {/* Submissions */}
-              {Object.keys(subs).length > 0 && (
-                <div className="mp-section">
-                  <div className="mp-section-title">Recent Code Submissions</div>
-                  <div className="mp-subs-list">
-                    {Object.entries(subs).slice(0, 6).map(([pid, list]) => {
-                      const latest = list[0]
+              {/* Activity Tabs */}
+              <div className="mp-section" style={{ padding: 0 }}>
+                {/* Tab bar */}
+                <div className="mp-tabs">
+                  {[
+                    { key: 'submissions', label: '💻 Code Submissions', count: Object.keys(subs).length },
+                    { key: 'quiz',        label: '🧮 Quiz Attempts',    count: Object.keys(attempts).length },
+                    { key: 'roadmap',     label: '🗺️ Roadmap',          count: `${completedTopics.length}/${ROADMAP_PHASES.reduce((a,p)=>a+p.topics.length,0)}` },
+                  ].map(t => (
+                    <button key={t.key} className={`mp-tab${activeTab === t.key ? ' active' : ''}`} onClick={() => setActiveTab(t.key)}>
+                      {t.label} <span className="mp-tab-count">{t.count}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* ── Code Submissions ── */}
+                {activeTab === 'submissions' && (
+                  <div className="mp-tab-body">
+                    {Object.keys(subs).length === 0 ? (
+                      <div className="mp-empty-tab">No code submissions yet</div>
+                    ) : Object.entries(subs).map(([pid, list]) => {
+                      const problem = codingProblems.find(p => String(p.id) === String(pid))
+                      const accepted = list.filter(s => s.verdict === 'Accepted').length
                       return (
-                        <div key={pid} className="mp-sub-row">
-                          <div className="mp-sub-pid">Problem #{pid}</div>
-                          <div className="mp-sub-lang">{latest.language || 'Unknown'}</div>
-                          <div className={`mp-sub-verdict ${latest.verdict === 'Accepted' ? 'pass' : 'fail'}`}>
-                            {latest.verdict || 'Submitted'}
+                        <div key={pid} className="mp-prob-group">
+                          <div className="mp-prob-header">
+                            <div>
+                              <span className="mp-prob-title">{problem?.title || `Problem #${pid}`}</span>
+                              {problem?.category && <span className="mp-prob-cat">{problem.category}</span>}
+                              {problem?.difficulty && <span className={`mp-prob-diff mp-diff-${(problem.difficulty||'').toLowerCase()}`}>{problem.difficulty}</span>}
+                            </div>
+                            <span className={`mp-acc-badge ${accepted > 0 ? 'pass' : 'fail'}`}>
+                              {accepted}/{list.length} Accepted
+                            </span>
                           </div>
-                          <div className="mp-sub-date">{latest.date ? new Date(latest.date).toLocaleDateString() : ''}</div>
-                          {latest.code && (
-                            <details className="mp-sub-code-wrap">
-                              <summary>View Code</summary>
-                              <pre className="mp-sub-code">{latest.code}</pre>
-                            </details>
-                          )}
+                          {list.map((sub, i) => (
+                            <div key={i} className="mp-sub-row">
+                              <span className="mp-sub-num">#{list.length - i}</span>
+                              <span className="mp-sub-lang">{sub.language || '—'}</span>
+                              <span className={`mp-sub-verdict ${sub.verdict === 'Accepted' ? 'pass' : 'fail'}`}>
+                                {sub.verdict || 'Submitted'}
+                              </span>
+                              <span className="mp-sub-date">{fmtDate(sub.date)}</span>
+                              {sub.code && (
+                                <details className="mp-sub-code-wrap">
+                                  <summary>View Code</summary>
+                                  <pre className="mp-sub-code">{sub.code}</pre>
+                                </details>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )
                     })}
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* ── Quiz Attempts ── */}
+                {activeTab === 'quiz' && (
+                  <div className="mp-tab-body">
+                    {Object.keys(attempts).length === 0 ? (
+                      <div className="mp-empty-tab">No quiz attempts yet</div>
+                    ) : Object.entries(attempts).map(([topicId, attemptList]) => {
+                      const topic = aptitudeTopics.find(t => t.id === topicId)
+                      const scores = attemptList.map(a => a.score || 0)
+                      const best = Math.max(...scores)
+                      const avg  = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                      const passed = best >= 60
+                      return (
+                        <div key={topicId} className="mp-quiz-group">
+                          <div className="mp-quiz-header">
+                            <div>
+                              <span className="mp-quiz-topic">{topic?.title || topicId}</span>
+                              {topic?.category && <span className="mp-prob-cat">{topic.category}</span>}
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                              <span className={`mp-acc-badge ${passed ? 'pass' : 'fail'}`}>{passed ? '✓ Passed' : '✗ Not passed'}</span>
+                              <span className="mp-quiz-att-count">{attemptList.length} attempt{attemptList.length !== 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
+                          <div className="mp-quiz-summary">
+                            <span>Best: <strong style={{ color: passed ? '#10b981' : '#ef4444' }}>{best}%</strong></span>
+                            <span>Avg: <strong>{avg}%</strong></span>
+                          </div>
+                          {attemptList.map((att, i) => (
+                            <div key={i} className="mp-att-row">
+                              <span className="mp-att-num">#{i + 1}</span>
+                              <div className="mp-att-bar-wrap">
+                                <div className="mp-att-bar" style={{ width: `${att.score || 0}%`, background: (att.score || 0) >= 60 ? '#10b981' : '#ef4444' }} />
+                              </div>
+                              <span className="mp-att-score" style={{ color: (att.score || 0) >= 60 ? '#10b981' : '#ef4444' }}>
+                                {att.score || 0}%
+                              </span>
+                              <span className="mp-att-date">{fmtDate(att.date)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* ── Roadmap Progress ── */}
+                {activeTab === 'roadmap' && (
+                  <div className="mp-tab-body">
+                    {ROADMAP_PHASES.map((phase, pi) => {
+                      const done = phase.topics.filter(t => completedTopics.includes(t.id)).length
+                      const pct  = Math.round((done / phase.topics.length) * 100)
+                      const color = pct === 100 ? '#10b981' : pct > 50 ? '#6366f1' : '#94a3b8'
+                      return (
+                        <div key={pi} className="mp-phase-group">
+                          <div className="mp-phase-header">
+                            <span className="mp-phase-title">{phase.phase || phase.title}</span>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                              <span className="mp-phase-count">{done}/{phase.topics.length} topics</span>
+                              <span className="mp-phase-pct" style={{ color }}>{pct}%</span>
+                            </div>
+                          </div>
+                          <div className="mp-phase-bar-wrap">
+                            <div className="mp-phase-bar" style={{ width: `${pct}%`, background: color }} />
+                          </div>
+                          <div className="mp-topics-list">
+                            {phase.topics.map(topic => {
+                              const isDone = completedTopics.includes(topic.id)
+                              return (
+                                <div key={topic.id} className={`mp-topic-item${isDone ? ' done' : ''}`}>
+                                  <span className={`mp-topic-check${isDone ? ' done' : ''}`}>{isDone ? '✓' : '○'}</span>
+                                  <span className="mp-topic-name">{topic.title}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
 
               {/* Feedback form */}
               <div className="mp-section">
