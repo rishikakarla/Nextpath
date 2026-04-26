@@ -227,7 +227,7 @@ export default function MentorPortal() {
                       <div className="mp-empty-tab">No code submissions yet</div>
                     ) : Object.entries(subs).map(([pid, list]) => {
                       const problem  = codingProblems.find(p => String(p.id) === String(pid))
-                      const sorted   = [...list].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+                      const sorted   = [...list].sort((a, b) => new Date(b.submittedAt || b.date || 0) - new Date(a.submittedAt || a.date || 0))
                       const accepted = sorted.filter(s => s.verdict === 'Accepted').length
                       return (
                         <div key={pid} className="mp-prob-group">
@@ -244,7 +244,7 @@ export default function MentorPortal() {
                           {sorted.map((sub, i) => (
                             <div key={i} className="mp-sub-row">
                               <span className="mp-sub-num">#{i + 1}</span>
-                              <span className="mp-sub-date-tag">{fmtDate(sub.date)}</span>
+                              <span className="mp-sub-date-tag">{fmtDate(sub.submittedAt || sub.date)}</span>
                               <span className="mp-sub-lang">{sub.language || '—'}</span>
                               <span className={`mp-sub-verdict ${sub.verdict === 'Accepted' ? 'pass' : 'fail'}`}>
                                 {sub.verdict || 'Submitted'}
