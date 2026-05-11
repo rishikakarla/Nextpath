@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
-import { ROADMAP_PHASES } from '../data/appData'
 import { db } from '../firebase'
 import { collection, getDocs, getDoc, doc, setDoc } from 'firebase/firestore'
 

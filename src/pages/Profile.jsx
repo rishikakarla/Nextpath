@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
-import { ROADMAP_PHASES } from '../data/appData'
 import BadgeModal from '../components/BadgeModal'
+
+const LEVEL_MAP = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'intermediate', Master: 'advanced' }
 
 const YEARS    = ['1st Year', '2nd Year', '3rd Year', '4th Year']
 const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other']
@@ -61,13 +62,15 @@ export default function Profile() {
 
   const isComplete = !!(user?.name && user?.college && user?.branch && user?.yearOfStudy && user?.careerGoal)
 
-  const { aptitudeTopics } = useContent()
+  const { aptitudeTopics, roadmapPhases: roadmapByLevel } = useContent()
   const aptitudePassed = aptitudeTopics.filter(t => {
     const best = (quizAttempts[t.id] || []).reduce((b, a) => a.score > (b?.score ?? -1) ? a : b, null)
     return best && best.score >= 60
   }).length
-  const phaseStats = ROADMAP_PHASES.map(phase => ({
-    pct: Math.round((phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length / phase.topics.length) * 100),
+  const userLevelKey = assessmentResult?.level ? (LEVEL_MAP[assessmentResult.level] || 'beginner') : null
+  const userPhases   = userLevelKey ? (roadmapByLevel[userLevelKey] || []) : []
+  const phaseStats   = userPhases.map(phase => ({
+    pct: phase.topics.length ? Math.round((phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length / phase.topics.length) * 100) : 0,
   }))
 
   const xpPerLevel = 50

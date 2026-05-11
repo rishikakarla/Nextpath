@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
-import { ROADMAP_PHASES } from '../data/appData'
 import BadgeModal from '../components/BadgeModal'
+
+const LEVEL_MAP = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'intermediate', Master: 'advanced' }
 
 const LEVELS = [
   { min: 0,    max: 99,   name: 'Rookie',   color: '#94a3b8', next: 100  },
@@ -50,11 +51,14 @@ function SkillBar({ label, sub, pct, color, icon, onClick }) {
 export default function Progress() {
   const navigate = useNavigate()
   const [sharingBadge, setSharingBadge] = useState(null)
-  const { user, progress, solvedProblems, streak, points, dailyTasks, quizAttempts } = useApp()
-  const { aptitudeTopics, codingProblems } = useContent()
+  const { user, progress, solvedProblems, streak, points, dailyTasks, quizAttempts, assessmentResult } = useApp()
+  const { aptitudeTopics, codingProblems, roadmapPhases: roadmapByLevel } = useContent()
+
+  const userLevelKey = assessmentResult?.level ? (LEVEL_MAP[assessmentResult.level] || 'beginner') : null
+  const userPhases   = userLevelKey ? (roadmapByLevel[userLevelKey] || []) : []
 
   const TOTAL_PROBLEMS  = codingProblems.length || 1
-  const TOTAL_TOPICS    = ROADMAP_PHASES.reduce((a, p) => a + p.topics.length, 0)
+  const TOTAL_TOPICS    = userPhases.reduce((a, p) => a + p.topics.length, 0)
   const completedTopics = progress.completedTopics?.length ?? 0
   const tasksToday      = [dailyTasks.coding, dailyTasks.aptitude, dailyTasks.revision].filter(Boolean).length
   const activeDays      = streak.history?.length ?? 0
@@ -74,9 +78,9 @@ export default function Progress() {
     return { cat, solved, total, pct: total ? Math.round((solved / total) * 100) : 0 }
   })
 
-  const phaseStats = ROADMAP_PHASES.map(phase => {
+  const phaseStats = userPhases.map(phase => {
     const done = phase.topics.filter(t => progress.completedTopics?.includes(t.id)).length
-    return { ...phase, done, pct: Math.round((done / phase.topics.length) * 100) }
+    return { ...phase, done, pct: phase.topics.length ? Math.round((done / phase.topics.length) * 100) : 0 }
   })
 
   // Level / XP

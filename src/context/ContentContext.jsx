@@ -1,61 +1,48 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
-import { ASSESSMENT_QUESTIONS, ROADMAP_PHASES, DAILY_TASKS } from '../data/appData'
-import { CODING_PROBLEMS } from '../data/codingProblems'
-import { APTITUDE_TOPICS } from '../data/aptitudeData'
-import { COMPANIES } from '../data/companyData'
 
 const ContentContext = createContext(null)
 
-const SEEDED_PHASES = ROADMAP_PHASES.map(phase => ({
-  ...phase,
-  topics: phase.topics.map(topic => ({ ...topic, description: '', resources: [], quiz: [] })),
-}))
-
-const DEFAULT_ROADMAP = {
-  beginner:     SEEDED_PHASES,
-  beginnerPlus: SEEDED_PHASES,
-  intermediate: SEEDED_PHASES,
-  advanced:     SEEDED_PHASES,
-}
+const EMPTY_ROADMAP    = { beginner: [], beginnerPlus: [], intermediate: [], advanced: [] }
+const EMPTY_DAILY_TASKS = { coding: null, aptitude: null, revision: null }
 
 export function ContentProvider({ children }) {
-  const [codingProblems, setCodingProblems] = useState(CODING_PROBLEMS)
-  const [assessmentQuestions, setAssessmentQuestions] = useState(ASSESSMENT_QUESTIONS)
-  const [roadmapPhases, setRoadmapPhases] = useState(DEFAULT_ROADMAP)
-  const [roadmapConfigured, setRoadmapConfigured] = useState({ beginner: true, beginnerPlus: true, intermediate: false, advanced: false })
-  const [dailyTasks, setDailyTasks] = useState(DAILY_TASKS)
-  const [aptitudeTopics, setAptitudeTopics] = useState(APTITUDE_TOPICS)
-  const [dailyQuote, setDailyQuote] = useState({ text: '', author: '' })
-  const [companyProblems, setCompanyProblems] = useState({})
-  const [companies, setCompanies] = useState(COMPANIES)
+  const [codingProblems,     setCodingProblems]     = useState([])
+  const [assessmentQuestions, setAssessmentQuestions] = useState([])
+  const [roadmapPhases,      setRoadmapPhases]      = useState(EMPTY_ROADMAP)
+  const [roadmapConfigured,  setRoadmapConfigured]  = useState({ beginner: false, beginnerPlus: false, intermediate: false, advanced: false })
+  const [dailyTasks,         setDailyTasks]         = useState(EMPTY_DAILY_TASKS)
+  const [aptitudeTopics,     setAptitudeTopics]     = useState([])
+  const [dailyQuote,         setDailyQuote]         = useState({ text: '', author: '' })
+  const [companyProblems,    setCompanyProblems]    = useState({})
+  const [companies,          setCompanies]          = useState([])
 
   useEffect(() => {
     const entries = [
       {
         key: 'codingProblems',
-        seed: { items: CODING_PROBLEMS },
-        setter: d => setCodingProblems(d.items || CODING_PROBLEMS),
+        seed: { items: [] },
+        setter: d => setCodingProblems(d.items || []),
       },
       {
         key: 'assessmentQuestions',
-        seed: { items: ASSESSMENT_QUESTIONS },
-        setter: d => setAssessmentQuestions(d.items || ASSESSMENT_QUESTIONS),
+        seed: { items: [] },
+        setter: d => setAssessmentQuestions(d.items || []),
       },
       {
         key: 'roadmapPhases',
-        seed: DEFAULT_ROADMAP,
+        seed: EMPTY_ROADMAP,
         setter: d => {
           setRoadmapPhases({
-            beginner:     d.beginner     || (d.items || SEEDED_PHASES),
-            beginnerPlus: d.beginnerPlus || SEEDED_PHASES,
-            intermediate: d.intermediate || SEEDED_PHASES,
-            advanced:     d.advanced     || SEEDED_PHASES,
+            beginner:     d.beginner     || [],
+            beginnerPlus: d.beginnerPlus || [],
+            intermediate: d.intermediate || [],
+            advanced:     d.advanced     || [],
           })
           setRoadmapConfigured({
-            beginner:     true,
-            beginnerPlus: true,
+            beginner:     !!(d.beginner?.length),
+            beginnerPlus: !!(d.beginnerPlus?.length),
             intermediate: !!(d.intermediate?.length),
             advanced:     !!(d.advanced?.length),
           })
@@ -63,29 +50,17 @@ export function ContentProvider({ children }) {
       },
       {
         key: 'dailyTasks',
-        seed: DAILY_TASKS,
+        seed: EMPTY_DAILY_TASKS,
         setter: d => setDailyTasks({
-          coding:   d.coding   || DAILY_TASKS.coding,
-          aptitude: d.aptitude || DAILY_TASKS.aptitude,
-          revision: d.revision || DAILY_TASKS.revision,
+          coding:   d.coding   || null,
+          aptitude: d.aptitude || null,
+          revision: d.revision || null,
         }),
       },
       {
         key: 'aptitudeTopics',
-        seed: { items: APTITUDE_TOPICS },
-        setter: d => {
-          const firestoreItems = d.items
-          if (!firestoreItems?.length) { setAptitudeTopics(APTITUDE_TOPICS); return }
-          const localById = Object.fromEntries(APTITUDE_TOPICS.map(t => [t.id, t]))
-          const merged = firestoreItems.map(fi => {
-            const local = localById[fi.id]
-            if (local) return { ...fi, module: local.module, quiz: local.quiz }
-            return fi
-          })
-          const firestoreIds = new Set(firestoreItems.map(fi => fi.id))
-          APTITUDE_TOPICS.forEach(local => { if (!firestoreIds.has(local.id)) merged.push(local) })
-          setAptitudeTopics(merged)
-        },
+        seed: { items: [] },
+        setter: d => setAptitudeTopics(d.items || []),
       },
       {
         key: 'dailyQuote',
@@ -99,8 +74,8 @@ export function ContentProvider({ children }) {
       },
       {
         key: 'companies',
-        seed: { items: COMPANIES },
-        setter: d => setCompanies(d.items || COMPANIES),
+        seed: { items: [] },
+        setter: d => setCompanies(d.items || []),
       },
     ]
 
@@ -123,7 +98,6 @@ export function ContentProvider({ children }) {
   }, [])
 
   const updateContent = async (type, data) => {
-    // companyProblems and roadmapPhases/dailyTasks/dailyQuote stored as-is; others wrapped in { items }
     const asIs = ['dailyTasks', 'roadmapPhases', 'dailyQuote', 'companyProblems']
     const payload = asIs.includes(type) ? data : { items: data }
     await setDoc(doc(db, 'content', type), payload)

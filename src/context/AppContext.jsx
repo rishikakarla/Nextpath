@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
-import { MOCK_LEADERBOARD } from '../data/appData'
 import { auth, db, googleProvider, githubProvider } from '../firebase'
 import {
   createUserWithEmailAndPassword,
@@ -339,8 +338,8 @@ export function AppProvider({ children }) {
       ? { id: user.uid, name: user.name, points, streak: streak.count, college: user.college || '', isMe: true }
       : null
     const base = myEntry
-      ? [...MOCK_LEADERBOARD.filter(e => e.id !== user?.uid), myEntry]
-      : MOCK_LEADERBOARD
+      ? [myEntry]
+      : []
     return base.sort((a, b) => b.points - a.points).map((e, i) => ({ ...e, rank: i + 1 }))
   }
 

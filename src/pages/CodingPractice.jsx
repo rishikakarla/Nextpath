@@ -141,8 +141,12 @@ export default function CodingPractice() {
         {/* Rows */}
         {filtered.length === 0 ? (
           <div className="cp-empty">
-            <div className="cp-empty-icon">🔍</div>
-            <div className="cp-empty-text">No problems match the current filters.</div>
+            <div className="cp-empty-icon">{codingProblems.length === 0 ? '📭' : '🔍'}</div>
+            <div className="cp-empty-text">
+              {codingProblems.length === 0
+                ? 'No coding problems have been added yet. Check back soon!'
+                : 'No problems match the current filters.'}
+            </div>
           </div>
         ) : (
           filtered.map((p, i) => {

@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
-import { LEVEL_ORDER, getRecommendedLevel } from '../data/aptitudeData'
+const LEVEL_ORDER = ['Rookie', 'Coder', 'Master']
+const getRecommendedLevel = r => r?.level || 'Rookie'
 
 function bestAttempt(attempts = []) {
   if (!attempts.length) return null
