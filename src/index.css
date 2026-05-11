@@ -5298,6 +5298,10 @@ nav { flex: 1; padding: 12px 0; }
 .mp-tab:hover { color: var(--text); background: var(--card); }
 .mp-tab.active { color: var(--primary); background: var(--card); border-bottom: 2px solid var(--primary); }
 .mp-tab-count { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--bg); color: var(--text-muted); font-weight: 700; }
+.mp-subtabs { display: flex; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 4px; flex-wrap: wrap; }
+.mp-subtab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s; }
+.mp-subtab:hover { border-color: var(--primary); color: var(--primary); }
+.mp-subtab.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
 .mp-tab.active .mp-tab-count { background: var(--primary-light); color: var(--primary); }
 .mp-tab-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 .mp-empty-tab { text-align: center; padding: 32px; color: var(--text-muted); font-size: 14px; }

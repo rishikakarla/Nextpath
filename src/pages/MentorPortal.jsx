@@ -48,6 +48,7 @@ export default function MentorPortal() {
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState('')
   const [activeTab,  setActiveTab]  = useState('submissions')
+  const [subTab,     setSubTab]     = useState('coding')
 
   useEffect(() => {
     if (!isMentor) return
@@ -64,6 +65,7 @@ export default function MentorPortal() {
     setFeedbacks([])
     setSaved('')
     setActiveTab('submissions')
+    setSubTab('coding')
     setLoadingD(true)
 
     try {
@@ -127,8 +129,15 @@ export default function MentorPortal() {
   const profile         = studentData?.profile            || {}
   const solveds         = studentData?.solvedProblems      || []
   const subs            = studentData?.codingSubmissions   || {}
+  const taskHistory     = studentData?.taskHistory         || {}
   const attempts        = studentData?.quizAttempts        || {}
   const completedTopics = studentData?.progress?.completedTopics || []
+
+  const dailyDays = Object.keys(taskHistory)
+    .filter(k => k.startsWith('day_'))
+    .sort((a, b) => Number(b.replace('day_', '')) - Number(a.replace('day_', '')))
+  const totalCodingSubs = Object.keys(subs).length
+  const totalDailySubs  = dailyDays.filter(k => Object.keys(taskHistory[k]).length > 0).length
 
   const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -222,43 +231,114 @@ export default function MentorPortal() {
                 {/* ── Code Submissions ── */}
                 {activeTab === 'submissions' && (
                   <div className="mp-tab-body">
-                    {Object.keys(subs).length === 0 ? (
-                      <div className="mp-empty-tab">No code submissions yet</div>
-                    ) : Object.entries(subs).map(([pid, list]) => {
-                      const problem  = codingProblems.find(p => String(p.id) === String(pid))
-                      const sorted   = [...list].sort((a, b) => new Date(b.submittedAt || b.date || 0) - new Date(a.submittedAt || a.date || 0))
-                      const accepted = sorted.filter(s => s.verdict === 'Accepted').length
-                      return (
-                        <div key={pid} className="mp-prob-group">
-                          <div className="mp-prob-header">
-                            <div>
-                              <span className="mp-prob-title">{problem?.title || `Problem #${pid}`}</span>
-                              {problem?.category && <span className="mp-prob-cat">{problem.category}</span>}
-                              {problem?.difficulty && <span className={`mp-prob-diff mp-diff-${(problem.difficulty||'').toLowerCase()}`}>{problem.difficulty}</span>}
-                            </div>
-                            <span className={`mp-acc-badge ${accepted > 0 ? 'pass' : 'fail'}`}>
-                              {accepted}/{sorted.length} Accepted
-                            </span>
-                          </div>
-                          {sorted.map((sub, i) => (
-                            <div key={i} className="mp-sub-row">
-                              <span className="mp-sub-num">#{i + 1}</span>
-                              <span className="mp-sub-date-tag">{fmtDate(sub.submittedAt || sub.date)}</span>
-                              <span className="mp-sub-lang">{sub.language || '—'}</span>
-                              <span className={`mp-sub-verdict ${sub.verdict === 'Accepted' ? 'pass' : 'fail'}`}>
-                                {sub.verdict || 'Submitted'}
+                    {/* Sub-tabs */}
+                    <div className="mp-subtabs">
+                      {[
+                        { key: 'coding',  label: '💻 Coding Practice', count: totalCodingSubs },
+                        { key: 'daily',   label: '📅 Daily Practice',  count: totalDailySubs  },
+                        { key: 'company', label: '🏢 Company Learning', count: 0               },
+                      ].map(t => (
+                        <button key={t.key} className={`mp-subtab${subTab === t.key ? ' active' : ''}`} onClick={() => setSubTab(t.key)}>
+                          {t.label} <span className="mp-tab-count">{t.count}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Coding Practice */}
+                    {subTab === 'coding' && (
+                      Object.keys(subs).length === 0 ? (
+                        <div className="mp-empty-tab">No coding practice submissions yet</div>
+                      ) : Object.entries(subs).map(([pid, list]) => {
+                        const problem  = codingProblems.find(p => String(p.id) === String(pid))
+                        const sorted   = [...list].sort((a, b) => new Date(b.submittedAt || b.date || 0) - new Date(a.submittedAt || a.date || 0))
+                        const accepted = sorted.filter(s => s.verdict === 'Accepted').length
+                        return (
+                          <div key={pid} className="mp-prob-group">
+                            <div className="mp-prob-header">
+                              <div>
+                                <span className="mp-prob-title">{problem?.title || `Problem #${pid}`}</span>
+                                {problem?.category && <span className="mp-prob-cat">{problem.category}</span>}
+                                {problem?.difficulty && <span className={`mp-prob-diff mp-diff-${(problem.difficulty||'').toLowerCase()}`}>{problem.difficulty}</span>}
+                              </div>
+                              <span className={`mp-acc-badge ${accepted > 0 ? 'pass' : 'fail'}`}>
+                                {accepted}/{sorted.length} Accepted
                               </span>
-                              {sub.code && (
-                                <details className="mp-sub-code-wrap">
-                                  <summary>View Code</summary>
-                                  <pre className="mp-sub-code">{sub.code}</pre>
-                                </details>
-                              )}
                             </div>
-                          ))}
-                        </div>
-                      )
-                    })}
+                            {sorted.map((sub, i) => (
+                              <div key={i} className="mp-sub-row">
+                                <span className="mp-sub-num">#{i + 1}</span>
+                                <span className="mp-sub-date-tag">{fmtDate(sub.submittedAt || sub.date)}</span>
+                                <span className="mp-sub-lang">{sub.language || '—'}</span>
+                                <span className={`mp-sub-verdict ${sub.verdict === 'Accepted' ? 'pass' : 'fail'}`}>
+                                  {sub.verdict || 'Submitted'}
+                                </span>
+                                {sub.code && (
+                                  <details className="mp-sub-code-wrap">
+                                    <summary>View Code</summary>
+                                    <pre className="mp-sub-code">{sub.code}</pre>
+                                  </details>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })
+                    )}
+
+                    {/* Daily Practice */}
+                    {subTab === 'daily' && (
+                      dailyDays.length === 0 ? (
+                        <div className="mp-empty-tab">No daily practice submissions yet</div>
+                      ) : dailyDays.map(dayKey => {
+                        const dayNum = dayKey.replace('day_', '')
+                        const daySubs = taskHistory[dayKey] || {}
+                        const sections = [
+                          { key: 'coding',   label: 'Coding Challenge', icon: '💻', color: '#6366f1' },
+                          { key: 'aptitude', label: 'Aptitude Quiz',    icon: '🧮', color: '#f59e0b' },
+                          { key: 'revision', label: 'Revision Quiz',     icon: '📖', color: '#10b981' },
+                        ].filter(s => daySubs[s.key])
+                        if (sections.length === 0) return null
+                        return (
+                          <div key={dayKey} className="mp-prob-group">
+                            <div className="mp-prob-header">
+                              <span className="mp-prob-title">Day {dayNum}</span>
+                              <span className="mp-acc-badge pass">{sections.length}/3 tasks done</span>
+                            </div>
+                            {sections.map(sec => {
+                              const s = daySubs[sec.key]
+                              const isQuiz = s.format === 'quiz'
+                              return (
+                                <div key={sec.key} className="mp-sub-row" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                                  <span className="mp-prob-cat" style={{ background: sec.color + '18', color: sec.color, borderColor: sec.color + '40' }}>{sec.icon} {sec.label}</span>
+                                  <span className="mp-sub-date-tag">{fmtDate(s.completedAt)}</span>
+                                  {isQuiz ? (
+                                    <>
+                                      <span className={`mp-sub-verdict ${(s.score || 0) >= 60 ? 'pass' : 'fail'}`}>
+                                        {s.score ?? 0}% · {s.correct ?? 0}/{s.total ?? 0} correct
+                                      </span>
+                                      <span className="mp-sub-lang">+{s.pts ?? 0} pts</span>
+                                      {s.timeTaken != null && <span className="mp-sub-lang">⏱ {Math.floor(s.timeTaken / 60)}m {s.timeTaken % 60}s</span>}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className={`mp-sub-verdict ${(s.score || 0) >= 60 ? 'pass' : 'fail'}`}>
+                                        {s.passed ?? 0}/{s.total ?? 0} tests · {s.score ?? 0}%
+                                      </span>
+                                      <span className="mp-sub-lang">+{s.pts ?? 0} pts</span>
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )
+                      })
+                    )}
+
+                    {/* Company Learning */}
+                    {subTab === 'company' && (
+                      <div className="mp-empty-tab">Company Learning activity is not tracked yet.</div>
+                    )}
                   </div>
                 )}
 
