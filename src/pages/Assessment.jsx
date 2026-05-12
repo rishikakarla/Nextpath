@@ -15,6 +15,8 @@ export default function Assessment() {
   const { saveAssessment } = useApp()
   const { assessmentQuestions } = useContent()
   const navigate = useNavigate()
+  const [showIntro, setShowIntro] = useState(true)
+  const [agreed,    setAgreed]    = useState(false)
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState({})
   const [selected, setSelected] = useState(null)
@@ -57,6 +59,61 @@ export default function Assessment() {
   const goToDashboard = () => navigate('/dashboard')
 
   const progress = ((current) / total) * 100
+
+  if (showIntro) {
+    return (
+      <div className="assessment-page">
+        <div className="asi-overlay">
+          <div className="asi-card">
+            <div className="asi-icon-wrap">
+              <span className="asi-icon">🧠</span>
+            </div>
+            <h2 className="asi-title">Skill Assessment</h2>
+            <p className="asi-subtitle">
+              This {assessmentQuestions.length || 15}-question test determines your current skill level and
+              personalises your entire learning journey — roadmap, practice problems, and daily challenges.
+            </p>
+
+            <div className="asi-warn-box">
+              <div className="asi-warn-title">⚠️ Important — Please Read</div>
+              <p className="asi-warn-body">
+                Attempt every question on your own, without searching for answers or copying responses.
+                If you do not, your roadmap will be set to a level above your actual skills, meaning:
+              </p>
+              <ul className="asi-warn-list">
+                <li>Your roadmap topics will be too advanced and confusing</li>
+                <li>Daily challenges and coding problems will feel impossible</li>
+                <li>You will lose XP, fall behind, and get less mentor support</li>
+                <li>The app cannot personalise your growth if the baseline is wrong</li>
+              </ul>
+              <p className="asi-warn-footer">
+                There is no shame in being a Rookie. Every expert started there.
+                An honest result is the only result that helps you grow.
+              </p>
+            </div>
+
+            <label className="asi-agree-row">
+              <input
+                type="checkbox"
+                className="asi-checkbox"
+                checked={agreed}
+                onChange={e => setAgreed(e.target.checked)}
+              />
+              <span>I understand and will attempt this assessment genuinely and on my own.</span>
+            </label>
+
+            <button
+              className="btn btn-primary btn-lg btn-full"
+              disabled={!agreed}
+              onClick={() => setShowIntro(false)}
+            >
+              Start Assessment →
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (done && result) {
     return (

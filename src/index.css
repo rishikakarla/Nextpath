@@ -502,6 +502,23 @@ nav { flex: 1; padding: 12px 0; }
 .badge-secondary { background: #f3e8ff; color: #6b21a8; }
 
 /* ─── ASSESSMENT ─────────────────────────────────────────── */
+/* ── Assessment Intro Modal ─────────────────────────────────────────────── */
+.asi-overlay { width: 100%; display: flex; justify-content: center; align-items: flex-start; padding: 24px 16px; }
+.asi-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 36px 32px; max-width: 560px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+.asi-icon-wrap { display: flex; justify-content: center; }
+.asi-icon { font-size: 52px; line-height: 1; }
+.asi-title { font-size: 24px; font-weight: 800; text-align: center; color: var(--text); margin: 0; }
+.asi-subtitle { font-size: 14px; color: var(--text-secondary); text-align: center; line-height: 1.6; margin: 0; }
+.asi-warn-box { background: rgba(239,68,68,.06); border: 1.5px solid rgba(239,68,68,.25); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.asi-warn-title { font-size: 13px; font-weight: 800; color: #ef4444; letter-spacing: .3px; }
+.asi-warn-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+.asi-warn-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+.asi-warn-list li { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.asi-warn-footer { font-size: 13px; font-weight: 600; color: var(--text); margin: 0; line-height: 1.5; border-top: 1px solid rgba(239,68,68,.15); padding-top: 10px; }
+.asi-agree-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.5; }
+.asi-checkbox { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; accent-color: var(--primary); cursor: pointer; }
+
+/* ── Assessment Page ─────────────────────────────────────────────────────── */
 .assessment-page {
   min-height: 100vh;
   background: var(--bg);

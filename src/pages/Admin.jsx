@@ -86,7 +86,7 @@ const JSON_TEMPLATE = `{
   }
 }`
 
-function CodingProblemsTab({ problems = [], onUpdate }) {
+export function CodingProblemsTab({ problems = [], onUpdate }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(BLANK_PROB)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -431,7 +431,7 @@ const ASSESSMENT_JSON_TEMPLATE = `[
   }
 ]`
 
-function AssessmentTab({ questions = [], onUpdate }) {
+export function AssessmentTab({ questions = [], onUpdate }) {
   const [editing,     setEditing]     = useState(null)
   const [form,        setForm]        = useState(BLANK_Q)
   const [jsonMode,    setJsonMode]    = useState(false)
@@ -598,7 +598,7 @@ const ROADMAP_LEVELS = [
   { key: 'advanced',     label: 'Master',    color: '#ef4444' },
 ]
 
-function RoadmapTab({ roadmapByLevel = {}, onUpdate }) {
+export function RoadmapTab({ roadmapByLevel = {}, onUpdate }) {
   const [level, setLevel] = useState('beginner')
   const phases = roadmapByLevel[level] || []
 
@@ -1102,7 +1102,7 @@ const DAILY_QUIZ_TEMPLATE = `[
   }
 ]`
 
-function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onUpdate }) {
+export function DailyTasksTab({ tasks = { coding: [], aptitude: [], revision: [] }, onUpdate }) {
   const [type, setType]       = useState('coding')
   const [editing, setEditing] = useState(null)   // null | 'new' | index
   const [form, setForm]       = useState(() => getBlankTask('coding'))
@@ -1401,7 +1401,7 @@ const APTITUDE_JSON_TEMPLATE = `{
   ]
 }`
 
-function AptitudeTab({ topics = [], onUpdate }) {
+export function AptitudeTab({ topics = [], onUpdate }) {
   const [editing, setEditing]     = useState(null)
   const [form, setForm]           = useState(BLANK_AT_TOPIC)
   const [levelFilter, setLevel]   = useState('All')
@@ -1770,7 +1770,7 @@ function AptitudeTopicForm({ form, setForm, addConcept, removeConcept, setConcep
 }
 
 // ── Daily Quote Tab ───────────────────────────────────────────────────────────
-function QuoteTab({ quote, onUpdate }) {
+export function QuoteTab({ quote, onUpdate }) {
   const [text, setText]     = useState(quote.text || '')
   const [author, setAuthor] = useState(quote.author || '')
   const [saved, setSaved]   = useState(false)
@@ -1841,7 +1841,7 @@ function hexToRgba(hex, a) {
   return `rgba(${r},${g},${b},${a})`
 }
 
-function CompaniesTab({ companies = [], onUpdate }) {
+export function CompaniesTab({ companies = [], onUpdate }) {
   const [editing, setEditing] = useState(null)   // null | 'new' | company.id
   const [form,    setForm]    = useState(BLANK_COMPANY)
   const [roundsText, setRoundsText] = useState('')
@@ -1965,7 +1965,7 @@ function CompaniesTab({ companies = [], onUpdate }) {
 const BLANK_MCQ  = { q: '', opts: ['', '', '', ''], ans: 0, exp: '' }
 const COMP_CATS  = ['coding', 'aptitude', 'english']
 
-function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate }) {
+export function CompanyQuestionsTab({ companies = [], companyProblems = {}, onUpdate }) {
   const [selCompany,   setSelCompany]   = useState(companies[0]?.id || '')
   const [subTab,       setSubTab]       = useState('coding')
 
@@ -2447,6 +2447,7 @@ const TABS = [
   { key: 'companies',  label: '🏢 Manage Companies' },
   { key: 'company',    label: '📋 Company Questions' },
   { key: 'mentors',    label: '👨‍🏫 Mentors' },
+  { key: 'trainers',   label: '🎯 Trainers' },
 ]
 
 const AVATAR_COLORS = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ef4444','#0ea5e9','#ec4899']
@@ -2546,6 +2547,102 @@ function MentorsTab() {
   )
 }
 
+const trainerKey = (email) => email.replace(/\./g, '__').replace(/@/g, '--at--')
+
+function TrainersTab() {
+  const [trainers, setTrainers] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [form,     setForm]     = useState({ name: '', email: '', avatarColor: '#6366f1' })
+  const [saving,   setSaving]   = useState(false)
+  const [err,      setErr]      = useState('')
+  const [success,  setSuccess]  = useState('')
+
+  useEffect(() => {
+    getDocs(collection(db, 'trainers')).then(snap => {
+      setTrainers(snap.docs.map(d => d.data()))
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [])
+
+  const addTrainer = async () => {
+    setErr(''); setSuccess('')
+    if (!form.name.trim() || !form.email.trim()) { setErr('Name and email are required.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setErr('Enter a valid email address.'); return }
+    setSaving(true)
+    try {
+      const key  = trainerKey(form.email.toLowerCase())
+      const data = { ...form, email: form.email.toLowerCase(), createdAt: new Date().toISOString() }
+      await setDoc(doc(db, 'trainers', key), data)
+      setTrainers(prev => [...prev.filter(t => t.email !== data.email), data])
+      setSuccess(`✓ ${form.name} added as trainer. They can now log in to access the Trainer Portal.`)
+      setForm({ name: '', email: '', avatarColor: '#6366f1' })
+    } catch (e) { setErr('Failed to save: ' + e.message) }
+    setSaving(false)
+  }
+
+  const removeTrainer = async (email) => {
+    if (!window.confirm(`Remove ${email} as trainer?`)) return
+    await deleteDoc(doc(db, 'trainers', trainerKey(email.toLowerCase())))
+    setTrainers(prev => prev.filter(t => t.email !== email))
+  }
+
+  return (
+    <div>
+      <h2 style={{ margin: '0 0 6px', fontSize: 20 }}>Manage Trainers</h2>
+      <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--text-secondary)' }}>
+        Trainers can log in to the Trainer Portal and add or edit all content — coding problems, roadmaps, assessment questions, daily tasks, aptitude topics, companies, and more.
+      </p>
+
+      {/* Add form */}
+      <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 24 }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 15 }}>Add New Trainer</h3>
+        <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)' }}>
+          The person must already have a NextPath account with this email. Once added they can log in and access the Trainer Portal.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          <Field label="Full Name"><input style={s.inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Ananya Reddy" /></Field>
+          <Field label="Email (NextPath account)"><input style={s.inp} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="trainer@example.com" /></Field>
+          <Field label="Avatar Color">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+              {AVATAR_COLORS.map(c => (
+                <button key={c} onClick={() => setForm(f => ({ ...f, avatarColor: c }))} style={{
+                  width: 28, height: 28, borderRadius: '50%', background: c, border: form.avatarColor === c ? '3px solid var(--text)' : '2px solid transparent', cursor: 'pointer',
+                }} />
+              ))}
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: form.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>
+                {form.name.charAt(0).toUpperCase() || '?'}
+              </div>
+            </div>
+          </Field>
+        </div>
+        {err     && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 10px' }}>{err}</p>}
+        {success && <p style={{ color: '#10b981', fontSize: 13, margin: '0 0 10px' }}>{success}</p>}
+        <Btn variant="success" onClick={addTrainer}>{saving ? 'Saving…' : '+ Add Trainer'}</Btn>
+      </div>
+
+      {/* Trainer list */}
+      <h3 style={{ fontSize: 15, margin: '0 0 12px' }}>Current Trainers ({trainers.length})</h3>
+      {loading ? <p style={{ color: 'var(--text-secondary)' }}>Loading…</p> : trainers.length === 0 ? (
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No trainers added yet.</p>
+      ) : (
+        trainers.map(t => (
+          <div key={t.email} style={{ ...s.card, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: t.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, flexShrink: 0 }}>
+              {t.name.charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{t.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{t.email}</div>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(t.createdAt).toLocaleDateString()}</div>
+            <Btn sm variant="danger" onClick={() => removeTrainer(t.email)}>Remove</Btn>
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
 export default function Admin() {
   const { user, logout } = useApp()
   const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, companies, updateContent } = useContent()
@@ -2597,6 +2694,7 @@ export default function Admin() {
           {tab === 'companies'  && <CompaniesTab        companies={companies}             onUpdate={d => updateContent('companies', { items: d })} />}
           {tab === 'company'    && <CompanyQuestionsTab companies={companies} companyProblems={companyProblems} onUpdate={d => updateContent('companyProblems', d)} />}
           {tab === 'mentors'    && <MentorsTab />}
+          {tab === 'trainers'   && <TrainersTab />}
         </main>
       </div>
     </div>

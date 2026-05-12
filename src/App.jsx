@@ -19,6 +19,7 @@ import TopicPage from './pages/TopicPage'
 import ProfileSetup from './pages/ProfileSetup'
 import Profile from './pages/Profile'
 import CompanyLearning from './pages/CompanyLearning'
+import TrainerPortal from './pages/TrainerPortal'
 
 function Require({ children }) {
   const { user, authLoading } = useApp()
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="mentor-portal" element={<MentorPortal />} />
       </Route>
       <Route path="/admin" element={<Admin />} />
+      <Route path="/trainer-portal" element={<Require><TrainerPortal /></Require>} />
       <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
     </Routes>
   )

@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore'
 
-const mentorKey = (email) => email.replace(/\./g, '__').replace(/@/g, '--at--')
+const roleKey = (email) => email.replace(/\./g, '__').replace(/@/g, '--at--')
 
 const AppContext = createContext(null)
 
@@ -30,8 +30,10 @@ export function AppProvider({ children }) {
   const [quizAttempts, setQuizAttempts] = useState({})
   const [taskHistory, setTaskHistory] = useState({})
   const [codingSubmissions, setCodingSubmissions] = useState({})
-  const [isMentor, setIsMentor] = useState(false)
+  const [isMentor,      setIsMentor]      = useState(false)
   const [mentorProfile, setMentorProfile] = useState(null)
+  const [isTrainer,     setIsTrainer]     = useState(false)
+  const [trainerProfile,setTrainerProfile]= useState(null)
 
   // Prevents syncing state back to Firestore right after it was loaded from there
   const dataLoaded = useRef(false)
@@ -54,9 +56,13 @@ export function AppProvider({ children }) {
           setTaskHistory(data.taskHistory || {})
           setCodingSubmissions(data.codingSubmissions || {})
           // Check mentor role
-          const mSnap = await getDoc(doc(db, 'mentors', mentorKey(firebaseUser.email)))
+          const mSnap = await getDoc(doc(db, 'mentors', roleKey(firebaseUser.email)))
           if (mSnap.exists()) { setIsMentor(true); setMentorProfile(mSnap.data()) }
           else { setIsMentor(false); setMentorProfile(null) }
+          // Check trainer role
+          const tSnap = await getDoc(doc(db, 'trainers', roleKey(firebaseUser.email)))
+          if (tSnap.exists()) { setIsTrainer(true); setTrainerProfile(tSnap.data()) }
+          else { setIsTrainer(false); setTrainerProfile(null) }
           // Delay enabling sync so the load-triggered effects don't write back to Firestore
           setTimeout(() => { dataLoaded.current = true }, 0)
           // Backfill leaderboard entry with latest data on every login
@@ -86,6 +92,8 @@ export function AppProvider({ children }) {
         setCodingSubmissions({})
         setIsMentor(false)
         setMentorProfile(null)
+        setIsTrainer(false)
+        setTrainerProfile(null)
       }
       setAuthLoading(false)
     })
@@ -349,7 +357,7 @@ export function AppProvider({ children }) {
       quizAttempts, saveQuizAttempt,
       taskHistory,
       codingSubmissions, saveSubmission,
-      isMentor, mentorProfile, mentorKey,
+      isMentor, mentorProfile, isTrainer, trainerProfile, roleKey,
       register, login, loginWithGoogle, loginWithGithub, updateProfile, logout, saveAssessment,
       completeTask, solveProblem, toggleTopic, levelUp, getLeaderboard, setPoints,
     }}>

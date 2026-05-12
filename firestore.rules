@@ -3,8 +3,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Content (coding problems, assessment, roadmap, daily tasks, aptitude topics)
-    // Any logged-in user can read; only the admin can write
+    // Any logged-in user can read; admin or registered trainers can write
     match /content/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && (request.auth.token.email == 'kakarlarishi5124@gmail.com'
+                       || exists(/databases/$(database)/documents/trainers/$(request.auth.token.email.replace('.', '__').replace('@', '--at--'))));
+    }
+
+    // Trainers — any logged-in user can read (for role detection on login)
+    // Only admin can create / delete trainer entries
+    match /trainers/{trainerId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
                    && request.auth.token.email == 'kakarlarishi5124@gmail.com';
