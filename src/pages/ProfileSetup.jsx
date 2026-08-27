@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useCollege } from '../context/CollegeContext'
 
 const YEARS    = ['1st Year', '2nd Year', '3rd Year', '4th Year']
 const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other']
 const GOALS    = ['Product Company (FAANG/Unicorn)', 'Service Company (TCS/Infosys/Wipro)', 'Startup', 'Higher Studies']
+const OTHER_COLLEGE = '__other__'
 
 export default function ProfileSetup() {
   const { user, updateProfile } = useApp()
+  const { colleges } = useCollege()
   const navigate = useNavigate()
 
+  const [collegeChoice, setCollegeChoice] = useState(user?.collegeId || (user?.college ? OTHER_COLLEGE : ''))
   const [form, setForm] = useState({
     name:        user?.name        || user?.displayName || '',
     college:     user?.college     || '',
@@ -22,10 +26,21 @@ export default function ProfileSetup() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const selectedCollege = colleges.find(c => c.id === collegeChoice)
+  const branchOptions = selectedCollege ? selectedCollege.departments : BRANCHES
+  const yearOptions   = selectedCollege ? selectedCollege.academicYears : YEARS
+
+  const handleCollegeChoice = (val) => {
+    setCollegeChoice(val)
+    const c = colleges.find(x => x.id === val)
+    setForm(f => ({ ...f, college: c ? c.name : (val === OTHER_COLLEGE ? '' : f.college), branch: '', yearOfStudy: '' }))
+  }
+
   const validate = () => {
     const e = {}
     if (!form.name.trim())    e.name        = 'Name is required'
-    if (!form.college.trim()) e.college     = 'College name required'
+    if (!collegeChoice)       e.collegeChoice = 'Select your college'
+    if (collegeChoice === OTHER_COLLEGE && !form.college.trim()) e.college = 'College name required'
     if (!form.branch)         e.branch      = 'Select your branch'
     if (!form.yearOfStudy)    e.yearOfStudy = 'Select year'
     if (!form.careerGoal)     e.careerGoal  = 'Select dream job / goal'
@@ -38,7 +53,8 @@ export default function ProfileSetup() {
     if (Object.keys(errs).length) { setErrors(errs); return }
     setSaving(true)
     try {
-      await updateProfile(form)
+      const payload = { ...form, collegeId: collegeChoice === OTHER_COLLEGE ? '' : collegeChoice }
+      await updateProfile(payload)
       navigate('/assessment')
     } catch {
       setErrors({ submit: 'Failed to save details. Please try again.' })
@@ -75,20 +91,32 @@ export default function ProfileSetup() {
 
           <div className="form-group">
             <label>College / University</label>
-            <input
-              placeholder="VIT Vellore"
-              value={form.college}
-              onChange={e => set('college', e.target.value)}
-            />
-            {errors.college && <div className="form-error">{errors.college}</div>}
+            <select value={collegeChoice} onChange={e => handleCollegeChoice(e.target.value)}>
+              <option value="">Select your college</option>
+              {colleges.filter(c => c.active !== false).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <option value={OTHER_COLLEGE}>My college isn't listed</option>
+            </select>
+            {errors.collegeChoice && <div className="form-error">{errors.collegeChoice}</div>}
           </div>
+
+          {collegeChoice === OTHER_COLLEGE && (
+            <div className="form-group">
+              <label>College Name</label>
+              <input
+                placeholder="VIT Vellore"
+                value={form.college}
+                onChange={e => set('college', e.target.value)}
+              />
+              {errors.college && <div className="form-error">{errors.college}</div>}
+            </div>
+          )}
 
           <div className="form-row">
             <div className="form-group">
               <label>Branch</label>
               <select value={form.branch} onChange={e => set('branch', e.target.value)}>
                 <option value="">Select branch</option>
-                {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                {branchOptions.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
               {errors.branch && <div className="form-error">{errors.branch}</div>}
             </div>
@@ -96,7 +124,7 @@ export default function ProfileSetup() {
               <label>Year of Study</label>
               <select value={form.yearOfStudy} onChange={e => set('yearOfStudy', e.target.value)}>
                 <option value="">Select year</option>
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
               {errors.yearOfStudy && <div className="form-error">{errors.yearOfStudy}</div>}
             </div>

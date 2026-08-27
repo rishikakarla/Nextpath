@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useContent } from '../context/ContentContext'
+import { useCollege } from '../context/CollegeContext'
 import BadgeModal from '../components/BadgeModal'
 
 const LEVEL_MAP = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'intermediate', Master: 'advanced' }
@@ -8,6 +9,7 @@ const LEVEL_MAP = { Rookie: 'beginner', Explorer: 'beginnerPlus', Coder: 'interm
 const YEARS    = ['1st Year', '2nd Year', '3rd Year', '4th Year']
 const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other']
 const GOALS    = ['Product Company (FAANG/Unicorn)', 'Service Company (TCS/Infosys/Wipro)', 'Startup', 'Higher Studies']
+const OTHER_COLLEGE = '__other__'
 const SKILL_SUGGESTIONS = ['Python', 'Java', 'C++', 'JavaScript', 'React', 'Node.js', 'SQL', 'DSA', 'Machine Learning', 'Git', 'HTML/CSS', 'TypeScript', 'MongoDB', 'AWS', 'Docker']
 
 // Assessment levels (from assessment result)
@@ -47,13 +49,23 @@ function EditBtn({ onClick }) {
 
 export default function Profile() {
   const { user, points, streak, progress, solvedProblems, quizAttempts, assessmentResult, updateProfile } = useApp()
+  const { colleges } = useCollege()
 
   const [sharingBadge, setSharingBadge] = useState(null)
   const [editSection, setEditSection] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saved,  setSaved]  = useState(false)
 
+  const [collegeChoice, setCollegeChoice] = useState(user?.collegeId || (user?.college ? OTHER_COLLEGE : ''))
   const [aboutForm,    setAboutForm]    = useState({ name: user?.name || '', college: user?.college || '', branch: user?.branch || '', yearOfStudy: user?.yearOfStudy || '', bio: user?.bio || '', phone: user?.phone || '' })
+  const selectedCollege = colleges.find(c => c.id === collegeChoice)
+  const branchOptions = selectedCollege ? selectedCollege.departments : BRANCHES
+  const yearOptions    = selectedCollege ? selectedCollege.academicYears : YEARS
+  const handleCollegeChoice = (val) => {
+    setCollegeChoice(val)
+    const c = colleges.find(x => x.id === val)
+    setAboutForm(f => ({ ...f, college: c ? c.name : (val === OTHER_COLLEGE ? '' : f.college), branch: '', yearOfStudy: '' }))
+  }
   const [skillInput,   setSkillInput]   = useState('')
   const [skillsForm,   setSkillsForm]   = useState(user?.skills || [])
   const [projectsForm, setProjectsForm] = useState(user?.projects || [])
@@ -196,25 +208,36 @@ export default function Profile() {
           {/* About / Character Info */}
           <Card title="Character Info" icon="👤" action={editSection !== 'about' && <EditBtn onClick={() => setEditSection('about')} />}>
             {editSection === 'about' ? (
-              <form onSubmit={e => { e.preventDefault(); save({ ...user, ...aboutForm, skills: skillsForm, projects: projectsForm, ...careerForm, ...socialForm }) }} className="gpf-form">
+              <form onSubmit={e => { e.preventDefault(); save({ ...user, ...aboutForm, collegeId: collegeChoice === OTHER_COLLEGE ? '' : collegeChoice, skills: skillsForm, projects: projectsForm, ...careerForm, ...socialForm }) }} className="gpf-form">
                 <div className="gpf-form-row">
                   <div className="gpf-fg"><label>Full Name *</label><input value={aboutForm.name} onChange={e => setAboutForm(f => ({ ...f, name: e.target.value }))} placeholder="Rahul Sharma" required /></div>
                   <div className="gpf-fg"><label>Phone</label><input value={aboutForm.phone} onChange={e => setAboutForm(f => ({ ...f, phone: e.target.value }))} placeholder="+91 9876543210" /></div>
                 </div>
                 <div className="gpf-form-row">
-                  <div className="gpf-fg"><label>College *</label><input value={aboutForm.college} onChange={e => setAboutForm(f => ({ ...f, college: e.target.value }))} placeholder="VIT Vellore" required /></div>
+                  <div className="gpf-fg"><label>College *</label>
+                    <select value={collegeChoice} onChange={e => handleCollegeChoice(e.target.value)} required>
+                      <option value="">Select your college</option>
+                      {colleges.filter(c => c.active !== false).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      <option value={OTHER_COLLEGE}>My college isn't listed</option>
+                    </select>
+                  </div>
                   <div className="gpf-fg"><label>Branch *</label>
                     <select value={aboutForm.branch} onChange={e => setAboutForm(f => ({ ...f, branch: e.target.value }))} required>
                       <option value="">Select</option>
-                      {BRANCHES.map(b => <option key={b}>{b}</option>)}
+                      {branchOptions.map(b => <option key={b}>{b}</option>)}
                     </select>
                   </div>
                 </div>
+                {collegeChoice === OTHER_COLLEGE && (
+                  <div className="gpf-form-row">
+                    <div className="gpf-fg"><label>College Name *</label><input value={aboutForm.college} onChange={e => setAboutForm(f => ({ ...f, college: e.target.value }))} placeholder="VIT Vellore" required /></div>
+                  </div>
+                )}
                 <div className="gpf-form-row">
                   <div className="gpf-fg"><label>Year *</label>
                     <select value={aboutForm.yearOfStudy} onChange={e => setAboutForm(f => ({ ...f, yearOfStudy: e.target.value }))} required>
                       <option value="">Select</option>
-                      {YEARS.map(y => <option key={y}>{y}</option>)}
+                      {yearOptions.map(y => <option key={y}>{y}</option>)}
                     </select>
                   </div>
                   <div className="gpf-fg"><label>Bio</label><input value={aboutForm.bio} onChange={e => setAboutForm(f => ({ ...f, bio: e.target.value }))} placeholder="One-liner about you" /></div>

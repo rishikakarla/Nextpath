@@ -23,13 +23,14 @@ const NAV = [
   { to: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
   { to: '/progress', icon: '📊', label: 'My Progress' },
   { to: '/mentor', icon: '👨‍🏫', label: 'Mentor Feedback' },
+  { to: '/assessments', icon: '🧾', label: 'Assessments' },
   { to: '/profile', icon: '👤', label: 'My Profile' },
 ]
 
 const ADMIN_EMAIL = 'kakarlarishi5124@gmail.com'
 
 export default function Layout() {
-  const { user, streak, points, logout, isMentor, isTrainer } = useApp()
+  const { user, streak, points, logout, isMentor, isTrainer, isCollegeAdmin } = useApp()
   const navigate = useNavigate()
   const [theme, toggleTheme] = useTheme()
 
@@ -78,6 +79,15 @@ export default function Layout() {
               <NavLink to="/trainer-portal" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
                 <span className="nav-icon">🎯</span>
                 Trainer Portal
+              </NavLink>
+            </>
+          )}
+          {isCollegeAdmin && (
+            <>
+              <div className="nav-section-title" style={{ marginTop: 16 }}>College Admin</div>
+              <NavLink to="/college-admin" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+                <span className="nav-icon">🏫</span>
+                College Admin Portal
               </NavLink>
             </>
           )}

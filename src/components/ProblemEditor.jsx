@@ -377,7 +377,7 @@ function SubmissionsPanel({ submissions, onLoadCode }) {
 }
 
 // ── Main ProblemEditor ────────────────────────────────────────────────────────
-export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, submissions, solvedMessage }) {
+export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, submissions, solvedMessage, awardPoints = true }) {
   const { setPoints } = useApp()
   const basePoints = problem.points || 10
   const [hintDeductions, setHintDeductions] = useState(0)
@@ -503,7 +503,7 @@ export default function ProblemEditor({ problem, onSolve, isSolved, onSubmit, su
     if (onSubmit) {
       onSubmit({ passed: passCount, total, langId, langName, code, submittedAt: new Date().toISOString(), earnedPts })
     }
-    if (!isSolved && earnedPts > 0) {
+    if (awardPoints && !isSolved && earnedPts > 0) {
       setPoints(p => p + earnedPts)
     }
     if (onSolve && !isSolved && allPassed) {

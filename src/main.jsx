@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
 import { ContentProvider } from './context/ContentContext'
+import { CollegeProvider } from './context/CollegeContext'
 import App from './App'
 import './index.css'
 
@@ -11,7 +12,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AppProvider>
         <ContentProvider>
-          <App />
+          <CollegeProvider>
+            <App />
+          </CollegeProvider>
         </ContentProvider>
       </AppProvider>
     </BrowserRouter>

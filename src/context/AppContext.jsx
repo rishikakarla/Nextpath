@@ -34,6 +34,8 @@ export function AppProvider({ children }) {
   const [mentorProfile, setMentorProfile] = useState(null)
   const [isTrainer,     setIsTrainer]     = useState(false)
   const [trainerProfile,setTrainerProfile]= useState(null)
+  const [isCollegeAdmin,      setIsCollegeAdmin]      = useState(false)
+  const [collegeAdminProfile, setCollegeAdminProfile] = useState(null)
 
   // Prevents syncing state back to Firestore right after it was loaded from there
   const dataLoaded = useRef(false)
@@ -63,6 +65,10 @@ export function AppProvider({ children }) {
           const tSnap = await getDoc(doc(db, 'trainers', roleKey(firebaseUser.email)))
           if (tSnap.exists()) { setIsTrainer(true); setTrainerProfile(tSnap.data()) }
           else { setIsTrainer(false); setTrainerProfile(null) }
+          // Check college admin role
+          const caSnap = await getDoc(doc(db, 'collegeAdmins', roleKey(firebaseUser.email)))
+          if (caSnap.exists()) { setIsCollegeAdmin(true); setCollegeAdminProfile(caSnap.data()) }
+          else { setIsCollegeAdmin(false); setCollegeAdminProfile(null) }
           // Delay enabling sync so the load-triggered effects don't write back to Firestore
           setTimeout(() => { dataLoaded.current = true }, 0)
           // Backfill leaderboard entry with latest data on every login
@@ -94,6 +100,8 @@ export function AppProvider({ children }) {
         setMentorProfile(null)
         setIsTrainer(false)
         setTrainerProfile(null)
+        setIsCollegeAdmin(false)
+        setCollegeAdminProfile(null)
       }
       setAuthLoading(false)
     })
@@ -357,7 +365,8 @@ export function AppProvider({ children }) {
       quizAttempts, saveQuizAttempt,
       taskHistory,
       codingSubmissions, saveSubmission,
-      isMentor, mentorProfile, isTrainer, trainerProfile, roleKey,
+      isMentor, mentorProfile, isTrainer, trainerProfile,
+      isCollegeAdmin, collegeAdminProfile, roleKey,
       register, login, loginWithGoogle, loginWithGithub, updateProfile, logout, saveAssessment,
       completeTask, solveProblem, toggleTopic, levelUp, getLeaderboard, setPoints,
     }}>
