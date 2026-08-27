@@ -20,6 +20,8 @@ import ProfileSetup from './pages/ProfileSetup'
 import Profile from './pages/Profile'
 import CompanyLearning from './pages/CompanyLearning'
 import TrainerPortal from './pages/TrainerPortal'
+import CollegeAdminPortal from './pages/CollegeAdminPortal'
+import StudentAssessments from './pages/StudentAssessments'
 
 function Require({ children }) {
   const { user, authLoading } = useApp()
@@ -51,9 +53,11 @@ export default function App() {
         <Route path="company-learning" element={<CompanyLearning />} />
         <Route path="profile" element={<Profile />} />
         <Route path="mentor-portal" element={<MentorPortal />} />
+        <Route path="assessments" element={<StudentAssessments />} />
       </Route>
       <Route path="/admin" element={<Admin />} />
       <Route path="/trainer-portal" element={<Require><TrainerPortal /></Require>} />
+      <Route path="/college-admin" element={<Require><CollegeAdminPortal /></Require>} />
       <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
     </Routes>
   )

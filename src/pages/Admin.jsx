@@ -9,15 +9,17 @@ const ADMIN_EMAIL = 'kakarlarishi5124@gmail.com'
 const PROB_CATS = ['Arrays', 'Strings', 'Recursion', 'Linked Lists', 'Stacks', 'Queues']
 const DIFFS = ['Easy', 'Medium', 'Hard']
 const Q_CATS = ['Programming', 'Logical Reasoning', 'Data Structures']
+const YEARS    = ['1st Year', '2nd Year', '3rd Year', '4th Year']
+const BRANCHES = ['Computer Science', 'Information Technology', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Other']
 
 // ── Shared UI helpers ─────────────────────────────────────────────────────────
-const s = {
+export const s = {
   card: { background: 'var(--card)', borderRadius: 12, padding: 20, marginBottom: 14, border: '1px solid var(--border)' },
   inp: { width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: 14, boxSizing: 'border-box', fontFamily: 'inherit' },
   lbl: { display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: .6 },
 }
 
-function Btn({ onClick, children, variant = 'primary', sm, type = 'button' }) {
+export function Btn({ onClick, children, variant = 'primary', sm, type = 'button' }) {
   const styles = {
     primary: { background: 'var(--primary)', color: '#fff', border: 'none' },
     danger:  { background: '#ef4444', color: '#fff', border: 'none' },
@@ -35,16 +37,16 @@ function Btn({ onClick, children, variant = 'primary', sm, type = 'button' }) {
   )
 }
 
-function Field({ label, children }) {
+export function Field({ label, children }) {
   return <div style={{ marginBottom: 14 }}><label style={s.lbl}>{label}</label>{children}</div>
 }
 
-function ActiveCard({ children }) {
+export function ActiveCard({ children }) {
   return <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 14 }}>{children}</div>
 }
 
 // ── Coding Problems ───────────────────────────────────────────────────────────
-const BLANK_PROB = {
+export const BLANK_PROB = {
   title: '', category: 'Arrays', difficulty: 'Easy',
   description: '', inputFormat: '', outputFormat: '', constraints: '',
   points: 10,
@@ -238,7 +240,7 @@ export function CodingProblemsTab({ problems = [], onUpdate }) {
   )
 }
 
-function ProblemForm({ form, set, setForm, onSave, onCancel }) {
+export function ProblemForm({ form, set, setForm, onSave, onCancel }) {
 
   // ── examples helpers
   const addExample   = () => setForm(f => ({ ...f, examples: [...f.examples, { input: '', output: '', explanation: '' }] }))
@@ -2448,6 +2450,7 @@ const TABS = [
   { key: 'company',    label: '📋 Company Questions' },
   { key: 'mentors',    label: '👨‍🏫 Mentors' },
   { key: 'trainers',   label: '🎯 Trainers' },
+  { key: 'colleges',   label: '🏫 Colleges' },
 ]
 
 const AVATAR_COLORS = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ef4444','#0ea5e9','#ec4899']
@@ -2643,6 +2646,174 @@ function TrainersTab() {
   )
 }
 
+const collegeKey = (name) => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+function ChipList({ items, onChange, placeholder }) {
+  const [draft, setDraft] = useState('')
+  const add = () => {
+    const v = draft.trim()
+    if (!v || items.includes(v)) return
+    onChange([...items, v])
+    setDraft('')
+  }
+  return (
+    <div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+        {items.map(it => (
+          <span key={it} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>
+            {it}
+            <button onClick={() => onChange(items.filter(x => x !== it))} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>✕</button>
+          </span>
+        ))}
+        {items.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>None added yet.</span>}
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input style={s.inp} value={draft} onChange={e => setDraft(e.target.value)} placeholder={placeholder}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add() } }} />
+        <Btn sm onClick={add}>+ Add</Btn>
+      </div>
+    </div>
+  )
+}
+
+function CollegesTab() {
+  const [colleges, setColleges]           = useState([])
+  const [collegeAdmins, setCollegeAdmins] = useState([])
+  const [loading, setLoading]             = useState(true)
+  const [form, setForm] = useState({ name: '', departments: [...BRANCHES], academicYears: [...YEARS] })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]         = useState('')
+  const [success, setSuccess] = useState('')
+  const [adminForms, setAdminForms] = useState({})   // collegeId -> {name, email, avatarColor}
+
+  useEffect(() => {
+    Promise.all([
+      getDocs(collection(db, 'colleges')),
+      getDocs(collection(db, 'collegeAdmins')),
+    ]).then(([cSnap, aSnap]) => {
+      setColleges(cSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+      setCollegeAdmins(aSnap.docs.map(d => d.data()))
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [])
+
+  const addCollege = async () => {
+    setErr(''); setSuccess('')
+    if (!form.name.trim()) { setErr('College name is required.'); return }
+    const id = collegeKey(form.name)
+    if (!id) { setErr('Enter a valid college name.'); return }
+    if (colleges.some(c => c.id === id)) { setErr('A college with this name already exists.'); return }
+    setSaving(true)
+    try {
+      const now = new Date().toISOString()
+      const data = {
+        name: form.name.trim(),
+        departments: form.departments,
+        academicYears: form.academicYears,
+        active: true,
+        createdBy: 'kakarlarishi5124@gmail.com',
+        createdAt: now,
+        updatedAt: now,
+      }
+      await setDoc(doc(db, 'colleges', id), data)
+      setColleges(prev => [...prev, { id, ...data }])
+      setSuccess(`✓ ${form.name} added. You can now add a College Admin below.`)
+      setForm({ name: '', departments: [...BRANCHES], academicYears: [...YEARS] })
+    } catch (e) { setErr('Failed to save: ' + e.message) }
+    setSaving(false)
+  }
+
+  const setAdminForm = (collegeId, patch) =>
+    setAdminForms(prev => ({ ...prev, [collegeId]: { name: '', email: '', avatarColor: '#6366f1', ...prev[collegeId], ...patch } }))
+
+  const addCollegeAdmin = async (collegeId) => {
+    const f = adminForms[collegeId] || { name: '', email: '', avatarColor: '#6366f1' }
+    if (!f.name?.trim() || !f.email?.trim()) return
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) return
+    const key = adminMentorKey(f.email.toLowerCase())
+    const data = { name: f.name.trim(), email: f.email.toLowerCase(), collegeId, avatarColor: f.avatarColor || '#6366f1', createdAt: new Date().toISOString(), createdBy: 'kakarlarishi5124@gmail.com' }
+    await setDoc(doc(db, 'collegeAdmins', key), data)
+    setCollegeAdmins(prev => [...prev.filter(a => a.email !== data.email), data])
+    setAdminForm(collegeId, { name: '', email: '' })
+  }
+
+  const removeCollegeAdmin = async (email) => {
+    if (!window.confirm(`Remove ${email} as college admin?`)) return
+    await deleteDoc(doc(db, 'collegeAdmins', adminMentorKey(email.toLowerCase())))
+    setCollegeAdmins(prev => prev.filter(a => a.email !== email))
+  }
+
+  return (
+    <div>
+      <h2 style={{ margin: '0 0 6px', fontSize: 20 }}>Manage Colleges</h2>
+      <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--text-secondary)' }}>
+        Onboard a college with its departments and academic years, then assign one or more College Admins who can manage that college's assessment modules and view student results.
+      </p>
+
+      {/* Add form */}
+      <div style={{ ...s.card, border: '2px solid var(--primary)', marginBottom: 24 }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 15 }}>Add New College</h3>
+        <Field label="College Name">
+          <input style={s.inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. VIT Vellore" />
+        </Field>
+        <Field label="Departments">
+          <ChipList items={form.departments} onChange={v => setForm(f => ({ ...f, departments: v }))} placeholder="e.g. Computer Science" />
+        </Field>
+        <Field label="Academic Years">
+          <ChipList items={form.academicYears} onChange={v => setForm(f => ({ ...f, academicYears: v }))} placeholder="e.g. 1st Year" />
+        </Field>
+        {err     && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 10px' }}>{err}</p>}
+        {success && <p style={{ color: '#10b981', fontSize: 13, margin: '0 0 10px' }}>{success}</p>}
+        <Btn variant="success" onClick={addCollege}>{saving ? 'Saving…' : '+ Add College'}</Btn>
+      </div>
+
+      {/* College list */}
+      <h3 style={{ fontSize: 15, margin: '0 0 12px' }}>Current Colleges ({colleges.length})</h3>
+      {loading ? <p style={{ color: 'var(--text-secondary)' }}>Loading…</p> : colleges.length === 0 ? (
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No colleges added yet.</p>
+      ) : (
+        colleges.map(c => {
+          const admins = collegeAdmins.filter(a => a.collegeId === c.id)
+          const af = adminForms[c.id] || { name: '', email: '', avatarColor: '#6366f1' }
+          return (
+            <div key={c.id} style={{ ...s.card }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>{c.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                    {(c.departments || []).length} departments · {(c.academicYears || []).length} academic years
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 13, fontWeight: 700, margin: '14px 0 8px' }}>College Admins ({admins.length})</div>
+              {admins.map(a => (
+                <div key={a.email} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
+                    {a.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{a.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{a.email}</div>
+                  </div>
+                  <Btn sm variant="danger" onClick={() => removeCollegeAdmin(a.email)}>Remove</Btn>
+                </div>
+              ))}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <input style={s.inp} value={af.name} onChange={e => setAdminForm(c.id, { name: e.target.value })} placeholder="Admin full name" />
+                <input style={s.inp} type="email" value={af.email} onChange={e => setAdminForm(c.id, { email: e.target.value })} placeholder="admin@example.com" />
+                <Btn sm onClick={() => addCollegeAdmin(c.id)}>+ Add Admin</Btn>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-muted)' }}>The person must already have a NextPath account with this email.</p>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
 export default function Admin() {
   const { user, logout } = useApp()
   const { codingProblems, assessmentQuestions, roadmapPhases, dailyTasks, aptitudeTopics, dailyQuote, companyProblems, companies, updateContent } = useContent()
@@ -2695,6 +2866,7 @@ export default function Admin() {
           {tab === 'company'    && <CompanyQuestionsTab companies={companies} companyProblems={companyProblems} onUpdate={d => updateContent('companyProblems', d)} />}
           {tab === 'mentors'    && <MentorsTab />}
           {tab === 'trainers'   && <TrainersTab />}
+          {tab === 'colleges'   && <CollegesTab />}
         </main>
       </div>
     </div>
